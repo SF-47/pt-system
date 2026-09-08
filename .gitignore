@@ -1,0 +1,10 @@
+# .NET
+backend/bin/
+backend/obj/
+
+# React/Vite
+web/node_modules/
+web/dist/
+
+# IDE
+.vscode/
