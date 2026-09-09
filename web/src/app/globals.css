@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+  --background: #f6f8f6;
+  --surface: #ffffff;
+  --sidebar: #ffffff;
+  --border: #d1d5db;
+  --border-strong: #c7cdd4;
+  --input-border: #8b978f;
+  --primary: #2f855a;
+  --primary-hover: #276749;
+  --primary-soft: #eaf6ef;
+  --text: #1f2937;
+  --text-muted: #6b7280;
+  --success: #2f855a;
+  --warning: #a65b05;
+  --danger: #dc2626;
+  --warning-soft: #fff4df;
+  --danger-soft: #fef2f2;
+  --hover: #f0f6f2;
+}
+
+html.dark {
+  color-scheme: dark;
+  --background: #0f1115;
+  --surface: #1b1f24;
+  --sidebar: #15181c;
+  --border: #2c3238;
+  --border-strong: #3a4149;
+  --input-border: #4b5563;
+  --primary: #2f855a;
+  --primary-hover: #276749;
+  --primary-soft: #173d2a;
+  --text: #f3f4f6;
+  --text-muted: #9ca3af;
+  --success: #2f855a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --warning-soft: #3f2a0c;
+  --danger-soft: #451a1a;
+  --hover: #23292f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-sidebar: var(--sidebar);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input-border: var(--input-border);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-foreground: var(--text);
+  --color-muted: var(--text-muted);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-hover: var(--hover);
+  --font-sans: Arial, Helvetica, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
