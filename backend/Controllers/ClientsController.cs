@@ -69,4 +69,20 @@ public class ClientController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPut("{id}/credentials")]
+    public async Task<IActionResult> UpdateCredentials(
+        int id,
+        UpdateClientCredentialsRequest request
+    )
+    {
+        var updated = await _clientService.UpdateCredentialsAsync(id, request);
+
+        if (!updated)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
 }

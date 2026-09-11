@@ -1,6 +1,8 @@
 using backend.Data;
 using backend.DTOs.Clients;
 using backend.Models;
+using BCrypt.Net;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services.Clients;
@@ -58,7 +60,7 @@ public class ClientService : IClientService
             Username = request.Username,
             Email = request.Email,
             PhoneNumber = request.PhoneNumber,
-            PasswordHash = request.Password,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             IsActive = true,
         };
 
@@ -119,6 +121,23 @@ public class ClientService : IClientService
         }
 
         _db.Clients.Remove(client);
+
+        return true;
+    }
+
+    public async Task<bool> UpdateCredentialsAsync(int id, UpdateClientCredentialsRequest request)
+    {
+        var client = await _db.Clients.FindAsync(id);
+
+        if (client is null)
+        {
+            return false;
+        }
+
+        client.Username = request.Username;
+        client.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+        await _db.SaveChangesAsync();
 
         return true;
     }

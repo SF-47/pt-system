@@ -35,31 +35,33 @@ export default function DashboardPage() {
           Add Client
         </Link>
       </PageHeader>
-      <div className="grid grid-cols-1 gap-3 min-[601px]:grid-cols-2 min-[1001px]:grid-cols-5">
-        <StatCard
-          title="Total Clients"
-          value={24}
-          supportingText="18 paid clients"
-          variant="primary"
-          className="w-full min-[1001px]:col-span-2"
-        />
-        <StatCard
-          title="Pending Payments"
-          value={6}
-          className="w-full"
-        />
-        <StatCard
-          title="Workouts Completed Today"
-          value={12}
-          className="w-full"
-        />
-        <StatCard
-          title="Meals Completed Today"
-          value={20}
-          className="w-full"
-        />
-      </div>
-      <div className="mt-5 grid grid-cols-1 gap-5 min-[1001px]:mt-4 min-[1001px]:grid-cols-[3fr_2fr] min-[1001px]:gap-4">
+      <div className="grid grid-cols-1 gap-5 min-[1001px]:grid-cols-[3fr_2fr] min-[1001px]:gap-4">
+        <div className="grid h-full grid-cols-1 gap-3 min-[601px]:grid-cols-2">
+          <StatCard
+            title="Total Clients"
+            value={24}
+            supportingText="18 paid clients"
+            variant="primary"
+            className="w-full"
+          />
+          <StatCard
+            title="Pending Payments"
+            value={6}
+            className="w-full"
+          />
+        </div>
+        <div className="grid h-full grid-cols-1 gap-3 min-[601px]:grid-cols-2">
+          <StatCard
+            title="Workouts Completed Today"
+            value={12}
+            className="w-full"
+          />
+          <StatCard
+            title="Meals Completed Today"
+            value={20}
+            className="w-full"
+          />
+        </div>
         <section className="rounded-lg border border-border bg-surface p-5 dark:border-[#2C3238] dark:bg-[#1B1F24]">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">Today’s Activity</h2>

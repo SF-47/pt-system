@@ -13,4 +13,6 @@ public interface IClientService
     Task<ClientResponse?> UpdateAsync(int id, UpdateClientRequest request);
 
     Task<bool> DeleteAsync(int id);
+
+    Task<bool> UpdateCredentialsAsync(int id, UpdateClientCredentialsRequest request);
 }
