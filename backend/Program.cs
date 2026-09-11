@@ -5,8 +5,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection")!)
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
 var app = builder.Build();
