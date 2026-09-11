@@ -13,7 +13,7 @@ export default async function ClientProgressPage({
   const { id } = await params;
 
   return (
-    <div>
+    <div className="max-w-4xl">
       <BackLink href={`/clients/${id}`}>Back to Client Details</BackLink>
       <PageHeader title="Client Progress" />
 

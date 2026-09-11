@@ -57,7 +57,10 @@ export default function ClientsPage() {
         aria-label="Client tools"
       >
         <div className="min-w-0 flex-1">
-          <label htmlFor="client-search" className="mb-1 block text-xs text-muted">
+          <label
+            htmlFor="client-search"
+            className="mb-1 block text-sm font-medium text-foreground"
+          >
             Search clients
           </label>
           <input
@@ -72,7 +75,7 @@ export default function ClientsPage() {
         <div className="min-[761px]:w-44">
           <label
             htmlFor="client-payment-filter"
-            className="mb-1 block text-xs text-muted"
+            className="mb-1 block text-sm font-medium text-foreground"
           >
             Payment status
           </label>
@@ -133,7 +136,7 @@ export default function ClientsPage() {
                     <div className="flex items-center gap-3">
                       <Avatar name={client.fullName} />
                       <div>
-                        <strong>{client.fullName}</strong>
+                        <span className="font-semibold">{client.fullName}</span>
                         <span className="mt-1 block text-xs text-muted">
                           {client.email}
                         </span>
@@ -153,7 +156,7 @@ export default function ClientsPage() {
                         href={`/clients/${client.id}`}
                         aria-label={`View ${client.fullName}`}
                       >
-                        <Icon name="view" />
+                        <Icon name="view" className="size-4" />
                         View
                       </Link>
                       <Link
@@ -161,7 +164,7 @@ export default function ClientsPage() {
                         href={`/clients/${client.id}/edit`}
                         aria-label={`Edit ${client.fullName}`}
                       >
-                        <Icon name="edit" />
+                        <Icon name="edit" className="size-4" />
                         Edit
                       </Link>
                     </div>

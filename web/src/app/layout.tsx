@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: "PT System",
@@ -27,7 +34,9 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="bg-background text-foreground dark:bg-[#0F1115] dark:text-[#F3F4F6]">
+      <body
+        className={`${inter.variable} bg-background text-foreground dark:bg-[#0F1115] dark:text-[#F3F4F6]`}
+      >
         {children}
       </body>
     </html>

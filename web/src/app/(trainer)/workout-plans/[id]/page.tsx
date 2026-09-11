@@ -29,7 +29,7 @@ export default async function WorkoutPlanPage({
   ];
 
   return (
-    <div>
+    <div className="max-w-4xl">
       <BackLink href="/workout-plans">Back to Workout Plans</BackLink>
       <PageHeader title="Push Day" />
 

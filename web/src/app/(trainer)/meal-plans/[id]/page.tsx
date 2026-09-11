@@ -28,7 +28,7 @@ export default async function MealPlanPage({ params }: MealPlanPageProps) {
   ];
 
   return (
-    <div>
+    <div className="max-w-3xl">
       <BackLink href="/meal-plans">Back to Meal Plans</BackLink>
       <PageHeader title="Weight Loss Plan" />
 

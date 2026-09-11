@@ -53,10 +53,10 @@ export default function PaymentsPage() {
         className="mb-3 flex flex-col gap-2 min-[761px]:flex-row min-[761px]:items-end"
         aria-label="Payment tools"
       >
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 min-[761px]:w-96">
           <label
             htmlFor="payment-search"
-            className="mb-1 block text-xs text-muted"
+            className="mb-1 block text-sm font-medium text-foreground"
           >
             Search payments
           </label>
@@ -66,13 +66,13 @@ export default function PaymentsPage() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Client name"
-            className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary min-[761px]:max-w-sm"
+            className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
           />
         </div>
         <div className="min-[761px]:w-44">
           <label
             htmlFor="payment-status-filter"
-            className="mb-1 block text-xs text-muted"
+            className="mb-1 block text-sm font-medium text-foreground"
           >
             Payment status
           </label>
@@ -126,7 +126,7 @@ export default function PaymentsPage() {
                   key={payment.id}
                   className="border-t border-border transition-colors hover:bg-hover focus-within:bg-hover dark:border-[#2C3238] dark:hover:bg-[#23292F] dark:focus-within:bg-[#23292F]"
                 >
-                  <td className="px-4 py-3 align-middle font-medium">
+                  <td className="px-4 py-3 align-middle font-semibold">
                     {payment.clientName}
                   </td>
                   <td className="px-4 py-3 text-right align-middle font-medium">
@@ -141,11 +141,11 @@ export default function PaymentsPage() {
                   <td className="px-4 py-3 align-middle">
                     {payment.status === "Pending" ? (
                       <button
-                        className="inline-flex min-h-9 cursor-not-allowed items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border bg-surface px-3 py-2 text-[13px] font-semibold text-muted"
+                        className="inline-flex min-h-9 cursor-not-allowed items-center justify-center gap-2 whitespace-nowrap rounded-md border border-transparent px-2 py-2 text-[13px] text-muted"
                         disabled
                         title="Payment updates are not available yet"
                       >
-                        <Icon name="check" className="size-4" />
+                        <Icon name="check" className="size-3.5" />
                         Mark Paid
                       </button>
                     ) : (

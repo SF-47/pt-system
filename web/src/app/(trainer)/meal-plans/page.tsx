@@ -51,7 +51,7 @@ export default function MealPlansPage() {
                 <p className="mt-2 text-muted">{plan.description}</p>
               </div>
               <div className="min-w-16 border-l border-border pl-4 text-center">
-                <strong className="block text-2xl text-foreground">
+                <strong className="block text-xl font-semibold text-foreground">
                   {plan.mealCount}
                 </strong>
                 <span className="text-xs text-muted">meals</span>

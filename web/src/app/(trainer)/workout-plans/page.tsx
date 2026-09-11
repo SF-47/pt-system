@@ -47,9 +47,11 @@ export default function WorkoutPlansPage() {
           >
             <h2 className="text-lg font-semibold">{plan.name}</h2>
             <p className="mt-2 text-muted">{plan.description}</p>
-            <div className="mt-5 mb-4 flex items-center gap-2 text-muted">
-              <strong className="text-foreground">{plan.exerciseCount}</strong>
-              exercises
+            <div className="mt-5 mb-4 flex items-baseline gap-2">
+              <strong className="text-xl font-semibold text-foreground">
+                {plan.exerciseCount}
+              </strong>
+              <span className="text-xs text-muted">exercises</span>
             </div>
             <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
               <Link

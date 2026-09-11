@@ -24,7 +24,7 @@ export default async function DailyActivityPage({
   ];
 
   return (
-    <div>
+    <div className="max-w-3xl">
       <BackLink href={`/clients/${id}`}>Back to Client Details</BackLink>
       <PageHeader title="Daily Activity" />
 

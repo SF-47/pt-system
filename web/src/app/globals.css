@@ -17,7 +17,7 @@
   --text-muted: #6b7280;
   --success: #2f855a;
   --warning: #a65b05;
-  --danger: #f87171;
+  --danger: #dc2626;
   --warning-soft: #fff4df;
   --danger-soft: #fef2f2;
   --hover: #f0f6f2;
@@ -38,7 +38,7 @@ html.dark {
   --text-muted: #9ca3af;
   --success: #2f855a;
   --warning: #d97706;
-  --danger: #dc2626;
+  --danger: #f87171;
   --warning-soft: #3f2a0c;
   --danger-soft: #451a1a;
   --hover: #23292f;
@@ -62,20 +62,21 @@ html.dark {
   --color-warning-soft: var(--warning-soft);
   --color-danger-soft: var(--danger-soft);
   --color-hover: var(--hover);
-  --font-sans: Arial, Helvetica, sans-serif;
+  --font-sans: var(--font-inter), Arial, Helvetica, sans-serif;
 }
 
 body {
   margin: 0;
   background: var(--background);
   color: var(--text);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
   font-size: 14px;
   line-height: 1.5;
 }
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }

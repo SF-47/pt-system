@@ -67,7 +67,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold">Today’s Activity</h2>
             <Icon name="clock" className="text-muted" />
           </div>
-          <div className="grid grid-cols-[38px_minmax(0,1fr)_auto] items-center gap-3 py-4">
+          <div className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 py-4">
             <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
               <Icon name="workout" />
             </span>
@@ -85,7 +85,7 @@ export default function DashboardPage() {
               className="col-[2/-1] h-1.25 w-full appearance-none overflow-hidden rounded-[3px] bg-border text-primary [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-border [&::-webkit-progress-value]:bg-primary"
             />
           </div>
-          <div className="grid grid-cols-[38px_minmax(0,1fr)_auto] items-center gap-3 border-t border-border py-4">
+          <div className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 border-t border-border py-4">
             <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-md bg-warning-soft text-warning">
               <Icon name="meal" />
             </span>
@@ -111,7 +111,7 @@ export default function DashboardPage() {
           </div>
           {attentionClients.map((client) => (
             <div
-              className="flex items-center gap-3 border-y border-border py-4.5"
+              className="flex items-center gap-3 border-y border-border py-4"
               key={client.id}
             >
               <Avatar name={client.fullName} />
