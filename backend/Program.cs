@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Services.Clients;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,9 +11,12 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
+builder.Services.AddControllers();
+builder.Services.AddScoped<IClientService, ClientService>();
 
 var app = builder.Build();
 
+app.MapControllers();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
