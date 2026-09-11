@@ -1,5 +1,6 @@
 using backend.Data;
 using backend.Services.Clients;
+using backend.Services.Workouts;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 );
 builder.Services.AddControllers();
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IWorkoutPlanService, WorkoutPlanService>();
 
 var app = builder.Build();
 
