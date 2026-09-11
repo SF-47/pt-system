@@ -12,7 +12,7 @@ export default function TrainerLayout({ children }: { children: React.ReactNode 
       <Sidebar />
       <main
         id="main-content"
-        className="mx-auto w-full min-w-0 max-w-[1600px] px-[18px] pt-[22px] pb-10 min-[761px]:p-6 min-[1001px]:px-8 min-[1001px]:pt-[30px] min-[1001px]:pb-10"
+        className="mx-auto w-full min-w-0 max-w-[1600px] px-4 pt-5 pb-10 min-[761px]:p-6 min-[1001px]:px-8 min-[1001px]:pt-8 min-[1001px]:pb-10"
         tabIndex={-1}
       >
         {children}

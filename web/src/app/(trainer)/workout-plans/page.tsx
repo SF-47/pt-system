@@ -33,7 +33,7 @@ export default function WorkoutPlansPage() {
       >
         <Link
           href="/workout-plans/new"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-3.5 py-[9px] font-semibold text-white transition-colors hover:bg-primary-hover"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover"
         >
           <Icon name="plus" />
           Create Workout Plan
@@ -43,30 +43,24 @@ export default function WorkoutPlansPage() {
         {workoutPlans.map((plan) => (
           <article
             key={plan.id}
-            className="overflow-hidden rounded-[9px] border border-border bg-surface p-[22px] transition-colors hover:border-[#9dc8ae] dark:border-[#2C3238] dark:bg-[#1B1F24] dark:hover:border-[#2F855A]"
+            className="overflow-hidden rounded-lg border border-border bg-surface p-5 transition-colors hover:border-[#9dc8ae] dark:border-[#2C3238] dark:bg-[#1B1F24] dark:hover:border-[#2F855A]"
           >
-            <div className="flex items-center gap-3">
-              <span className="inline-flex size-[38px] shrink-0 items-center justify-center rounded-[9px] bg-primary-soft text-primary">
-                <Icon name="workout" />
-              </span>
-              <h2 className="text-lg font-semibold">{plan.name}</h2>
-            </div>
-            <p className="mt-[14px] text-muted">{plan.description}</p>
-            <div className="mt-6 mb-[18px] flex items-center gap-2 text-muted">
-              <Icon name="workout" />
+            <h2 className="text-lg font-semibold">{plan.name}</h2>
+            <p className="mt-2 text-muted">{plan.description}</p>
+            <div className="mt-5 mb-4 flex items-center gap-2 text-muted">
               <strong className="text-foreground">{plan.exerciseCount}</strong>
               exercises
             </div>
             <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
               <Link
                 href={`/workout-plans/${plan.id}`}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-3.5 py-[9px] font-semibold text-foreground transition-colors hover:bg-hover"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-semibold text-foreground transition-colors hover:bg-hover"
               >
                 <Icon name="view" />
                 View Plan
               </Link>
               <button
-                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2 rounded-md border border-transparent px-3 py-[9px] text-muted"
+                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2 rounded-md border border-transparent px-3 py-2 text-muted"
                 disabled
                 title="Plan editing is not available yet"
               >
@@ -77,7 +71,7 @@ export default function WorkoutPlansPage() {
           </article>
         ))}
       </div>
-      <p className="my-[18px] text-[13px] text-muted">
+      <p className="my-4 text-[13px] text-muted">
         Plan editing is not available yet.
       </p>
     </div>

@@ -6,7 +6,12 @@ import Avatar from "@/components/Avatar";
 import StatusBadge from "@/components/StatusBadge";
 import { clients, payments } from "@/data/mock-data";
 
+export const dynamic = "force-dynamic";
+
 export default function DashboardPage() {
+  const today = new Intl.DateTimeFormat("en-US", {
+    dateStyle: "full",
+  }).format(new Date());
   const attentionClients = clients.filter(
     (client) => client.paymentStatus === "Pending",
   );
@@ -17,32 +22,51 @@ export default function DashboardPage() {
   return (
     <div>
       <PageHeader
-        title="Welcome back, Trainer"
+        title={today}
+        eyebrow="Welcome back, Trainer"
         description="A clear view of your clients, training, and nutrition."
+        compact
       >
         <Link
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-3.5 py-2.25 font-semibold text-white transition-colors hover:bg-primary-hover"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover"
           href="/clients/new"
         >
           <Icon name="plus" />
           Add Client
         </Link>
       </PageHeader>
-      <div className="grid grid-cols-1 gap-3 min-[401px]:grid-cols-2 min-[761px]:grid-cols-3 min-[1251px]:grid-cols-5">
-        <StatCard title="Total Clients" value={24} icon="clients" />
-        <StatCard title="Paid Clients" value={18} icon="check" />
-        <StatCard title="Pending Payments" value={6} icon="payment" />
-        <StatCard title="Completed Workouts Today" value={12} icon="workout" />
-        <StatCard title="Completed Meals Today" value={20} icon="meal" />
+      <div className="grid grid-cols-1 gap-3 min-[601px]:grid-cols-2 min-[1001px]:grid-cols-5">
+        <StatCard
+          title="Total Clients"
+          value={24}
+          supportingText="18 paid clients"
+          variant="primary"
+          className="w-full min-[1001px]:col-span-2"
+        />
+        <StatCard
+          title="Pending Payments"
+          value={6}
+          className="w-full"
+        />
+        <StatCard
+          title="Workouts Completed Today"
+          value={12}
+          className="w-full"
+        />
+        <StatCard
+          title="Meals Completed Today"
+          value={20}
+          className="w-full"
+        />
       </div>
-      <div className="mt-5.5 grid grid-cols-1 gap-5 min-[1001px]:grid-cols-[1.15fr_1fr]">
-        <section className="rounded-[9px] border border-border bg-surface p-5 dark:border-[#2C3238] dark:bg-[#1B1F24]">
+      <div className="mt-5 grid grid-cols-1 gap-5 min-[1001px]:mt-4 min-[1001px]:grid-cols-[3fr_2fr] min-[1001px]:gap-4">
+        <section className="rounded-lg border border-border bg-surface p-5 dark:border-[#2C3238] dark:bg-[#1B1F24]">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">Today’s Activity</h2>
             <Icon name="clock" className="text-muted" />
           </div>
           <div className="grid grid-cols-[38px_minmax(0,1fr)_auto] items-center gap-3 py-4">
-            <span className="inline-flex size-9.5 shrink-0 items-center justify-center rounded-[9px] bg-primary-soft text-primary">
+            <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
               <Icon name="workout" />
             </span>
             <div>
@@ -60,7 +84,7 @@ export default function DashboardPage() {
             />
           </div>
           <div className="grid grid-cols-[38px_minmax(0,1fr)_auto] items-center gap-3 border-t border-border py-4">
-            <span className="inline-flex size-9.5 shrink-0 items-center justify-center rounded-[9px] bg-warning-soft text-warning">
+            <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-md bg-warning-soft text-warning">
               <Icon name="meal" />
             </span>
             <div>
@@ -78,7 +102,7 @@ export default function DashboardPage() {
             />
           </div>
         </section>
-        <section className="pt-5 pr-0 pb-5 pl-1">
+        <section className="px-1 py-5">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">Clients Needing Attention</h2>
             <Icon name="clients" className="text-muted" />
@@ -94,7 +118,7 @@ export default function DashboardPage() {
                 <p className="mt-1 text-xs text-muted">Payment pending</p>
               </div>
               <Link
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-3.5 py-2.25 font-semibold text-foreground transition-colors hover:bg-hover"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-semibold text-foreground transition-colors hover:bg-hover"
                 href={`/clients/${client.id}`}
                 aria-label={`View ${client.fullName}`}
               >
@@ -124,7 +148,7 @@ export default function DashboardPage() {
           </div>
           {pendingPayments.map((payment) => (
             <div
-              className="flex flex-wrap items-center gap-4 rounded-[7px] border border-border bg-surface px-5 py-4 dark:border-[#2C3238] dark:bg-[#1B1F24]"
+              className="flex flex-wrap items-center gap-4 rounded-md border border-border bg-surface px-5 py-4 dark:border-[#2C3238] dark:bg-[#1B1F24]"
               key={payment.id}
             >
               <Icon name="payment" className="text-warning" />
@@ -138,7 +162,7 @@ export default function DashboardPage() {
           ))}
         </section>
       </div>
-      <p className="my-4.5 text-[13px] text-muted">
+      <p className="my-4 text-[13px] text-muted">
         Sample data: overview totals are separate from the client and payment
         records shown below.
       </p>

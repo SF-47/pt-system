@@ -33,7 +33,7 @@ export default function MealPlansPage() {
       >
         <Link
           href="/meal-plans/new"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-3.5 py-[9px] font-semibold text-white transition-colors hover:bg-primary-hover"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover"
         >
           <Icon name="plus" />
           Create Meal Plan
@@ -43,34 +43,30 @@ export default function MealPlansPage() {
         {mealPlans.map((plan) => (
           <article
             key={plan.id}
-            className="overflow-hidden rounded-[9px] border border-border bg-surface transition-colors hover:border-[#9dc8ae] dark:border-[#2C3238] dark:bg-[#1B1F24] dark:hover:border-[#2F855A]"
+            className="overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-[#9dc8ae] dark:border-[#2C3238] dark:bg-[#1B1F24] dark:hover:border-[#2F855A]"
           >
-            <div className="flex items-center justify-between gap-3 p-[18px] min-[401px]:gap-5 min-[401px]:p-[22px]">
+            <div className="flex items-center justify-between gap-4 p-5">
               <div>
-                <span className="mb-4 inline-flex items-center gap-2 text-xs text-warning">
-                  <Icon name="meal" />
-                  Nutrition plan
-                </span>
                 <h2 className="text-lg font-semibold">{plan.name}</h2>
-                <p className="mt-[14px] text-muted">{plan.description}</p>
+                <p className="mt-2 text-muted">{plan.description}</p>
               </div>
-              <div className="min-w-[68px] border-l border-border pl-5 text-center">
-                <strong className="block text-[26px] text-warning">
+              <div className="min-w-16 border-l border-border pl-4 text-center">
+                <strong className="block text-2xl text-foreground">
                   {plan.mealCount}
                 </strong>
                 <span className="text-xs text-muted">meals</span>
               </div>
             </div>
-            <div className="flex items-center justify-between gap-3 border-t border-border bg-[#fafcfb] px-[22px] py-[14px] dark:border-[#2C3238] dark:bg-[#20252A]">
+            <div className="flex items-center justify-between gap-3 border-t border-border bg-[#fafcfb] px-5 py-3 dark:border-[#2C3238] dark:bg-[#20252A]">
               <Link
                 href={`/meal-plans/${plan.id}`}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-3.5 py-[9px] font-semibold text-foreground transition-colors hover:bg-hover"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-semibold text-foreground transition-colors hover:bg-hover"
               >
                 <Icon name="view" />
                 View Plan
               </Link>
               <button
-                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2 rounded-md border border-transparent px-3 py-[9px] text-muted"
+                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2 rounded-md border border-transparent px-3 py-2 text-muted"
                 disabled
                 title="Plan editing is not available yet"
               >
@@ -81,7 +77,7 @@ export default function MealPlansPage() {
           </article>
         ))}
       </div>
-      <p className="my-[18px] text-[13px] text-muted">
+      <p className="my-4 text-[13px] text-muted">
         Plan editing is not available yet.
       </p>
     </div>

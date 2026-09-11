@@ -33,14 +33,14 @@ export default async function WorkoutPlanPage({
       <BackLink href="/workout-plans">Back to Workout Plans</BackLink>
       <PageHeader title="Push Day" />
 
-      <p className="mt-2 text-muted">Workout Plan ID: {id}</p>
+      <p className="text-sm text-muted">Workout Plan ID: {id}</p>
 
       <p className="mt-2">Chest, shoulders and triceps workout.</p>
 
-      <h2 className="mb-4 mt-8 text-xl font-semibold">Exercises</h2>
+      <h2 className="mb-3 mt-8 text-lg font-semibold">Exercises</h2>
 
       <div
-        className="w-full overflow-x-auto rounded-md border border-border-strong bg-surface dark:border-[#3A4149] dark:bg-[#1B1F24]"
+        className="w-full overflow-x-auto rounded-md border border-border bg-surface dark:border-[#2C3238] dark:bg-[#1B1F24]"
         role="region"
         aria-label="Exercises"
         tabIndex={0}
@@ -48,11 +48,11 @@ export default async function WorkoutPlanPage({
         <table className="w-full border-collapse whitespace-nowrap tabular-nums">
           <thead>
             <tr>
-              {['Exercise', 'Sets', 'Reps', 'Rest'].map((heading) => (
+              {["Exercise", "Sets", "Reps", "Rest"].map((heading) => (
                 <th
                   key={heading}
                   scope="col"
-                  className="bg-[#f3f7f4] px-4 py-3.5 text-left align-middle font-semibold dark:bg-[#20252A]"
+                  className="bg-[#f3f7f4] px-4 py-3 text-left align-middle text-sm font-semibold text-muted dark:bg-[#20252A]"
                 >
                   {heading}
                 </th>
@@ -63,12 +63,12 @@ export default async function WorkoutPlanPage({
             {exercises.map((exercise) => (
               <tr
                 key={exercise.id}
-                className="border-t border-border-strong transition-colors hover:bg-hover focus-within:bg-hover dark:border-[#3A4149] dark:hover:bg-[#23292F] dark:focus-within:bg-[#23292F]"
+                className="border-t border-border transition-colors hover:bg-hover focus-within:bg-hover dark:border-[#2C3238] dark:hover:bg-[#23292F] dark:focus-within:bg-[#23292F]"
               >
-                <td className="px-4 py-3.5 align-middle">{exercise.name}</td>
-                <td className="px-4 py-3.5 align-middle">{exercise.sets}</td>
-                <td className="px-4 py-3.5 align-middle">{exercise.reps}</td>
-                <td className="px-4 py-3.5 align-middle">
+                <td className="px-4 py-3 align-middle font-medium">{exercise.name}</td>
+                <td className="px-4 py-3 align-middle">{exercise.sets}</td>
+                <td className="px-4 py-3 align-middle">{exercise.reps}</td>
+                <td className="px-4 py-3 align-middle text-muted">
                   {exercise.restSeconds} seconds
                 </td>
               </tr>

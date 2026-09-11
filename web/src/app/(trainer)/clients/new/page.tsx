@@ -2,8 +2,6 @@
 
 import BackLink from "@/components/BackLink";
 import Link from "next/link";
-
-
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
 
@@ -24,20 +22,20 @@ export default function AddClientPage() {
   }
 
   return (
-    <div className="max-w-[720px]">
+    <div className="max-w-2xl">
       <BackLink href="/clients">Back to Clients</BackLink>
       <PageHeader title="Add Client" />
 
-      <p className="my-[18px] text-[13px] text-muted">
+      <p className="mb-4 text-sm text-muted">
         Demo form. Submissions are not saved yet.
       </p>
       <form
         onChange={() => setSubmitted(false)}
         onSubmit={handleSubmit}
-        className="grid gap-[18px] rounded-[9px] border border-border bg-surface p-[22px]"
+        className="grid gap-5 rounded-lg border border-border bg-surface p-5"
       >
         <div>
-          <label htmlFor="fullName" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="fullName" className="mb-2 block text-sm font-medium">
             Full Name
           </label>
 
@@ -47,12 +45,12 @@ export default function AddClientPage() {
             type="text"
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
-            className="block min-h-[42px] w-full rounded-sm border border-input-border bg-surface px-3 py-[9px] text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+            className="block min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
           />
         </div>
 
         <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="email" className="mb-2 block text-sm font-medium">
             Email
           </label>
 
@@ -62,12 +60,12 @@ export default function AddClientPage() {
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="block min-h-[42px] w-full rounded-sm border border-input-border bg-surface px-3 py-[9px] text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+            className="block min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
           />
         </div>
 
         <div>
-          <label htmlFor="phoneNumber" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="phoneNumber" className="mb-2 block text-sm font-medium">
             Phone Number
           </label>
 
@@ -77,12 +75,12 @@ export default function AddClientPage() {
             type="tel"
             value={phoneNumber}
             onChange={(event) => setPhoneNumber(event.target.value)}
-            className="block min-h-[42px] w-full rounded-sm border border-input-border bg-surface px-3 py-[9px] text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+            className="block min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="password" className="mb-2 block text-sm font-medium">
             Password
           </label>
 
@@ -92,20 +90,20 @@ export default function AddClientPage() {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="block min-h-[42px] w-full rounded-sm border border-input-border bg-surface px-3 py-[9px] text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+            className="block min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-3.5 py-[9px] font-semibold text-white transition-colors hover:bg-primary-hover"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover"
           >
             <Icon name="check" />
             Save Client
           </button>
           <Link
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-3.5 py-[9px] font-semibold text-foreground transition-colors hover:bg-hover"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-semibold text-foreground transition-colors hover:bg-hover"
             href="/clients"
           >
             Cancel

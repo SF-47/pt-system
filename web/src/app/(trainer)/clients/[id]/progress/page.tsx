@@ -17,22 +17,22 @@ export default async function ClientProgressPage({
       <BackLink href={`/clients/${id}`}>Back to Client Details</BackLink>
       <PageHeader title="Client Progress" />
 
-      <p className="mb-6 text-muted">Client ID: {id}</p>
+      <p className="mb-5 text-sm text-muted">Client ID: {id}</p>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-md border border-border bg-surface p-5">
+        <div className="rounded-md border border-border bg-surface p-4">
           <StatusBadge status="Completed" />
-          <p className="mb-1.5 text-[29px] leading-[1.2] font-bold tabular-nums">8</p>
+          <p className="mt-3 text-[32px] leading-none font-bold tabular-nums">8</p>
         </div>
 
-        <div className="rounded-md border border-border bg-surface p-5">
+        <div className="rounded-md border border-border bg-surface p-4">
           <StatusBadge status="Pending" />
-          <p className="mb-1.5 text-[29px] leading-[1.2] font-bold tabular-nums">3</p>
+          <p className="mt-3 text-[32px] leading-none font-bold tabular-nums">3</p>
         </div>
 
-        <div className="rounded-md border border-border bg-surface p-5">
+        <div className="rounded-md border border-border bg-surface p-4">
           <StatusBadge status="Skipped" />
-          <p className="mb-1.5 text-[29px] leading-[1.2] font-bold tabular-nums">2</p>
+          <p className="mt-3 text-[32px] leading-none font-bold tabular-nums">2</p>
         </div>
       </div>
     </div>

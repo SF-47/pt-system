@@ -12,7 +12,7 @@ export default function PaymentsPage() {
       />
 
       <div
-        className="w-full overflow-x-auto rounded-md border border-border-strong bg-surface dark:border-[#3A4149] dark:bg-[#1B1F24]"
+        className="w-full overflow-x-auto rounded-md border border-border bg-surface dark:border-[#2C3238] dark:bg-[#1B1F24]"
         role="region"
         aria-label="Payments table"
         tabIndex={0}
@@ -24,7 +24,7 @@ export default function PaymentsPage() {
                 <th
                   key={heading}
                   scope="col"
-                  className="bg-[#f3f7f4] px-4 py-3.5 text-left align-middle font-semibold dark:bg-[#20252A]"
+                  className="bg-[#f3f7f4] px-4 py-3 text-left align-middle text-sm font-semibold text-muted dark:bg-[#20252A]"
                 >
                   {heading}
                 </th>
@@ -36,18 +36,18 @@ export default function PaymentsPage() {
             {payments.map((payment) => (
               <tr
                 key={payment.id}
-                className="border-t border-border-strong transition-colors hover:bg-hover focus-within:bg-hover dark:border-[#3A4149] dark:hover:bg-[#23292F] dark:focus-within:bg-[#23292F]"
+                className="border-t border-border transition-colors hover:bg-hover focus-within:bg-hover dark:border-[#2C3238] dark:hover:bg-[#23292F] dark:focus-within:bg-[#23292F]"
               >
-                <td className="px-4 py-3.5 align-middle">{payment.clientName}</td>
-                <td className="px-4 py-3.5 align-middle">${payment.amount}</td>
-                <td className="px-4 py-3.5 align-middle">{payment.dueDate}</td>
-                <td className="px-4 py-3.5 align-middle">
+                <td className="px-4 py-3 align-middle font-medium">{payment.clientName}</td>
+                <td className="px-4 py-3 align-middle">${payment.amount}</td>
+                <td className="px-4 py-3 align-middle text-muted">{payment.dueDate}</td>
+                <td className="px-4 py-3 align-middle">
                   <StatusBadge status={payment.status} />
                 </td>
-                <td className="px-4 py-3.5 align-middle">
+                <td className="px-4 py-3 align-middle">
                   {payment.status === "Pending" ? (
                     <button
-                      className="inline-flex min-h-9 cursor-not-allowed items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border bg-surface px-2.5 py-[7px] text-[13px] font-semibold text-muted"
+                      className="inline-flex min-h-9 cursor-not-allowed items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border bg-surface px-3 py-2 text-[13px] font-semibold text-muted"
                       disabled
                     >
                       <Icon name="check" className="size-4" />

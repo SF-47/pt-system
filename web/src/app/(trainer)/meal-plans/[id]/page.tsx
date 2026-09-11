@@ -32,16 +32,13 @@ export default async function MealPlanPage({ params }: MealPlanPageProps) {
       <BackLink href="/meal-plans">Back to Meal Plans</BackLink>
       <PageHeader title="Weight Loss Plan" />
 
-      <p className="mt-2 text-muted">Meal Plan ID: {id}</p>
+      <p className="text-sm text-muted">Meal Plan ID: {id}</p>
 
-      <h2 className="mb-4 mt-8 text-xl font-semibold">Meals</h2>
+      <h2 className="mb-3 mt-8 text-lg font-semibold">Meals</h2>
 
-      <div className="space-y-3">
+      <div className="divide-y divide-border rounded-md border border-border bg-surface">
         {meals.map((meal) => (
-          <div
-            key={meal.id}
-            className="rounded-sm border border-border bg-surface p-4"
-          >
+          <div key={meal.id} className="p-4">
             <h3 className="text-base font-semibold">{meal.name}</h3>
 
             <p className="mt-2 text-muted">{meal.instructions}</p>

@@ -1,15 +1,43 @@
-import Icon, { type IconName } from "@/components/Icon";
+type StatCardProps = {
+  title: string;
+  value: number;
+  supportingText?: string;
+  variant?: "primary" | "secondary";
+  className?: string;
+};
 
-type StatCardProps = { title: string; value: number; icon: IconName };
+export default function StatCard({
+  title,
+  value,
+  supportingText,
+  variant = "secondary",
+  className = "",
+}: StatCardProps) {
+  const isPrimary = variant === "primary";
 
-export default function StatCard({ title, value, icon }: StatCardProps) {
   return (
-    <div className="rounded-[9px] border border-border bg-surface p-[18px] dark:border-[#2C3238] dark:bg-[#1B1F24]">
-      <span className="mb-3 inline-flex size-[34px] items-center justify-center rounded-md bg-primary-soft text-primary dark:bg-[#173D2A] dark:text-[#86D5A9]">
-        <Icon name={icon} />
-      </span>
-      <p className="mb-1.5 text-[29px] leading-[1.2] font-bold tabular-nums">{value}</p>
-      <p className="text-xs text-muted">{title}</p>
+    <div
+      className={`flex min-h-32 flex-col rounded-lg border border-border bg-surface p-4 dark:border-[#2C3238] dark:bg-[#1B1F24] ${className}`}
+    >
+      <p
+        className="text-sm font-semibold text-muted"
+      >
+        {title}
+      </p>
+      <div className="mt-auto pt-4">
+        <p
+          className={`leading-none font-bold tracking-[-0.04em] tabular-nums ${
+            isPrimary
+              ? "text-[40px]"
+              : "text-[32px]"
+          }`}
+        >
+          {value}
+        </p>
+        {supportingText && (
+          <p className="mt-2 text-sm text-muted">{supportingText}</p>
+        )}
+      </div>
     </div>
   );
 }
