@@ -15,7 +15,7 @@ public class ClientAuthController : ControllerBase
         _clientAuthService = clientAuthService;
     }
 
-    [HttpGet("login")]
+    [HttpPost("login")]
     public async Task<ActionResult<ClientLoginResponse>> Login(ClientLoginRequest request)
     {
         var result = await _clientAuthService.LoginAsync(request);
