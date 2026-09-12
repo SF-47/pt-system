@@ -4,6 +4,7 @@ using backend.Services.MealAssignments;
 using backend.Services.Meals;
 using backend.Services.WorkoutAssignments;
 using backend.Services.Workouts;
+using backend.Services.Payments;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,7 @@ builder.Services.AddScoped<IWorkoutPlanService, WorkoutPlanService>();
 builder.Services.AddScoped<IMealPlanService, MealPlanService>();
 builder.Services.AddScoped<IWorkoutAssignmentService, WorkoutAssignmentService>();
 builder.Services.AddScoped<IMealAssignmentService, MealAssignmentService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 var app = builder.Build();
 
 app.MapControllers();
