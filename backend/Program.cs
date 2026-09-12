@@ -28,6 +28,7 @@ builder.Services.AddScoped<IWorkoutAssignmentService, WorkoutAssignmentService>(
 builder.Services.AddScoped<IMealAssignmentService, MealAssignmentService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IClientAuthService, ClientAuthService>();
+builder.Services.AddScoped<ITrainerAuthService, TrainerAuthService>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 
