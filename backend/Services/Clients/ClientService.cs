@@ -1,6 +1,7 @@
 using backend.Data;
 using backend.DTOs.Clients;
 using backend.Models;
+using backend.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services.Clients;
@@ -49,7 +50,7 @@ public class ClientService : IClientService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<ClientResponse?> CreateAsync(CreateClientRequest request)
+    public async Task<ServiceResult<ClientResponse>> CreateAsync(CreateClientRequest request)
     {
         var usernameExists = await _db.Clients.AnyAsync(client =>
             client.Username == request.Username
@@ -57,7 +58,7 @@ public class ClientService : IClientService
 
         if (usernameExists)
         {
-            return null;
+            return ServiceResult<ClientResponse>.Conflict("Username already exists.");
         }
         var client = new Client
         {
@@ -74,34 +75,40 @@ public class ClientService : IClientService
 
         await _db.SaveChangesAsync();
 
-        return new ClientResponse
-        {
-            Id = client.Id,
-            TrainerId = client.TrainerId,
-            FullName = client.FullName,
-            Username = client.Username,
-            Email = client.Email,
-            PhoneNumber = client.PhoneNumber,
-            IsActive = client.IsActive,
-            CreatedAt = client.CreatedAt,
-        };
+        return ServiceResult<ClientResponse>.Ok(
+            new ClientResponse
+            {
+                Id = client.Id,
+                TrainerId = client.TrainerId,
+                FullName = client.FullName,
+                Username = client.Username,
+                Email = client.Email,
+                PhoneNumber = client.PhoneNumber,
+                IsActive = client.IsActive,
+                CreatedAt = client.CreatedAt,
+            }
+        );
     }
 
-    public async Task<ClientResponse?> UpdateAsync(int id, UpdateClientRequest request)
+    public async Task<ServiceResult<ClientResponse>> UpdateAsync(
+        int id,
+        UpdateClientRequest request
+    )
     {
+        var client = await _db.Clients.FindAsync(id);
+
+        if (client is null)
+        {
+            return ServiceResult<ClientResponse>.NotFound("Client not found.");
+        }
+
         var usernameExists = await _db.Clients.AnyAsync(client =>
             client.Username == request.Username && client.Id != id
         );
 
         if (usernameExists)
         {
-            return null;
-        }
-        var client = await _db.Clients.FindAsync(id);
-
-        if (client is null)
-        {
-            return null;
+            return ServiceResult<ClientResponse>.Conflict("Username already exists.");
         }
 
         client.FullName = request.FullName;
@@ -112,17 +119,19 @@ public class ClientService : IClientService
 
         await _db.SaveChangesAsync();
 
-        return new ClientResponse
-        {
-            Id = client.Id,
-            TrainerId = client.TrainerId,
-            FullName = client.FullName,
-            Username = client.Username,
-            Email = client.Email,
-            PhoneNumber = client.PhoneNumber,
-            IsActive = client.IsActive,
-            CreatedAt = client.CreatedAt,
-        };
+        return ServiceResult<ClientResponse>.Ok(
+            new ClientResponse
+            {
+                Id = client.Id,
+                TrainerId = client.TrainerId,
+                FullName = client.FullName,
+                Username = client.Username,
+                Email = client.Email,
+                PhoneNumber = client.PhoneNumber,
+                IsActive = client.IsActive,
+                CreatedAt = client.CreatedAt,
+            }
+        );
     }
 
     public async Task<bool> DeleteAsync(int id)
@@ -140,13 +149,16 @@ public class ClientService : IClientService
         return true;
     }
 
-    public async Task<bool> UpdateCredentialsAsync(int id, UpdateClientCredentialsRequest request)
+    public async Task<ServiceResult<bool>> UpdateCredentialsAsync(
+        int id,
+        UpdateClientCredentialsRequest request
+    )
     {
         var client = await _db.Clients.FindAsync(id);
 
         if (client is null)
         {
-            return false;
+            return ServiceResult<bool>.NotFound("Client not found.");
         }
 
         var usernameExists = await _db.Clients.AnyAsync(otherClient =>
@@ -155,7 +167,7 @@ public class ClientService : IClientService
 
         if (usernameExists)
         {
-            return false;
+            return ServiceResult<bool>.Conflict("Username already exists.");
         }
 
         client.Username = request.Username;
@@ -163,6 +175,6 @@ public class ClientService : IClientService
 
         await _db.SaveChangesAsync();
 
-        return true;
+        return ServiceResult<bool>.Ok(true);
     }
 }

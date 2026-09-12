@@ -39,22 +39,27 @@ public class ClientController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ClientResponse>> Create(CreateClientRequest request)
     {
-        var client = await _clientService.CreateAsync(request);
+        var result = await _clientService.CreateAsync(request);
 
-        return CreatedAtAction(nameof(GetById), new { id = client.Id }, client);
+        if (!result.Success)
+        {
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
+        }
+
+        return CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<ClientResponse>> Update(int id, UpdateClientRequest request)
     {
-        var client = await _clientService.UpdateAsync(id, request);
+        var result = await _clientService.UpdateAsync(id, request);
 
-        if (client is null)
+        if (!result.Success)
         {
-            return NotFound();
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
-        return Ok(client);
+        return Ok(result.Data);
     }
 
     [HttpDelete("{id}")]
@@ -76,11 +81,11 @@ public class ClientController : ControllerBase
         UpdateClientCredentialsRequest request
     )
     {
-        var updated = await _clientService.UpdateCredentialsAsync(id, request);
+        var result = await _clientService.UpdateCredentialsAsync(id, request);
 
-        if (!updated)
+        if (!result.Success)
         {
-            return NotFound();
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
         return NoContent();

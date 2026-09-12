@@ -1,4 +1,5 @@
 using backend.DTOs.Clients;
+using backend.Services;
 
 namespace backend.Services.Clients;
 
@@ -8,11 +9,14 @@ public interface IClientService
 
     Task<ClientResponse?> GetByIdAsync(int id);
 
-    Task<ClientResponse?> CreateAsync(CreateClientRequest request);
+    Task<ServiceResult<ClientResponse>> CreateAsync(CreateClientRequest request);
 
-    Task<ClientResponse?> UpdateAsync(int id, UpdateClientRequest request);
+    Task<ServiceResult<ClientResponse>> UpdateAsync(int id, UpdateClientRequest request);
 
     Task<bool> DeleteAsync(int id);
 
-    Task<bool> UpdateCredentialsAsync(int id, UpdateClientCredentialsRequest request);
+    Task<ServiceResult<bool>> UpdateCredentialsAsync(
+        int id,
+        UpdateClientCredentialsRequest request
+    );
 }

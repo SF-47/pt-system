@@ -2,6 +2,7 @@ using backend.Data;
 using backend.DTOs.WorkoutAssignments;
 using backend.Enums;
 using backend.Models;
+using backend.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services.WorkoutAssignments;
@@ -32,7 +33,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
             .ToListAsync();
     }
 
-    public async Task<WorkoutAssignmentResponse?> AssignAsync(
+    public async Task<ServiceResult<WorkoutAssignmentResponse>> AssignAsync(
         int clientId,
         AssignWorkoutPlanRequest request
     )
@@ -41,7 +42,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
 
         if (!clientExists)
         {
-            return null;
+            return ServiceResult<WorkoutAssignmentResponse>.NotFound("Client not found.");
         }
 
         var workoutPlanExists = await _context.WorkoutPlans.AnyAsync(plan =>
@@ -50,7 +51,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
 
         if (!workoutPlanExists)
         {
-            return null;
+            return ServiceResult<WorkoutAssignmentResponse>.NotFound("Workout plan not found.");
         }
 
         var assignment = new ClientWorkoutAssignment
@@ -71,19 +72,21 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
             .Select(plan => plan.Name)
             .FirstAsync();
 
-        return new WorkoutAssignmentResponse
-        {
-            Id = assignment.Id,
-            ClientId = assignment.ClientId,
-            WorkoutPlanId = assignment.WorkoutPlanId,
-            WorkoutPlanName = workoutPlanName,
-            AssignedDate = assignment.AssignedDate,
-            Status = assignment.Status,
-            CompletedAt = assignment.CompletedAt,
-        };
+        return ServiceResult<WorkoutAssignmentResponse>.Ok(
+            new WorkoutAssignmentResponse
+            {
+                Id = assignment.Id,
+                ClientId = assignment.ClientId,
+                WorkoutPlanId = assignment.WorkoutPlanId,
+                WorkoutPlanName = workoutPlanName,
+                AssignedDate = assignment.AssignedDate,
+                Status = assignment.Status,
+                CompletedAt = assignment.CompletedAt,
+            }
+        );
     }
 
-    public async Task<WorkoutAssignmentResponse?> UpdateAsync(
+    public async Task<ServiceResult<WorkoutAssignmentResponse>> UpdateAsync(
         int assignmentId,
         UpdateWorkoutAssignmentRequest request
     )
@@ -94,7 +97,9 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
 
         if (assignment is null)
         {
-            return null;
+            return ServiceResult<WorkoutAssignmentResponse>.NotFound(
+                "Workout assignment not found."
+            );
         }
 
         var workoutPlanExists = await _context.WorkoutPlans.AnyAsync(plan =>
@@ -103,7 +108,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
 
         if (!workoutPlanExists)
         {
-            return null;
+            return ServiceResult<WorkoutAssignmentResponse>.NotFound("Workout plan not found.");
         }
 
         assignment.WorkoutPlanId = request.WorkoutPlanId;
@@ -116,16 +121,18 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
             .Select(plan => plan.Name)
             .FirstAsync();
 
-        return new WorkoutAssignmentResponse
-        {
-            Id = assignment.Id,
-            ClientId = assignment.ClientId,
-            WorkoutPlanId = assignment.WorkoutPlanId,
-            WorkoutPlanName = workoutPlanName,
-            AssignedDate = assignment.AssignedDate,
-            Status = assignment.Status,
-            CompletedAt = assignment.CompletedAt,
-        };
+        return ServiceResult<WorkoutAssignmentResponse>.Ok(
+            new WorkoutAssignmentResponse
+            {
+                Id = assignment.Id,
+                ClientId = assignment.ClientId,
+                WorkoutPlanId = assignment.WorkoutPlanId,
+                WorkoutPlanName = workoutPlanName,
+                AssignedDate = assignment.AssignedDate,
+                Status = assignment.Status,
+                CompletedAt = assignment.CompletedAt,
+            }
+        );
     }
 
     public async Task<WorkoutAssignmentResponse?> UpdateStatusAsync(

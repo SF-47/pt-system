@@ -2,6 +2,7 @@ using backend.Data;
 using backend.DTOs.MealAssignments;
 using backend.Enums;
 using backend.Models;
+using backend.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services.MealAssignments;
@@ -41,7 +42,7 @@ public class MealAssignmentService : IMealAssignmentService
             .ToListAsync();
     }
 
-    public async Task<MealAssignmentResponse?> AssignAsync(
+    public async Task<ServiceResult<MealAssignmentResponse>> AssignAsync(
         int clientId,
         AssignMealPlanRequest request
     )
@@ -50,7 +51,7 @@ public class MealAssignmentService : IMealAssignmentService
 
         if (!clientExists)
         {
-            return null;
+            return ServiceResult<MealAssignmentResponse>.NotFound("Client not found.");
         }
 
         var mealPlan = await _db
@@ -59,7 +60,7 @@ public class MealAssignmentService : IMealAssignmentService
 
         if (mealPlan is null)
         {
-            return null;
+            return ServiceResult<MealAssignmentResponse>.NotFound("Meal plan not found.");
         }
 
         var assignment = new ClientMealPlan
@@ -88,10 +89,12 @@ public class MealAssignmentService : IMealAssignmentService
 
         await _db.SaveChangesAsync();
 
-        return await GetAssignmentByIdAsync(assignment.Id);
+        var response = await GetAssignmentByIdAsync(assignment.Id);
+
+        return ServiceResult<MealAssignmentResponse>.Ok(response!);
     }
 
-    public async Task<MealAssignmentResponse?> UpdateAsync(
+    public async Task<ServiceResult<MealAssignmentResponse>> UpdateAsync(
         int assignmentId,
         UpdateMealAssignmentRequest request
     )
@@ -100,7 +103,7 @@ public class MealAssignmentService : IMealAssignmentService
 
         if (assignment is null)
         {
-            return null;
+            return ServiceResult<MealAssignmentResponse>.NotFound("Meal assignment not found.");
         }
 
         var mealPlan = await _db
@@ -109,7 +112,7 @@ public class MealAssignmentService : IMealAssignmentService
 
         if (mealPlan is null)
         {
-            return null;
+            return ServiceResult<MealAssignmentResponse>.NotFound("Meal plan not found.");
         }
 
         bool mealPlanChanged = assignment.MealPlanId != request.MealPlanId;
@@ -141,7 +144,9 @@ public class MealAssignmentService : IMealAssignmentService
 
         await _db.SaveChangesAsync();
 
-        return await GetAssignmentByIdAsync(assignment.Id);
+        var response = await GetAssignmentByIdAsync(assignment.Id);
+
+        return ServiceResult<MealAssignmentResponse>.Ok(response!);
     }
 
     public async Task<MealStatusResponse?> UpdateMealStatusAsync(

@@ -28,14 +28,14 @@ public class MealAssignmentsController : ControllerBase
         AssignMealPlanRequest request
     )
     {
-        var assignment = await _mealAssignmentService.AssignAsync(clientId, request);
+        var result = await _mealAssignmentService.AssignAsync(clientId, request);
 
-        if (assignment is null)
+        if (!result.Success)
         {
-            return NotFound();
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
-        return Ok(assignment);
+        return Ok(result.Data);
     }
 
     [HttpPut("api/client-meal-plans/{id}")]
@@ -44,14 +44,14 @@ public class MealAssignmentsController : ControllerBase
         UpdateMealAssignmentRequest request
     )
     {
-        var assignment = await _mealAssignmentService.UpdateAsync(id, request);
+        var result = await _mealAssignmentService.UpdateAsync(id, request);
 
-        if (assignment is null)
+        if (!result.Success)
         {
-            return NotFound();
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
-        return Ok(assignment);
+        return Ok(result.Data);
     }
 
     [HttpPut("api/client-meal-statuses/{id}/status")]

@@ -28,14 +28,14 @@ public class WorkoutAssignmentsController : ControllerBase
         AssignWorkoutPlanRequest request
     )
     {
-        var assignment = await _workoutAssignmentService.AssignAsync(clientId, request);
+        var result = await _workoutAssignmentService.AssignAsync(clientId, request);
 
-        if (assignment is null)
+        if (!result.Success)
         {
-            return NotFound();
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
-        return Ok(assignment);
+        return Ok(result.Data);
     }
 
     [HttpPut("api/client-workout-plans/{id}")]
@@ -44,14 +44,14 @@ public class WorkoutAssignmentsController : ControllerBase
         UpdateWorkoutAssignmentRequest request
     )
     {
-        var assignment = await _workoutAssignmentService.UpdateAsync(id, request);
+        var result = await _workoutAssignmentService.UpdateAsync(id, request);
 
-        if (assignment is null)
+        if (!result.Success)
         {
-            return NotFound();
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
-        return Ok(assignment);
+        return Ok(result.Data);
     }
 
     [HttpPut("api/client-workout-plans/{id}/status")]
