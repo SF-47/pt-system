@@ -1,8 +1,6 @@
 using backend.Data;
 using backend.DTOs.Clients;
 using backend.Models;
-using BCrypt.Net;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services.Clients;
@@ -51,8 +49,16 @@ public class ClientService : IClientService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<ClientResponse> CreateAsync(CreateClientRequest request)
+    public async Task<ClientResponse?> CreateAsync(CreateClientRequest request)
     {
+        var usernameExists = await _db.Clients.AnyAsync(client =>
+            client.Username == request.Username
+        );
+
+        if (usernameExists)
+        {
+            return null;
+        }
         var client = new Client
         {
             TrainerId = 1,
@@ -83,6 +89,14 @@ public class ClientService : IClientService
 
     public async Task<ClientResponse?> UpdateAsync(int id, UpdateClientRequest request)
     {
+        var usernameExists = await _db.Clients.AnyAsync(client =>
+            client.Username == request.Username && client.Id != id
+        );
+
+        if (usernameExists)
+        {
+            return null;
+        }
         var client = await _db.Clients.FindAsync(id);
 
         if (client is null)
@@ -121,6 +135,7 @@ public class ClientService : IClientService
         }
 
         _db.Clients.Remove(client);
+        await _db.SaveChangesAsync();
 
         return true;
     }
@@ -130,6 +145,15 @@ public class ClientService : IClientService
         var client = await _db.Clients.FindAsync(id);
 
         if (client is null)
+        {
+            return false;
+        }
+
+        var usernameExists = await _db.Clients.AnyAsync(otherClient =>
+            otherClient.Username == request.Username && otherClient.Id != id
+        );
+
+        if (usernameExists)
         {
             return false;
         }
