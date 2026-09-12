@@ -2,7 +2,7 @@ using backend.DTOs.Auth;
 using backend.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 
-namespace backend.Controllers;
+namespace backend.Controllers.Mobile;
 
 [ApiController]
 [Route("api/client")]
