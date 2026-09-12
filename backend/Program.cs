@@ -1,5 +1,6 @@
 using backend.Data;
 using backend.Services.Clients;
+using backend.Services.MealAssignments;
 using backend.Services.Meals;
 using backend.Services.WorkoutAssignments;
 using backend.Services.Workouts;
@@ -19,6 +20,7 @@ builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IWorkoutPlanService, WorkoutPlanService>();
 builder.Services.AddScoped<IMealPlanService, MealPlanService>();
 builder.Services.AddScoped<IWorkoutAssignmentService, WorkoutAssignmentService>();
+builder.Services.AddScoped<IMealAssignmentService, MealAssignmentService>();
 var app = builder.Build();
 
 app.MapControllers();
