@@ -49,4 +49,14 @@ public class ServiceResult<T>
             StatusCode = 409,
         };
     }
+
+    public static ServiceResult<T> Unauthorized(string error)
+    {
+        return new ServiceResult<T>
+        {
+            Success = false,
+            ErrorMessage = error,
+            StatusCode = 401,
+        };
+    }
 }
