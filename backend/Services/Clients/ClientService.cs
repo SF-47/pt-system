@@ -15,10 +15,11 @@ public class ClientService : IClientService
         _db = db;
     }
 
-    public async Task<List<ClientResponse>> GetAllAsync()
+    public async Task<List<ClientResponse>> GetAllAsync(int trainerId)
     {
         return await _db
-            .Clients.Select(client => new ClientResponse
+            .Clients.Where(client => client.TrainerId == trainerId)
+            .Select(client => new ClientResponse
             {
                 Id = client.Id,
                 TrainerId = client.TrainerId,
@@ -32,10 +33,10 @@ public class ClientService : IClientService
             .ToListAsync();
     }
 
-    public async Task<ClientResponse?> GetByIdAsync(int id)
+    public async Task<ClientResponse?> GetByIdAsync(int id, int trainerId)
     {
         return await _db
-            .Clients.Where(client => client.Id == id)
+            .Clients.Where(client => client.Id == id && client.TrainerId == trainerId)
             .Select(client => new ClientResponse
             {
                 Id = client.Id,
@@ -50,7 +51,10 @@ public class ClientService : IClientService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<ServiceResult<ClientResponse>> CreateAsync(CreateClientRequest request)
+    public async Task<ServiceResult<ClientResponse>> CreateAsync(
+        CreateClientRequest request,
+        int trainerId
+    )
     {
         var usernameExists = await _db.Clients.AnyAsync(client =>
             client.Username == request.Username
@@ -62,7 +66,7 @@ public class ClientService : IClientService
         }
         var client = new Client
         {
-            TrainerId = 1,
+            TrainerId = trainerId,
             FullName = request.FullName,
             Username = request.Username,
             Email = request.Email,
@@ -92,18 +96,21 @@ public class ClientService : IClientService
 
     public async Task<ServiceResult<ClientResponse>> UpdateAsync(
         int id,
-        UpdateClientRequest request
+        UpdateClientRequest request,
+        int trainerId
     )
     {
-        var client = await _db.Clients.FindAsync(id);
+        var client = await _db.Clients.FirstOrDefaultAsync(client =>
+            client.Id == id && client.TrainerId == trainerId
+        );
 
         if (client is null)
         {
             return ServiceResult<ClientResponse>.NotFound("Client not found.");
         }
 
-        var usernameExists = await _db.Clients.AnyAsync(client =>
-            client.Username == request.Username && client.Id != id
+        var usernameExists = await _db.Clients.AnyAsync(otherClient =>
+            otherClient.Username == request.Username && otherClient.Id != id
         );
 
         if (usernameExists)
@@ -134,9 +141,11 @@ public class ClientService : IClientService
         );
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int trainerId)
     {
-        var client = await _db.Clients.FindAsync(id);
+        var client = await _db.Clients.FirstOrDefaultAsync(client =>
+            client.Id == id && client.TrainerId == trainerId
+        );
 
         if (client is null)
         {
@@ -151,10 +160,13 @@ public class ClientService : IClientService
 
     public async Task<ServiceResult<bool>> UpdateCredentialsAsync(
         int id,
-        UpdateClientCredentialsRequest request
+        UpdateClientCredentialsRequest request,
+        int trainerId
     )
     {
-        var client = await _db.Clients.FindAsync(id);
+        var client = await _db.Clients.FirstOrDefaultAsync(client =>
+            client.Id == id && client.TrainerId == trainerId
+        );
 
         if (client is null)
         {

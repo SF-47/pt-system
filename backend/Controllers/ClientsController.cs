@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using backend.DTOs.Clients;
 using backend.Services.Clients;
 using Microsoft.AspNetCore.Authorization;
@@ -20,7 +21,12 @@ public class ClientController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<ClientResponse>>> GetAll()
     {
-        var clients = await _clientService.GetAllAsync();
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var clients = await _clientService.GetAllAsync(trainerId.Value);
 
         return Ok(clients);
     }
@@ -28,7 +34,12 @@ public class ClientController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ClientResponse>> GetById(int id)
     {
-        var client = await _clientService.GetByIdAsync(id);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var client = await _clientService.GetByIdAsync(id, trainerId.Value);
 
         if (client is null)
         {
@@ -41,7 +52,12 @@ public class ClientController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ClientResponse>> Create(CreateClientRequest request)
     {
-        var result = await _clientService.CreateAsync(request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var result = await _clientService.CreateAsync(request, trainerId.Value);
 
         if (!result.Success)
         {
@@ -54,7 +70,12 @@ public class ClientController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<ClientResponse>> Update(int id, UpdateClientRequest request)
     {
-        var result = await _clientService.UpdateAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var result = await _clientService.UpdateAsync(id, request, trainerId.Value);
 
         if (!result.Success)
         {
@@ -67,7 +88,12 @@ public class ClientController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _clientService.DeleteAsync(id);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var deleted = await _clientService.DeleteAsync(id, trainerId.Value);
 
         if (!deleted)
         {
@@ -83,7 +109,12 @@ public class ClientController : ControllerBase
         UpdateClientCredentialsRequest request
     )
     {
-        var result = await _clientService.UpdateCredentialsAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var result = await _clientService.UpdateCredentialsAsync(id, request, trainerId.Value);
 
         if (!result.Success)
         {
@@ -91,5 +122,16 @@ public class ClientController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    private int? GetTrainerId()
+    {
+        var trainerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(trainerIdClaim, out var trainerId))
+        {
+            return null;
+        }
+        return trainerId;
     }
 }

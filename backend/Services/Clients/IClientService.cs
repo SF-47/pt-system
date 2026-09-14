@@ -5,18 +5,19 @@ namespace backend.Services.Clients;
 
 public interface IClientService
 {
-    Task<List<ClientResponse>> GetAllAsync();
+    Task<List<ClientResponse>> GetAllAsync(int trainerId);
 
-    Task<ClientResponse?> GetByIdAsync(int id);
+    Task<ClientResponse?> GetByIdAsync(int id , int trainerId);
 
-    Task<ServiceResult<ClientResponse>> CreateAsync(CreateClientRequest request);
+    Task<ServiceResult<ClientResponse>> CreateAsync(CreateClientRequest request , int trainerId);
 
-    Task<ServiceResult<ClientResponse>> UpdateAsync(int id, UpdateClientRequest request);
+    Task<ServiceResult<ClientResponse>> UpdateAsync(int id, UpdateClientRequest request , int trainerId);
 
-    Task<bool> DeleteAsync(int id);
+    Task<bool> DeleteAsync(int id , int trainerId);
 
     Task<ServiceResult<bool>> UpdateCredentialsAsync(
         int id,
-        UpdateClientCredentialsRequest request
+        UpdateClientCredentialsRequest request,
+        int trainerId
     );
 }
