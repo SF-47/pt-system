@@ -1,0 +1,11 @@
+# Android Studio / IntelliJ
+.idea/
+
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub/
+build/
+
+# Generated files
+*.g.dart
