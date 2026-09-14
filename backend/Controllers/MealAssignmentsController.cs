@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using backend.DTOs.MealAssignments;
 using backend.Services.MealAssignments;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +20,12 @@ public class MealAssignmentsController : ControllerBase
     [HttpGet("api/clients/{clientId}/meal-plans")]
     public async Task<ActionResult<List<MealAssignmentResponse>>> GetByClientId(int clientId)
     {
-        var assignments = await _mealAssignmentService.GetByClientIdAsync(clientId);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var assignments = await _mealAssignmentService.GetByClientIdAsync(clientId, trainerId.Value);
 
         return Ok(assignments);
     }
@@ -30,7 +36,12 @@ public class MealAssignmentsController : ControllerBase
         AssignMealPlanRequest request
     )
     {
-        var result = await _mealAssignmentService.AssignAsync(clientId, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var result = await _mealAssignmentService.AssignAsync(clientId, request, trainerId.Value);
 
         if (!result.Success)
         {
@@ -46,7 +57,12 @@ public class MealAssignmentsController : ControllerBase
         UpdateMealAssignmentRequest request
     )
     {
-        var result = await _mealAssignmentService.UpdateAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var result = await _mealAssignmentService.UpdateAsync(id, request, trainerId.Value);
 
         if (!result.Success)
         {
@@ -62,7 +78,16 @@ public class MealAssignmentsController : ControllerBase
         UpdateMealStatusRequest request
     )
     {
-        var mealStatus = await _mealAssignmentService.UpdateMealStatusAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var mealStatus = await _mealAssignmentService.UpdateMealStatusAsync(
+            id,
+            request,
+            trainerId.Value
+        );
 
         if (mealStatus is null)
         {
@@ -70,5 +95,16 @@ public class MealAssignmentsController : ControllerBase
         }
 
         return Ok(mealStatus);
+    }
+
+    private int? GetTrainerId()
+    {
+        var trainerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(trainerIdClaim, out var trainerId))
+        {
+            return null;
+        }
+        return trainerId;
     }
 }

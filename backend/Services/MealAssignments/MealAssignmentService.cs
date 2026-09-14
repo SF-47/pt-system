@@ -16,10 +16,12 @@ public class MealAssignmentService : IMealAssignmentService
         _db = db;
     }
 
-    public async Task<List<MealAssignmentResponse>> GetByClientIdAsync(int clientId)
+    public async Task<List<MealAssignmentResponse>> GetByClientIdAsync(int clientId, int trainerId)
     {
         return await _db
-            .ClientMealPlans.Where(assignment => assignment.ClientId == clientId)
+            .ClientMealPlans.Where(assignment =>
+                assignment.ClientId == clientId && assignment.Client.TrainerId == trainerId
+            )
             .Select(assignment => new MealAssignmentResponse
             {
                 Id = assignment.Id,
@@ -44,10 +46,13 @@ public class MealAssignmentService : IMealAssignmentService
 
     public async Task<ServiceResult<MealAssignmentResponse>> AssignAsync(
         int clientId,
-        AssignMealPlanRequest request
+        AssignMealPlanRequest request,
+        int trainerId
     )
     {
-        var clientExists = await _db.Clients.AnyAsync(client => client.Id == clientId);
+        var clientExists = await _db.Clients.AnyAsync(client =>
+            client.Id == clientId && client.TrainerId == trainerId
+        );
 
         if (!clientExists)
         {
@@ -56,7 +61,9 @@ public class MealAssignmentService : IMealAssignmentService
 
         var mealPlan = await _db
             .MealPlans.Include(plan => plan.Meals)
-            .FirstOrDefaultAsync(plan => plan.Id == request.MealPlanId);
+            .FirstOrDefaultAsync(plan =>
+                plan.Id == request.MealPlanId && plan.TrainerId == trainerId
+            );
 
         if (mealPlan is null)
         {
@@ -89,17 +96,20 @@ public class MealAssignmentService : IMealAssignmentService
 
         await _db.SaveChangesAsync();
 
-        var response = await GetAssignmentByIdAsync(assignment.Id);
+        var response = await GetAssignmentByIdAsync(assignment.Id, trainerId);
 
         return ServiceResult<MealAssignmentResponse>.Ok(response!);
     }
 
     public async Task<ServiceResult<MealAssignmentResponse>> UpdateAsync(
         int assignmentId,
-        UpdateMealAssignmentRequest request
+        UpdateMealAssignmentRequest request,
+        int trainerId
     )
     {
-        var assignment = await _db.ClientMealPlans.FindAsync(assignmentId);
+        var assignment = await _db.ClientMealPlans.FirstOrDefaultAsync(assignment =>
+            assignment.Id == assignmentId && assignment.Client.TrainerId == trainerId
+        );
 
         if (assignment is null)
         {
@@ -108,7 +118,9 @@ public class MealAssignmentService : IMealAssignmentService
 
         var mealPlan = await _db
             .MealPlans.Include(plan => plan.Meals)
-            .FirstOrDefaultAsync(plan => plan.Id == request.MealPlanId);
+            .FirstOrDefaultAsync(plan =>
+                plan.Id == request.MealPlanId && plan.TrainerId == trainerId
+            );
 
         if (mealPlan is null)
         {
@@ -144,19 +156,23 @@ public class MealAssignmentService : IMealAssignmentService
 
         await _db.SaveChangesAsync();
 
-        var response = await GetAssignmentByIdAsync(assignment.Id);
+        var response = await GetAssignmentByIdAsync(assignment.Id, trainerId);
 
         return ServiceResult<MealAssignmentResponse>.Ok(response!);
     }
 
     public async Task<MealStatusResponse?> UpdateMealStatusAsync(
         int mealStatusId,
-        UpdateMealStatusRequest request
+        UpdateMealStatusRequest request,
+        int trainerId
     )
     {
         var mealStatus = await _db
             .ClientMealStatuses.Include(status => status.Meal)
-            .FirstOrDefaultAsync(status => status.Id == mealStatusId);
+            .FirstOrDefaultAsync(status =>
+                status.Id == mealStatusId
+                && status.ClientMealPlan.Client.TrainerId == trainerId
+            );
 
         if (mealStatus is null)
         {
@@ -186,10 +202,15 @@ public class MealAssignmentService : IMealAssignmentService
         };
     }
 
-    private async Task<MealAssignmentResponse?> GetAssignmentByIdAsync(int assignmentId)
+    private async Task<MealAssignmentResponse?> GetAssignmentByIdAsync(
+        int assignmentId,
+        int trainerId
+    )
     {
         return await _db
-            .ClientMealPlans.Where(assignment => assignment.Id == assignmentId)
+            .ClientMealPlans.Where(assignment =>
+                assignment.Id == assignmentId && assignment.Client.TrainerId == trainerId
+            )
             .Select(assignment => new MealAssignmentResponse
             {
                 Id = assignment.Id,

@@ -16,10 +16,15 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         _context = context;
     }
 
-    public async Task<List<WorkoutAssignmentResponse>> GetByClientIdAsync(int clientId)
+    public async Task<List<WorkoutAssignmentResponse>> GetByClientIdAsync(
+        int clientId,
+        int trainerId
+    )
     {
         return await _context
-            .ClientWorkoutAssignments.Where(assignment => assignment.ClientId == clientId)
+            .ClientWorkoutAssignments.Where(assignment =>
+                assignment.ClientId == clientId && assignment.Client.TrainerId == trainerId
+            )
             .Select(assignment => new WorkoutAssignmentResponse
             {
                 Id = assignment.Id,
@@ -35,10 +40,13 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
 
     public async Task<ServiceResult<WorkoutAssignmentResponse>> AssignAsync(
         int clientId,
-        AssignWorkoutPlanRequest request
+        AssignWorkoutPlanRequest request,
+        int trainerId
     )
     {
-        var clientExists = await _context.Clients.AnyAsync(client => client.Id == clientId);
+        var clientExists = await _context.Clients.AnyAsync(client =>
+            client.Id == clientId && client.TrainerId == trainerId
+        );
 
         if (!clientExists)
         {
@@ -46,7 +54,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         }
 
         var workoutPlanExists = await _context.WorkoutPlans.AnyAsync(plan =>
-            plan.Id == request.WorkoutPlanId
+            plan.Id == request.WorkoutPlanId && plan.TrainerId == trainerId
         );
 
         if (!workoutPlanExists)
@@ -88,11 +96,12 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
 
     public async Task<ServiceResult<WorkoutAssignmentResponse>> UpdateAsync(
         int assignmentId,
-        UpdateWorkoutAssignmentRequest request
+        UpdateWorkoutAssignmentRequest request,
+        int trainerId
     )
     {
         var assignment = await _context.ClientWorkoutAssignments.FirstOrDefaultAsync(assignment =>
-            assignment.Id == assignmentId
+            assignment.Id == assignmentId && assignment.Client.TrainerId == trainerId
         );
 
         if (assignment is null)
@@ -103,7 +112,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         }
 
         var workoutPlanExists = await _context.WorkoutPlans.AnyAsync(plan =>
-            plan.Id == request.WorkoutPlanId
+            plan.Id == request.WorkoutPlanId && plan.TrainerId == trainerId
         );
 
         if (!workoutPlanExists)
@@ -137,12 +146,15 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
 
     public async Task<WorkoutAssignmentResponse?> UpdateStatusAsync(
         int assignmentId,
-        UpdateWorkoutStatusRequest request
+        UpdateWorkoutStatusRequest request,
+        int trainerId
     )
     {
         var assignment = await _context
             .ClientWorkoutAssignments.Include(assignment => assignment.WorkoutPlan)
-            .FirstOrDefaultAsync(assignment => assignment.Id == assignmentId);
+            .FirstOrDefaultAsync(assignment =>
+                assignment.Id == assignmentId && assignment.Client.TrainerId == trainerId
+            );
 
         if (assignment is null)
         {

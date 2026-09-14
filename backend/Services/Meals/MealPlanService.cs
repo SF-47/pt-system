@@ -14,10 +14,11 @@ public class MealPlanService : IMealPlanService
         _id = id;
     }
 
-    public async Task<List<MealPlanResponse>> GetAllAsync()
+    public async Task<List<MealPlanResponse>> GetAllAsync(int trainerId)
     {
         return await _id
             .MealPlans.Include(plan => plan.Meals)
+            .Where(plan => plan.TrainerId == trainerId)
             .Select(plan => new MealPlanResponse
             {
                 Id = plan.Id,
@@ -38,11 +39,11 @@ public class MealPlanService : IMealPlanService
             .ToListAsync();
     }
 
-    public async Task<MealPlanResponse?> GetByIdAsync(int id)
+    public async Task<MealPlanResponse?> GetByIdAsync(int id, int trainerId)
     {
         return await _id
             .MealPlans.Include(plan => plan.Meals)
-            .Where(plan => plan.Id == id)
+            .Where(plan => plan.Id == id && plan.TrainerId == trainerId)
             .Select(plan => new MealPlanResponse
             {
                 Id = plan.Id,
@@ -63,11 +64,11 @@ public class MealPlanService : IMealPlanService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<MealPlanResponse> CreateAsync(CreateMealPlanRequest request)
+    public async Task<MealPlanResponse> CreateAsync(CreateMealPlanRequest request, int trainerId)
     {
         var plan = new MealPlan
         {
-            TrainerId = 1,
+            TrainerId = trainerId,
             Name = request.Name,
             Description = request.Description,
         };
@@ -87,11 +88,15 @@ public class MealPlanService : IMealPlanService
         };
     }
 
-    public async Task<MealPlanResponse?> UpdateAsync(int id, UpdateMealPlanRequest request)
+    public async Task<MealPlanResponse?> UpdateAsync(
+        int id,
+        UpdateMealPlanRequest request,
+        int trainerId
+    )
     {
         var plan = await _id
             .MealPlans.Include(plan => plan.Meals)
-            .FirstOrDefaultAsync(plan => plan.Id == id);
+            .FirstOrDefaultAsync(plan => plan.Id == id && plan.TrainerId == trainerId);
 
         if (plan is null)
         {
@@ -122,9 +127,11 @@ public class MealPlanService : IMealPlanService
         };
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int trainerId)
     {
-        var plan = await _id.MealPlans.FindAsync(id);
+        var plan = await _id.MealPlans.FirstOrDefaultAsync(plan =>
+            plan.Id == id && plan.TrainerId == trainerId
+        );
 
         if (plan is null)
         {
@@ -138,9 +145,15 @@ public class MealPlanService : IMealPlanService
         return true;
     }
 
-    public async Task<MealResponse?> AddMealAsync(int mealPlanId, CreateMealRequest request)
+    public async Task<MealResponse?> AddMealAsync(
+        int mealPlanId,
+        CreateMealRequest request,
+        int trainerId
+    )
     {
-        var planExists = await _id.MealPlans.AnyAsync(plan => plan.Id == mealPlanId);
+        var planExists = await _id.MealPlans.AnyAsync(plan =>
+            plan.Id == mealPlanId && plan.TrainerId == trainerId
+        );
 
         if (!planExists)
         {
@@ -167,9 +180,15 @@ public class MealPlanService : IMealPlanService
         };
     }
 
-    public async Task<MealResponse?> UpdateMealAsync(int mealId, UpdateMealRequest request)
+    public async Task<MealResponse?> UpdateMealAsync(
+        int mealId,
+        UpdateMealRequest request,
+        int trainerId
+    )
     {
-        var meal = await _id.Meals.FindAsync(mealId);
+        var meal = await _id
+            .Meals.Include(meal => meal.MealPlan)
+            .FirstOrDefaultAsync(meal => meal.Id == mealId && meal.MealPlan.TrainerId == trainerId);
 
         if (meal is null)
         {
@@ -190,9 +209,11 @@ public class MealPlanService : IMealPlanService
         };
     }
 
-    public async Task<bool> DeleteMealAsync(int mealId)
+    public async Task<bool> DeleteMealAsync(int mealId, int trainerId)
     {
-        var meal = await _id.Meals.FindAsync(mealId);
+        var meal = await _id
+            .Meals.Include(meal => meal.MealPlan)
+            .FirstOrDefaultAsync(meal => meal.Id == mealId && meal.MealPlan.TrainerId == trainerId);
 
         if (meal is null)
         {

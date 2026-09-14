@@ -15,26 +15,10 @@ public class PaymentService : IPaymentService
         _context = context;
     }
 
-    public async Task<List<PaymentResponse>> GetAllAsync()
+    public async Task<List<PaymentResponse>> GetAllAsync(int trainerId)
     {
         return await _context
-            .Payments.Select(payment => new PaymentResponse
-            {
-                Id = payment.Id,
-                ClientId = payment.ClientId,
-                ClientName = payment.Client.FullName,
-                Amount = payment.Amount,
-                Status = payment.Status,
-                DueDate = payment.DueDate,
-                PaidAt = payment.PaidAt,
-            })
-            .ToListAsync();
-    }
-
-    public async Task<List<PaymentResponse>> GetByClientIdAsync(int clientId)
-    {
-        return await _context
-            .Payments.Where(payment => payment.ClientId == clientId)
+            .Payments.Where(payment => payment.Client.TrainerId == trainerId)
             .Select(payment => new PaymentResponse
             {
                 Id = payment.Id,
@@ -48,9 +32,34 @@ public class PaymentService : IPaymentService
             .ToListAsync();
     }
 
-    public async Task<PaymentResponse?> CreateAsync(int clientId, CreatePaymentRequest request)
+    public async Task<List<PaymentResponse>> GetByClientIdAsync(int clientId, int trainerId)
     {
-        var client = await _context.Clients.FindAsync(clientId);
+        return await _context
+            .Payments.Where(payment =>
+                payment.ClientId == clientId && payment.Client.TrainerId == trainerId
+            )
+            .Select(payment => new PaymentResponse
+            {
+                Id = payment.Id,
+                ClientId = payment.ClientId,
+                ClientName = payment.Client.FullName,
+                Amount = payment.Amount,
+                Status = payment.Status,
+                DueDate = payment.DueDate,
+                PaidAt = payment.PaidAt,
+            })
+            .ToListAsync();
+    }
+
+    public async Task<PaymentResponse?> CreateAsync(
+        int clientId,
+        CreatePaymentRequest request,
+        int trainerId
+    )
+    {
+        var client = await _context.Clients.FirstOrDefaultAsync(client =>
+            client.Id == clientId && client.TrainerId == trainerId
+        );
 
         if (client is null)
         {
@@ -84,12 +93,15 @@ public class PaymentService : IPaymentService
 
     public async Task<PaymentResponse?> UpdateStatusAsync(
         int paymentId,
-        UpdatePaymentStatusRequest request
+        UpdatePaymentStatusRequest request,
+        int trainerId
     )
     {
         var payment = await _context
             .Payments.Include(payment => payment.Client)
-            .FirstOrDefaultAsync(payment => payment.Id == paymentId);
+            .FirstOrDefaultAsync(payment =>
+                payment.Id == paymentId && payment.Client.TrainerId == trainerId
+            );
 
         if (payment is null)
         {

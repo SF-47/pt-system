@@ -14,10 +14,11 @@ public class WorkoutPlanService : IWorkoutPlanService
         _context = context;
     }
 
-    public async Task<List<WorkoutPlanResponse>> GetAllAsync()
+    public async Task<List<WorkoutPlanResponse>> GetAllAsync(int trainerId)
     {
         return await _context
             .WorkoutPlans.Include(plan => plan.Exercises)
+            .Where(plan => plan.TrainerId == trainerId)
             .Select(plan => new WorkoutPlanResponse
             {
                 Id = plan.Id,
@@ -41,11 +42,11 @@ public class WorkoutPlanService : IWorkoutPlanService
             .ToListAsync();
     }
 
-    public async Task<WorkoutPlanResponse?> GetByIdAsync(int id)
+    public async Task<WorkoutPlanResponse?> GetByIdAsync(int id, int trainerId)
     {
         return await _context
             .WorkoutPlans.Include(plan => plan.Exercises)
-            .Where(plan => plan.Id == id)
+            .Where(plan => plan.Id == id && plan.TrainerId == trainerId)
             .Select(plan => new WorkoutPlanResponse
             {
                 Id = plan.Id,
@@ -69,11 +70,14 @@ public class WorkoutPlanService : IWorkoutPlanService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<WorkoutPlanResponse> CreateAsync(CreateWorkoutPlanRequest request)
+    public async Task<WorkoutPlanResponse> CreateAsync(
+        CreateWorkoutPlanRequest request,
+        int trainerId
+    )
     {
         var plan = new WorkoutPlan
         {
-            TrainerId = 1,
+            TrainerId = trainerId,
             Name = request.Name,
             Description = request.Description,
         };
@@ -93,11 +97,15 @@ public class WorkoutPlanService : IWorkoutPlanService
         };
     }
 
-    public async Task<WorkoutPlanResponse?> UpdateAsync(int id, UpdateWorkoutPlanRequest request)
+    public async Task<WorkoutPlanResponse?> UpdateAsync(
+        int id,
+        UpdateWorkoutPlanRequest request,
+        int trainerId
+    )
     {
         var plan = await _context
             .WorkoutPlans.Include(plan => plan.Exercises)
-            .FirstOrDefaultAsync(plan => plan.Id == id);
+            .FirstOrDefaultAsync(plan => plan.Id == id && plan.TrainerId == trainerId);
 
         if (plan is null)
         {
@@ -131,9 +139,11 @@ public class WorkoutPlanService : IWorkoutPlanService
         };
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int trainerId)
     {
-        var plan = await _context.WorkoutPlans.FindAsync(id);
+        var plan = await _context.WorkoutPlans.FirstOrDefaultAsync(plan =>
+            plan.Id == id && plan.TrainerId == trainerId
+        );
 
         if (plan is null)
         {
@@ -149,10 +159,13 @@ public class WorkoutPlanService : IWorkoutPlanService
 
     public async Task<ExerciseResponse?> AddExerciseAsync(
         int workoutPlanId,
-        CreateExerciseRequest request
+        CreateExerciseRequest request,
+        int trainerId
     )
     {
-        var planExists = await _context.WorkoutPlans.AnyAsync(plan => plan.Id == workoutPlanId);
+        var planExists = await _context.WorkoutPlans.AnyAsync(plan =>
+            plan.Id == workoutPlanId && plan.TrainerId == trainerId
+        );
 
         if (!planExists)
         {
@@ -187,10 +200,15 @@ public class WorkoutPlanService : IWorkoutPlanService
 
     public async Task<ExerciseResponse?> UpdateExerciseAsync(
         int exerciseId,
-        UpdateExerciseRequest request
+        UpdateExerciseRequest request,
+        int trainerId
     )
     {
-        var exercise = await _context.Exercises.FindAsync(exerciseId);
+        var exercise = await _context
+            .Exercises.Include(exercise => exercise.WorkoutPlan)
+            .FirstOrDefaultAsync(exercise =>
+                exercise.Id == exerciseId && exercise.WorkoutPlan.TrainerId == trainerId
+            );
 
         if (exercise is null)
         {
@@ -217,9 +235,13 @@ public class WorkoutPlanService : IWorkoutPlanService
         };
     }
 
-    public async Task<bool> DeleteExerciseAsync(int exerciseId)
+    public async Task<bool> DeleteExerciseAsync(int exerciseId, int trainerId)
     {
-        var exercise = await _context.Exercises.FindAsync(exerciseId);
+        var exercise = await _context
+            .Exercises.Include(exercise => exercise.WorkoutPlan)
+            .FirstOrDefaultAsync(exercise =>
+                exercise.Id == exerciseId && exercise.WorkoutPlan.TrainerId == trainerId
+            );
 
         if (exercise is null)
         {

@@ -4,19 +4,19 @@ namespace backend.Services.Meals;
 
 public interface IMealPlanService
 {
-    Task<List<MealPlanResponse>> GetAllAsync();
+    Task<List<MealPlanResponse>> GetAllAsync(int trainerId);
 
-    Task<MealPlanResponse?> GetByIdAsync(int id);
+    Task<MealPlanResponse?> GetByIdAsync(int id, int trainerId);
 
-    Task<MealPlanResponse> CreateAsync(CreateMealPlanRequest request);
+    Task<MealPlanResponse> CreateAsync(CreateMealPlanRequest request, int trainerId);
 
-    Task<MealPlanResponse?> UpdateAsync(int id, UpdateMealPlanRequest request);
+    Task<MealPlanResponse?> UpdateAsync(int id, UpdateMealPlanRequest request, int trainerId);
 
-    Task<bool> DeleteAsync(int id);
+    Task<bool> DeleteAsync(int id, int trainerId);
 
-    Task<MealResponse?> AddMealAsync(int mealPlanId, CreateMealRequest request);
+    Task<MealResponse?> AddMealAsync(int mealPlanId, CreateMealRequest request, int trainerId);
 
-    Task<MealResponse?> UpdateMealAsync(int mealId, UpdateMealRequest request);
+    Task<MealResponse?> UpdateMealAsync(int mealId, UpdateMealRequest request, int trainerId);
 
-    Task<bool> DeleteMealAsync(int mealId);
+    Task<bool> DeleteMealAsync(int mealId, int trainerId);
 }

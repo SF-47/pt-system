@@ -5,20 +5,23 @@ namespace backend.Services.MealAssignments;
 
 public interface IMealAssignmentService
 {
-    Task<List<MealAssignmentResponse>> GetByClientIdAsync(int clientId);
+    Task<List<MealAssignmentResponse>> GetByClientIdAsync(int clientId, int trainerId);
 
     Task<ServiceResult<MealAssignmentResponse>> AssignAsync(
         int clientId,
-        AssignMealPlanRequest request
+        AssignMealPlanRequest request,
+        int trainerId
     );
 
     Task<ServiceResult<MealAssignmentResponse>> UpdateAsync(
         int assignmentId,
-        UpdateMealAssignmentRequest request
+        UpdateMealAssignmentRequest request,
+        int trainerId
     );
 
     Task<MealStatusResponse?> UpdateMealStatusAsync(
         int mealStatusId,
-        UpdateMealStatusRequest request
+        UpdateMealStatusRequest request,
+        int trainerId
     );
 }

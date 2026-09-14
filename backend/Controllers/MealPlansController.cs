@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using backend.DTOs.Meals;
 using backend.Services.Meals;
 using Microsoft.AspNetCore.Authorization;
@@ -20,7 +21,12 @@ public class MealPlansController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<MealPlanResponse>>> GetAll()
     {
-        var plans = await _mealPlanService.GetAllAsync();
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var plans = await _mealPlanService.GetAllAsync(trainerId.Value);
 
         return Ok(plans);
     }
@@ -28,7 +34,12 @@ public class MealPlansController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<MealPlanResponse>> GetById(int id)
     {
-        var plan = await _mealPlanService.GetByIdAsync(id);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var plan = await _mealPlanService.GetByIdAsync(id, trainerId.Value);
 
         if (plan is null)
         {
@@ -41,7 +52,12 @@ public class MealPlansController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<MealPlanResponse>> Create(CreateMealPlanRequest request)
     {
-        var plan = await _mealPlanService.CreateAsync(request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var plan = await _mealPlanService.CreateAsync(request, trainerId.Value);
 
         return CreatedAtAction(nameof(GetById), new { id = plan.Id }, plan);
     }
@@ -49,7 +65,12 @@ public class MealPlansController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<MealPlanResponse>> Update(int id, UpdateMealPlanRequest request)
     {
-        var plan = await _mealPlanService.UpdateAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var plan = await _mealPlanService.UpdateAsync(id, request, trainerId.Value);
 
         if (plan is null)
         {
@@ -62,7 +83,12 @@ public class MealPlansController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _mealPlanService.DeleteAsync(id);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var deleted = await _mealPlanService.DeleteAsync(id, trainerId.Value);
 
         if (!deleted)
         {
@@ -75,7 +101,12 @@ public class MealPlansController : ControllerBase
     [HttpPost("{id}/meals")]
     public async Task<ActionResult<MealResponse>> AddMeal(int id, CreateMealRequest request)
     {
-        var meal = await _mealPlanService.AddMealAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var meal = await _mealPlanService.AddMealAsync(id, request, trainerId.Value);
 
         if (meal is null)
         {
@@ -88,7 +119,12 @@ public class MealPlansController : ControllerBase
     [HttpPut("/api/meals/{id}")]
     public async Task<ActionResult<MealResponse>> UpdateMeal(int id, UpdateMealRequest request)
     {
-        var meal = await _mealPlanService.UpdateMealAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var meal = await _mealPlanService.UpdateMealAsync(id, request, trainerId.Value);
 
         if (meal is null)
         {
@@ -101,7 +137,12 @@ public class MealPlansController : ControllerBase
     [HttpDelete("/api/meals/{id}")]
     public async Task<IActionResult> DeleteMeal(int id)
     {
-        var deleted = await _mealPlanService.DeleteMealAsync(id);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var deleted = await _mealPlanService.DeleteMealAsync(id, trainerId.Value);
 
         if (!deleted)
         {
@@ -109,5 +150,16 @@ public class MealPlansController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    private int? GetTrainerId()
+    {
+        var trainerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(trainerIdClaim, out var trainerId))
+        {
+            return null;
+        }
+        return trainerId;
     }
 }

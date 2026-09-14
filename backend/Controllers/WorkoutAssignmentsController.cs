@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using backend.DTOs.WorkoutAssignments;
 using backend.Services.WorkoutAssignments;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +20,15 @@ public class WorkoutAssignmentsController : ControllerBase
     [HttpGet("api/clients/{clientId}/workout-plans")]
     public async Task<ActionResult<List<WorkoutAssignmentResponse>>> GetByClientId(int clientId)
     {
-        var assignments = await _workoutAssignmentService.GetByClientIdAsync(clientId);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var assignments = await _workoutAssignmentService.GetByClientIdAsync(
+            clientId,
+            trainerId.Value
+        );
 
         return Ok(assignments);
     }
@@ -30,7 +39,16 @@ public class WorkoutAssignmentsController : ControllerBase
         AssignWorkoutPlanRequest request
     )
     {
-        var result = await _workoutAssignmentService.AssignAsync(clientId, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var result = await _workoutAssignmentService.AssignAsync(
+            clientId,
+            request,
+            trainerId.Value
+        );
 
         if (!result.Success)
         {
@@ -46,7 +64,12 @@ public class WorkoutAssignmentsController : ControllerBase
         UpdateWorkoutAssignmentRequest request
     )
     {
-        var result = await _workoutAssignmentService.UpdateAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var result = await _workoutAssignmentService.UpdateAsync(id, request, trainerId.Value);
 
         if (!result.Success)
         {
@@ -62,7 +85,16 @@ public class WorkoutAssignmentsController : ControllerBase
         UpdateWorkoutStatusRequest request
     )
     {
-        var assignment = await _workoutAssignmentService.UpdateStatusAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var assignment = await _workoutAssignmentService.UpdateStatusAsync(
+            id,
+            request,
+            trainerId.Value
+        );
 
         if (assignment is null)
         {
@@ -70,5 +102,16 @@ public class WorkoutAssignmentsController : ControllerBase
         }
 
         return Ok(assignment);
+    }
+
+    private int? GetTrainerId()
+    {
+        var trainerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(trainerIdClaim, out var trainerId))
+        {
+            return null;
+        }
+        return trainerId;
     }
 }

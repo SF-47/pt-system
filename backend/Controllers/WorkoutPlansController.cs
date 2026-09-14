@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using backend.DTOs.Workouts;
 using backend.Services.Workouts;
 using Microsoft.AspNetCore.Authorization;
@@ -20,7 +21,12 @@ public class WorkoutPlansController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<WorkoutPlanResponse>>> GetAll()
     {
-        var plans = await _workoutPlanService.GetAllAsync();
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var plans = await _workoutPlanService.GetAllAsync(trainerId.Value);
 
         return Ok(plans);
     }
@@ -28,7 +34,12 @@ public class WorkoutPlansController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<WorkoutPlanResponse>> GetById(int id)
     {
-        var plan = await _workoutPlanService.GetByIdAsync(id);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var plan = await _workoutPlanService.GetByIdAsync(id, trainerId.Value);
 
         if (plan is null)
         {
@@ -41,7 +52,12 @@ public class WorkoutPlansController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<WorkoutPlanResponse>> Create(CreateWorkoutPlanRequest request)
     {
-        var plan = await _workoutPlanService.CreateAsync(request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var plan = await _workoutPlanService.CreateAsync(request, trainerId.Value);
 
         return CreatedAtAction(nameof(GetById), new { id = plan.Id }, plan);
     }
@@ -52,7 +68,12 @@ public class WorkoutPlansController : ControllerBase
         UpdateWorkoutPlanRequest request
     )
     {
-        var plan = await _workoutPlanService.UpdateAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var plan = await _workoutPlanService.UpdateAsync(id, request, trainerId.Value);
 
         if (plan is null)
         {
@@ -65,7 +86,12 @@ public class WorkoutPlansController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await _workoutPlanService.DeleteAsync(id);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var deleted = await _workoutPlanService.DeleteAsync(id, trainerId.Value);
 
         if (!deleted)
         {
@@ -81,7 +107,12 @@ public class WorkoutPlansController : ControllerBase
         CreateExerciseRequest request
     )
     {
-        var exercise = await _workoutPlanService.AddExerciseAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var exercise = await _workoutPlanService.AddExerciseAsync(id, request, trainerId.Value);
 
         if (exercise is null)
         {
@@ -97,7 +128,12 @@ public class WorkoutPlansController : ControllerBase
         UpdateExerciseRequest request
     )
     {
-        var exercise = await _workoutPlanService.UpdateExerciseAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var exercise = await _workoutPlanService.UpdateExerciseAsync(id, request, trainerId.Value);
 
         if (exercise is null)
         {
@@ -110,7 +146,12 @@ public class WorkoutPlansController : ControllerBase
     [HttpDelete("/api/exercises/{id}")]
     public async Task<IActionResult> DeleteExercise(int id)
     {
-        var deleted = await _workoutPlanService.DeleteExerciseAsync(id);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var deleted = await _workoutPlanService.DeleteExerciseAsync(id, trainerId.Value);
 
         if (!deleted)
         {
@@ -118,5 +159,16 @@ public class WorkoutPlansController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    private int? GetTrainerId()
+    {
+        var trainerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(trainerIdClaim, out var trainerId))
+        {
+            return null;
+        }
+        return trainerId;
     }
 }

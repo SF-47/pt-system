@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using backend.DTOs.Payments;
 using backend.Services.Payments;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +20,12 @@ public class PaymentsController : ControllerBase
     [HttpGet("api/payments")]
     public async Task<ActionResult<List<PaymentResponse>>> GetAll()
     {
-        var payments = await _paymentService.GetAllAsync();
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var payments = await _paymentService.GetAllAsync(trainerId.Value);
 
         return Ok(payments);
     }
@@ -27,7 +33,12 @@ public class PaymentsController : ControllerBase
     [HttpGet("api/clients/{clientId}/payments")]
     public async Task<ActionResult<List<PaymentResponse>>> GetByClientId(int clientId)
     {
-        var payments = await _paymentService.GetByClientIdAsync(clientId);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var payments = await _paymentService.GetByClientIdAsync(clientId, trainerId.Value);
 
         return Ok(payments);
     }
@@ -38,7 +49,12 @@ public class PaymentsController : ControllerBase
         CreatePaymentRequest request
     )
     {
-        var payment = await _paymentService.CreateAsync(clientId, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var payment = await _paymentService.CreateAsync(clientId, request, trainerId.Value);
 
         if (payment is null)
         {
@@ -54,7 +70,12 @@ public class PaymentsController : ControllerBase
         UpdatePaymentStatusRequest request
     )
     {
-        var payment = await _paymentService.UpdateStatusAsync(id, request);
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var payment = await _paymentService.UpdateStatusAsync(id, request, trainerId.Value);
 
         if (payment is null)
         {
@@ -62,5 +83,16 @@ public class PaymentsController : ControllerBase
         }
 
         return Ok(payment);
+    }
+
+    private int? GetTrainerId()
+    {
+        var trainerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(trainerIdClaim, out var trainerId))
+        {
+            return null;
+        }
+        return trainerId;
     }
 }

@@ -5,20 +5,23 @@ namespace backend.Services.WorkoutAssignments;
 
 public interface IWorkoutAssignmentService
 {
-    Task<List<WorkoutAssignmentResponse>> GetByClientIdAsync(int clientId);
+    Task<List<WorkoutAssignmentResponse>> GetByClientIdAsync(int clientId, int trainerId);
 
     Task<ServiceResult<WorkoutAssignmentResponse>> AssignAsync(
         int clientId,
-        AssignWorkoutPlanRequest request
+        AssignWorkoutPlanRequest request,
+        int trainerId
     );
 
     Task<ServiceResult<WorkoutAssignmentResponse>> UpdateAsync(
         int assignmentId,
-        UpdateWorkoutAssignmentRequest request
+        UpdateWorkoutAssignmentRequest request,
+        int trainerId
     );
 
     Task<WorkoutAssignmentResponse?> UpdateStatusAsync(
         int assignmentId,
-        UpdateWorkoutStatusRequest request
+        UpdateWorkoutStatusRequest request,
+        int trainerId
     );
 }

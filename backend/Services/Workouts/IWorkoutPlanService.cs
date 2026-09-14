@@ -4,19 +4,27 @@ namespace backend.Services.Workouts;
 
 public interface IWorkoutPlanService
 {
-    Task<List<WorkoutPlanResponse>> GetAllAsync();
+    Task<List<WorkoutPlanResponse>> GetAllAsync(int trainerId);
 
-    Task<WorkoutPlanResponse?> GetByIdAsync(int id);
+    Task<WorkoutPlanResponse?> GetByIdAsync(int id, int trainerId);
 
-    Task<WorkoutPlanResponse> CreateAsync(CreateWorkoutPlanRequest request);
+    Task<WorkoutPlanResponse> CreateAsync(CreateWorkoutPlanRequest request, int trainerId);
 
-    Task<WorkoutPlanResponse?> UpdateAsync(int id, UpdateWorkoutPlanRequest request);
+    Task<WorkoutPlanResponse?> UpdateAsync(int id, UpdateWorkoutPlanRequest request, int trainerId);
 
-    Task<bool> DeleteAsync(int id);
+    Task<bool> DeleteAsync(int id, int trainerId);
 
-    Task<ExerciseResponse?> AddExerciseAsync(int workoutPlanId, CreateExerciseRequest request);
+    Task<ExerciseResponse?> AddExerciseAsync(
+        int workoutPlanId,
+        CreateExerciseRequest request,
+        int trainerId
+    );
 
-    Task<ExerciseResponse?> UpdateExerciseAsync(int workoutPlanId, UpdateExerciseRequest request);
+    Task<ExerciseResponse?> UpdateExerciseAsync(
+        int exerciseId,
+        UpdateExerciseRequest request,
+        int trainerId
+    );
 
-    Task<bool> DeleteExerciseAsync(int exerciseId);
+    Task<bool> DeleteExerciseAsync(int exerciseId, int trainerId);
 }
