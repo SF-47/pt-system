@@ -1,11 +1,13 @@
 using backend.DTOs.Clients;
 using backend.Services.Clients;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/clients")]
+[Authorize(Roles = "Trainer")]
 public class ClientController : ControllerBase
 {
     private readonly IClientService _clientService;

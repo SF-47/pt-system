@@ -1,10 +1,12 @@
 using backend.DTOs.Payments;
 using backend.Services.Payments;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Trainer")]
 public class PaymentsController : ControllerBase
 {
     private readonly IPaymentService _paymentService;

@@ -1,10 +1,12 @@
 using backend.DTOs.WorkoutAssignments;
 using backend.Services.WorkoutAssignments;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Trainer")]
 public class WorkoutAssignmentsController : ControllerBase
 {
     private readonly IWorkoutAssignmentService _workoutAssignmentService;

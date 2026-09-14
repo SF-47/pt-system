@@ -1,11 +1,13 @@
 using backend.DTOs.Meals;
 using backend.Services.Meals;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/meal-plans")]
+[Authorize(Roles = "Trainer")]
 public class MealPlansController : ControllerBase
 {
     private readonly IMealPlanService _mealPlanService;

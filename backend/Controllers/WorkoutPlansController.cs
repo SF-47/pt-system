@@ -1,11 +1,13 @@
 using backend.DTOs.Workouts;
 using backend.Services.Workouts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/workout-plans")]
+[Authorize(Roles = "Trainer")]
 public class WorkoutPlansController : ControllerBase
 {
     private readonly IWorkoutPlanService _workoutPlanService;
