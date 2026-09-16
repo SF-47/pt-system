@@ -251,6 +251,41 @@ class _MealItemState extends State<_MealItem> {
   Future<void> _toggleCompleted() async {
     if (_isUpdating) return;
 
+    // Ask for confirmation only when marking the meal as completed.
+    if (!_isCompleted) {
+      final shouldComplete = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Complete Meal?'),
+            content: const Text(
+              'Are you sure you want to mark this meal as completed?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context, false);
+                },
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context, true);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2F855A),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Complete'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (shouldComplete != true) return;
+    }
+
     final newStatus = _isCompleted ? 0 : 1;
 
     setState(() {

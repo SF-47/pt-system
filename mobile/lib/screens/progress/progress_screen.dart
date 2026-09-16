@@ -85,7 +85,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
         child: Text('No progress data available.'),
       );
     }
+    final totalTasks = _progress!.totalWorkouts + _progress!.totalMeals;
+    final completedTasks =
+        _progress!.completedWorkouts + _progress!.completedMeals;
 
+    final overallPercentage =
+    totalTasks == 0 ? 0.0 : completedTasks / totalTasks;
     return RefreshIndicator(
       onRefresh: _loadProgress,
       color: const Color(0xFF2F855A),
@@ -109,7 +114,58 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ),
           const SizedBox(height: 24),
+          Card(
+            color: const Color(0xFF2F855A),
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Overall Progress',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$completedTasks of $totalTasks tasks completed',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: overallPercentage,
+                      minHeight: 10,
+                      backgroundColor: Colors.white30,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '${(overallPercentage * 100).round()}%',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
+          const SizedBox(height: 16),
           _ProgressCard(
             title: 'Workouts',
             icon: Icons.fitness_center,

@@ -54,6 +54,38 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
   Future<void> _markAsCompleted() async {
     if (_workout == null || _isUpdating) return;
 
+    final shouldComplete = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Complete Workout?'),
+          content: const Text(
+            'Are you sure you want to mark this workout as completed?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2F855A),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Complete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldComplete != true) return;
+
     setState(() {
       _isUpdating = true;
     });
