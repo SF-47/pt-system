@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using backend.DTOs.Mobile;
 using backend.Services.Mobile;
 
@@ -9,6 +10,7 @@ namespace backend.Controllers.Mobile;
 [ApiController]
 [Route("api/client/profile")]
 [Authorize(Roles = "Client")]
+[EnableRateLimiting("authenticated")]
 public class ClientProfileController : ControllerBase
 {
     private readonly IClientProfileService _service;

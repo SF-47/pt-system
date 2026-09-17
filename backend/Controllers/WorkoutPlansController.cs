@@ -3,12 +3,14 @@ using backend.DTOs.Workouts;
 using backend.Services.Workouts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/workout-plans")]
 [Authorize(Roles = "Trainer")]
+[EnableRateLimiting("authenticated")]
 public class WorkoutPlansController : ControllerBase
 {
     private readonly IWorkoutPlanService _workoutPlanService;

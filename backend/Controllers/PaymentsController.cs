@@ -3,11 +3,13 @@ using backend.DTOs.Payments;
 using backend.Services.Payments;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Authorize(Roles = "Trainer")]
+[EnableRateLimiting("authenticated")]
 public class PaymentsController : ControllerBase
 {
     private readonly IPaymentService _paymentService;

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using backend.DTOs.Common;
 using backend.DTOs.MealAssignments;
 using backend.DTOs.Mobile;
@@ -11,6 +12,7 @@ namespace backend.Controllers.Mobile;
 [ApiController]
 [Route("api/client/meals")]
 [Authorize(Roles = "Client")]
+[EnableRateLimiting("authenticated")]
 public class ClientMealsController : ControllerBase
 {
     private readonly IClientMealService _service;

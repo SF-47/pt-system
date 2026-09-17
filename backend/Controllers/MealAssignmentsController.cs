@@ -3,11 +3,13 @@ using backend.DTOs.MealAssignments;
 using backend.Services.MealAssignments;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Authorize(Roles = "Trainer")]
+[EnableRateLimiting("authenticated")]
 public class MealAssignmentsController : ControllerBase
 {
     private readonly IMealAssignmentService _mealAssignmentService;

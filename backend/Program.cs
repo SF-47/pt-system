@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using backend.Data;
 using backend.Services.Auth;
 using backend.Services.Clients;
@@ -9,6 +11,7 @@ using backend.Services.Payments;
 using backend.Services.WorkoutAssignments;
 using backend.Services.Workouts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -77,6 +80,50 @@ builder.Services.AddCors(options =>
     );
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy(
+        "login",
+        httpContext =>
+        {
+            var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            return RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: ipAddress,
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                }
+            );
+        }
+    );
+
+    options.AddPolicy(
+        "authenticated",
+        httpContext =>
+        {
+            var userId =
+                httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
+            var role = httpContext.User.FindFirst(ClaimTypes.Role)?.Value ?? "unknown";
+            var key = $"{role}:{userId}";
+
+            return RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: key,
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 100,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                }
+            );
+        }
+    );
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -87,8 +134,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("Frontend");
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

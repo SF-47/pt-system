@@ -4,12 +4,14 @@ using backend.DTOs.Common;
 using backend.Services.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/clients")]
 [Authorize(Roles = "Trainer")]
+[EnableRateLimiting("authenticated")]
 public class ClientController : ControllerBase
 {
     private readonly IClientService _clientService;

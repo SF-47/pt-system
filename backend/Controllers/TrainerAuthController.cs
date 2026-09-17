@@ -1,6 +1,7 @@
 using backend.DTOs.Auth;
 using backend.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers;
 
@@ -15,6 +16,7 @@ public class TrainerAuthController : ControllerBase
         _trainerAuthService = trainerAuthService;
     }
 
+    [EnableRateLimiting("login")]
     [HttpPost("login")]
     public async Task<IActionResult> Login(TrainerLoginRequest request)
     {

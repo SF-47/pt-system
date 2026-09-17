@@ -1,6 +1,7 @@
 using backend.DTOs.Auth;
 using backend.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace backend.Controllers.Mobile;
 
@@ -15,6 +16,7 @@ public class ClientAuthController : ControllerBase
         _clientAuthService = clientAuthService;
     }
 
+    [EnableRateLimiting("login")]
     [HttpPost("login")]
     public async Task<ActionResult<ClientLoginResponse>> Login(ClientLoginRequest request)
     {

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using backend.DTOs.Common;
 using backend.DTOs.Mobile;
 using backend.DTOs.WorkoutAssignments;
@@ -11,6 +12,7 @@ namespace backend.Controllers.Mobile;
 [ApiController]
 [Route("api/client/workouts")]
 [Authorize(Roles = "Client")]
+[EnableRateLimiting("authenticated")]
 public class ClientWorkoutsController : ControllerBase
 {
     private readonly IClientWorkoutService _service;
