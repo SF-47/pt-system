@@ -65,6 +65,37 @@ builder
 
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var role = context.Principal?.FindFirst(ClaimTypes.Role)?.Value;
+                if (role != "Client")
+                {
+                    return;
+                }
+
+                var clientIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!int.TryParse(clientIdClaim, out var clientId))
+                {
+                    context.Fail("Invalid client ID.");
+                    return;
+                }
+
+                var dbContext =
+                    context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
+
+                var isActive = await dbContext.Clients.AnyAsync(client =>
+                    client.Id == clientId && client.IsActive
+                );
+
+                if (!isActive)
+                {
+                    context.Fail("Client account is inactive.");
+                }
+            },
+        };
     });
 
 builder.Services.AddAuthorization();
