@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using backend.DTOs.Clients;
+using backend.DTOs.Common;
 using backend.Services.Clients;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,16 +20,27 @@ public class ClientController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<ClientResponse>>> GetAll()
+    public async Task<ActionResult<PagedResponse<ClientResponse>>> GetAll(
+        int page = 1,
+        int pageSize = 10
+    )
     {
         var trainerId = GetTrainerId();
         if (trainerId is null)
         {
             return Unauthorized();
         }
-        var clients = await _clientService.GetAllAsync(trainerId.Value);
+        if (page < 1)
+        {
+            return BadRequest(new { message = "Page must be at least 1." });
+        }
+        if (pageSize < 1 || pageSize > 50)
+        {
+            return BadRequest(new { message = "Page size must be between 1 and 50." });
+        }
+        var result = await _clientService.GetAllAsync(trainerId.Value, page, pageSize);
 
-        return Ok(clients);
+        return Ok(result);
     }
 
     [HttpGet("{id}")]

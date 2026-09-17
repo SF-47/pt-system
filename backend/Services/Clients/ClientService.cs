@@ -1,5 +1,6 @@
 using backend.Data;
 using backend.DTOs.Clients;
+using backend.DTOs.Common;
 using backend.Models;
 using backend.Services;
 using Microsoft.EntityFrameworkCore;
@@ -15,10 +16,18 @@ public class ClientService : IClientService
         _db = db;
     }
 
-    public async Task<List<ClientResponse>> GetAllAsync(int trainerId)
+    public async Task<PagedResponse<ClientResponse>> GetAllAsync(
+        int trainerId,
+        int page,
+        int pageSize
+    )
     {
-        return await _db
-            .Clients.Where(client => client.TrainerId == trainerId)
+        var query = _db.Clients.Where(client => client.TrainerId == trainerId);
+        var totalCount = await query.CountAsync();
+        var clients = await query
+            .OrderBy(client => client.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(client => new ClientResponse
             {
                 Id = client.Id,
@@ -31,6 +40,15 @@ public class ClientService : IClientService
                 CreatedAt = client.CreatedAt,
             })
             .ToListAsync();
+
+        return new PagedResponse<ClientResponse>
+        {
+            Items = clients,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+        };
     }
 
     public async Task<ClientResponse?> GetByIdAsync(int id, int trainerId)

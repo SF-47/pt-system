@@ -1,11 +1,12 @@
 using backend.DTOs.Clients;
-using backend.Services;
+using backend.DTOs.Common;
+
 
 namespace backend.Services.Clients;
 
 public interface IClientService
 {
-    Task<List<ClientResponse>> GetAllAsync(int trainerId);
+    Task<PagedResponse<ClientResponse>> GetAllAsync(int trainerId , int page , int pageSize);
 
     Task<ClientResponse?> GetByIdAsync(int id , int trainerId);
 
