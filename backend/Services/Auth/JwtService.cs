@@ -38,7 +38,7 @@ public class JwtService : IJwtService
             issuer: _configuration["Jwt:Issuer"], //Issuer means who created this token.
             audience: _configuration["Jwt:Audience"], //Audience means who is this token intended for.
             claims: claims, //This puts the info inside.
-            expires: DateTime.UtcNow.AddDays(7), //this makes the token valid for 7 days
+            expires: DateTime.UtcNow.AddHours(1), //this makes the token valid for 7 days
             signingCredentials: credentials //This sign the token using "secret key + HMAC SHA256" which prevents someone from changing it.
         );
 
@@ -68,7 +68,7 @@ public class JwtService : IJwtService
             issuer: _configuration["Jwt:Issuer"],
             audience: _configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(7),
+            expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: credentials
         );
 
