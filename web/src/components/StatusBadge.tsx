@@ -23,7 +23,7 @@ export default function StatusBadge({ status }: { status: string }) {
     >
       <Icon
         name={tone === "success" ? "check" : tone === "pending" ? "clock" : "close"}
-        className="size-[13px]"
+        className="size-3.25"
       />
       {status}
     </span>

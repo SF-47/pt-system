@@ -1,37 +1,112 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Avatar from "@/components/Avatar";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
-import StatusBadge from "@/components/StatusBadge";
 import SummaryMetric from "@/components/SummaryMetric";
-import { clients } from "@/data/mock-data";
+import api from "@/lib/api";
+import { Endpoints } from "@/lib/Endpoints";
 
-type PaymentFilter = "All" | "Paid" | "Pending";
+type Client = {
+  id: number;
+  trainerId: number;
+  fullName: string;
+  username: string;
+  email: string | null;
+  phoneNumber: string;
+  isActive: boolean;
+  createdAt: string;
+};
+
+function ClientsPageSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading clients">
+      <PageHeader title="Clients" description="Loading your client roster..." />
+
+      <section className="mb-4 grid animate-pulse grid-cols-1 gap-3 min-[401px]:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div
+            key={index}
+            className="min-h-24 rounded-md border border-border bg-surface p-4 dark:border-[#2C3238] dark:bg-[#1B1F24]"
+          >
+            <div className="h-4 w-24 rounded bg-border dark:bg-[#343B43]" />
+            <div className="mt-5 h-7 w-10 rounded bg-border dark:bg-[#343B43]" />
+          </div>
+        ))}
+      </section>
+
+      <div className="mb-3 flex animate-pulse flex-col gap-2 min-[761px]:flex-row min-[761px]:items-end min-[761px]:justify-between">
+        <div className="w-full min-[761px]:max-w-sm">
+          <div className="mb-2 h-4 w-24 rounded bg-border dark:bg-[#343B43]" />
+          <div className="h-11 rounded-md bg-border dark:bg-[#343B43]" />
+        </div>
+        <div className="h-11 w-full rounded-md bg-border dark:bg-[#343B43] min-[761px]:w-32" />
+      </div>
+
+      <div className="mt-7 overflow-hidden rounded-md border border-border bg-surface dark:border-[#2C3238] dark:bg-[#1B1F24]">
+        <div className="grid grid-cols-5 gap-4 bg-[#f3f7f4] px-4 py-3 dark:bg-[#20252A]">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-4 w-16 animate-pulse rounded bg-border dark:bg-[#343B43]"
+            />
+          ))}
+        </div>
+        {Array.from({ length: 5 }).map((_, row) => (
+          <div
+            key={row}
+            className="grid grid-cols-5 gap-4 border-t border-border px-4 py-5 dark:border-[#2C3238]"
+          >
+            {Array.from({ length: 5 }).map((_, column) => (
+              <div
+                key={column}
+                className="h-4 animate-pulse rounded bg-border dark:bg-[#343B43]"
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function ClientsPage() {
   const [query, setQuery] = useState("");
-  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("All");
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  async function getAllClients() {
+    try {
+      const response = await api.get(Endpoints.clients);
+      setClients(response.data);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    getAllClients();
+  }, []);
+
+  if (isLoading) {
+    return <ClientsPageSkeleton />;
+  }
+
+  const activeClients = clients.filter((client) => client.isActive);
+  const inactiveClients = clients.filter((client) => !client.isActive);
 
   const normalizedQuery = query.trim().toLowerCase();
+
   const filteredClients = clients.filter((client) => {
     const matchesQuery =
       client.fullName.toLowerCase().includes(normalizedQuery) ||
-      client.email.toLowerCase().includes(normalizedQuery) ||
+      client.email?.toLowerCase().includes(normalizedQuery) ||
       client.phoneNumber.includes(normalizedQuery);
-    const matchesPayment =
-      paymentFilter === "All" || client.paymentStatus === paymentFilter;
 
-    return matchesQuery && matchesPayment;
+    return matchesQuery;
   });
-  const paidClients = clients.filter(
-    (client) => client.paymentStatus === "Paid",
-  );
-  const pendingClients = clients.filter(
-    (client) => client.paymentStatus === "Pending",
-  );
 
   return (
     <div>
@@ -45,10 +120,10 @@ export default function ClientsPage() {
         aria-label="Client summary"
       >
         <SummaryMetric label="Total Clients" value={clients.length} />
-        <SummaryMetric label="Paid Clients" value={paidClients.length} />
+        <SummaryMetric label="Active Clients" value={activeClients.length} />
         <SummaryMetric
-          label="Pending Payments"
-          value={pendingClients.length}
+          label="Inactive Clients"
+          value={inactiveClients.length}
         />
       </section>
 
@@ -72,26 +147,7 @@ export default function ClientsPage() {
             className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary min-[761px]:max-w-sm"
           />
         </div>
-        <div className="min-[761px]:w-44">
-          <label
-            htmlFor="client-payment-filter"
-            className="mb-1 block text-sm font-medium text-foreground"
-          >
-            Payment status
-          </label>
-          <select
-            id="client-payment-filter"
-            value={paymentFilter}
-            onChange={(event) =>
-              setPaymentFilter(event.target.value as PaymentFilter)
-            }
-            className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
-          >
-            <option value="All">All</option>
-            <option value="Paid">Paid</option>
-            <option value="Pending">Pending</option>
-          </select>
-        </div>
+
         <Link
           href="/clients/new"
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover"
@@ -114,15 +170,17 @@ export default function ClientsPage() {
         <table className="w-full border-collapse whitespace-nowrap tabular-nums">
           <thead>
             <tr>
-              {["Client", "Phone", "Payment", "Actions"].map((heading) => (
-                <th
-                  key={heading}
-                  scope="col"
-                  className="bg-[#f3f7f4] px-4 py-3 text-left align-middle text-sm font-semibold text-muted dark:bg-[#20252A]"
-                >
-                  {heading}
-                </th>
-              ))}
+              {["Client", "Phone", "Status", "Created At", "Actions"].map(
+                (heading) => (
+                  <th
+                    key={heading}
+                    scope="col"
+                    className="bg-[#f3f7f4] px-4 py-3 text-left align-middle text-sm font-semibold text-muted dark:bg-[#20252A]"
+                  >
+                    {heading}
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>
@@ -146,8 +204,20 @@ export default function ClientsPage() {
                   <td className="px-4 py-3 align-middle text-muted">
                     {client.phoneNumber}
                   </td>
+
+                  <td className="px-4 py-3 align-middle  text-muted">
+                    {client.isActive ? "Active" : "Inactive"}
+                  </td>
                   <td className="px-4 py-3 align-middle">
-                    <StatusBadge status={client.paymentStatus} />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground">
+                        {client.createdAt.split("T")[0]}
+                      </span>
+
+                      <span className="mt-1 text-xs text-muted">
+                        {client.createdAt.split("T")[1].split(".")[0]}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-3 align-middle">
                     <div className="flex items-center gap-2">
@@ -173,15 +243,14 @@ export default function ClientsPage() {
               ))
             ) : (
               <tr className="border-t border-border dark:border-[#2C3238]">
-                <td className="px-4 py-8 text-center text-muted" colSpan={4}>
-                  No clients match your search and payment filter.
+                <td className="px-4 py-8 text-center text-muted" colSpan={5}>
+                  No clients match your search.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-
     </div>
   );
 }
