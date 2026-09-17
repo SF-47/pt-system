@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.DTOs.Common;
 using backend.DTOs.Meals;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
@@ -7,18 +8,25 @@ namespace backend.Services.Meals;
 
 public class MealPlanService : IMealPlanService
 {
-    private readonly ApplicationDbContext _id;
+    private readonly ApplicationDbContext _db;
 
-    public MealPlanService(ApplicationDbContext id)
+    public MealPlanService(ApplicationDbContext db)
     {
-        _id = id;
+        _db = db;
     }
 
-    public async Task<List<MealPlanResponse>> GetAllAsync(int trainerId)
+    public async Task<PagedResponse<MealPlanResponse>> GetAllAsync(
+        int trainerId,
+        int page,
+        int pageSize
+    )
     {
-        return await _id
-            .MealPlans.Include(plan => plan.Meals)
-            .Where(plan => plan.TrainerId == trainerId)
+        var query = _db.MealPlans.Where(plan => plan.TrainerId == trainerId);
+        var totalCount = await query.CountAsync();
+        var plans = await query
+            .OrderBy(plan => plan.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(plan => new MealPlanResponse
             {
                 Id = plan.Id,
@@ -37,11 +45,20 @@ public class MealPlanService : IMealPlanService
                     .ToList(),
             })
             .ToListAsync();
+
+        return new PagedResponse<MealPlanResponse>
+        {
+            Items = plans,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+        };
     }
 
     public async Task<MealPlanResponse?> GetByIdAsync(int id, int trainerId)
     {
-        return await _id
+        return await _db
             .MealPlans.Include(plan => plan.Meals)
             .Where(plan => plan.Id == id && plan.TrainerId == trainerId)
             .Select(plan => new MealPlanResponse
@@ -73,9 +90,9 @@ public class MealPlanService : IMealPlanService
             Description = request.Description,
         };
 
-        _id.MealPlans.Add(plan);
+        _db.MealPlans.Add(plan);
 
-        await _id.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return new MealPlanResponse
         {
@@ -94,7 +111,7 @@ public class MealPlanService : IMealPlanService
         int trainerId
     )
     {
-        var plan = await _id
+        var plan = await _db
             .MealPlans.Include(plan => plan.Meals)
             .FirstOrDefaultAsync(plan => plan.Id == id && plan.TrainerId == trainerId);
 
@@ -106,7 +123,7 @@ public class MealPlanService : IMealPlanService
         plan.Name = request.Name;
         plan.Description = request.Description;
 
-        await _id.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return new MealPlanResponse
         {
@@ -129,7 +146,7 @@ public class MealPlanService : IMealPlanService
 
     public async Task<bool> DeleteAsync(int id, int trainerId)
     {
-        var plan = await _id.MealPlans.FirstOrDefaultAsync(plan =>
+        var plan = await _db.MealPlans.FirstOrDefaultAsync(plan =>
             plan.Id == id && plan.TrainerId == trainerId
         );
 
@@ -138,9 +155,9 @@ public class MealPlanService : IMealPlanService
             return false;
         }
 
-        _id.MealPlans.Remove(plan);
+        _db.MealPlans.Remove(plan);
 
-        await _id.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return true;
     }
@@ -151,7 +168,7 @@ public class MealPlanService : IMealPlanService
         int trainerId
     )
     {
-        var planExists = await _id.MealPlans.AnyAsync(plan =>
+        var planExists = await _db.MealPlans.AnyAsync(plan =>
             plan.Id == mealPlanId && plan.TrainerId == trainerId
         );
 
@@ -167,9 +184,9 @@ public class MealPlanService : IMealPlanService
             Instructions = request.Instructions,
         };
 
-        _id.Meals.Add(meal);
+        _db.Meals.Add(meal);
 
-        await _id.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return new MealResponse
         {
@@ -186,7 +203,7 @@ public class MealPlanService : IMealPlanService
         int trainerId
     )
     {
-        var meal = await _id
+        var meal = await _db
             .Meals.Include(meal => meal.MealPlan)
             .FirstOrDefaultAsync(meal => meal.Id == mealId && meal.MealPlan.TrainerId == trainerId);
 
@@ -198,7 +215,7 @@ public class MealPlanService : IMealPlanService
         meal.Name = request.Name;
         meal.Instructions = request.Instructions;
 
-        await _id.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return new MealResponse
         {
@@ -211,7 +228,7 @@ public class MealPlanService : IMealPlanService
 
     public async Task<bool> DeleteMealAsync(int mealId, int trainerId)
     {
-        var meal = await _id
+        var meal = await _db
             .Meals.Include(meal => meal.MealPlan)
             .FirstOrDefaultAsync(meal => meal.Id == mealId && meal.MealPlan.TrainerId == trainerId);
 
@@ -220,9 +237,9 @@ public class MealPlanService : IMealPlanService
             return false;
         }
 
-        _id.Meals.Remove(meal);
+        _db.Meals.Remove(meal);
 
-        await _id.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return true;
     }

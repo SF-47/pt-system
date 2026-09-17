@@ -1,10 +1,11 @@
+using backend.DTOs.Common;
 using backend.DTOs.Meals;
 
 namespace backend.Services.Meals;
 
 public interface IMealPlanService
 {
-    Task<List<MealPlanResponse>> GetAllAsync(int trainerId);
+    Task<PagedResponse<MealPlanResponse>> GetAllAsync(int trainerId, int page, int pageSize);
 
     Task<MealPlanResponse?> GetByIdAsync(int id, int trainerId);
 

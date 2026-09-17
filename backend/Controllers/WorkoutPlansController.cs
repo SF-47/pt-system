@@ -19,16 +19,28 @@ public class WorkoutPlansController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<WorkoutPlanResponse>>> GetAll()
+    public async Task<ActionResult<List<WorkoutPlanResponse>>> GetAll(
+        int page = 1,
+        int pageSize = 10
+    )
     {
         var trainerId = GetTrainerId();
         if (trainerId is null)
         {
             return Unauthorized();
         }
-        var plans = await _workoutPlanService.GetAllAsync(trainerId.Value);
+        if (page < 1)
+        {
+            return BadRequest(new { message = "Page must be at least 1." });
+        }
 
-        return Ok(plans);
+        if (pageSize < 1 || pageSize > 50)
+        {
+            return BadRequest(new { message = "Page size must be between 1 and 50." });
+        }
+        var result = await _workoutPlanService.GetAllAsync(trainerId.Value, page, pageSize);
+
+        return Ok(result);
     }
 
     [HttpGet("{id}")]

@@ -1,24 +1,33 @@
 using backend.Data;
+using backend.DTOs.Common;
 using backend.DTOs.Workouts;
 using backend.Models;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services.Workouts;
 
 public class WorkoutPlanService : IWorkoutPlanService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly ApplicationDbContext _db;
 
-    public WorkoutPlanService(ApplicationDbContext context)
+    public WorkoutPlanService(ApplicationDbContext db)
     {
-        _context = context;
+        _db = db;
     }
 
-    public async Task<List<WorkoutPlanResponse>> GetAllAsync(int trainerId)
+    public async Task<PagedResponse<WorkoutPlanResponse>> GetAllAsync(
+        int trainerId,
+        int page,
+        int pageSize
+    )
     {
-        return await _context
-            .WorkoutPlans.Include(plan => plan.Exercises)
-            .Where(plan => plan.TrainerId == trainerId)
+        var query = _db.WorkoutPlans.Where(plan => plan.TrainerId == trainerId);
+        var totalCount = await query.CountAsync();
+        var plans = await query
+            .OrderBy(plan => plan.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(plan => new WorkoutPlanResponse
             {
                 Id = plan.Id,
@@ -40,11 +49,20 @@ public class WorkoutPlanService : IWorkoutPlanService
                     .ToList(),
             })
             .ToListAsync();
+
+        return new PagedResponse<WorkoutPlanResponse>
+        {
+            Items = plans,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+        };
     }
 
     public async Task<WorkoutPlanResponse?> GetByIdAsync(int id, int trainerId)
     {
-        return await _context
+        return await _db
             .WorkoutPlans.Include(plan => plan.Exercises)
             .Where(plan => plan.Id == id && plan.TrainerId == trainerId)
             .Select(plan => new WorkoutPlanResponse
@@ -82,9 +100,9 @@ public class WorkoutPlanService : IWorkoutPlanService
             Description = request.Description,
         };
 
-        _context.WorkoutPlans.Add(plan);
+        _db.WorkoutPlans.Add(plan);
 
-        await _context.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return new WorkoutPlanResponse
         {
@@ -103,7 +121,7 @@ public class WorkoutPlanService : IWorkoutPlanService
         int trainerId
     )
     {
-        var plan = await _context
+        var plan = await _db
             .WorkoutPlans.Include(plan => plan.Exercises)
             .FirstOrDefaultAsync(plan => plan.Id == id && plan.TrainerId == trainerId);
 
@@ -115,7 +133,7 @@ public class WorkoutPlanService : IWorkoutPlanService
         plan.Name = request.Name;
         plan.Description = request.Description;
 
-        await _context.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return new WorkoutPlanResponse
         {
@@ -141,7 +159,7 @@ public class WorkoutPlanService : IWorkoutPlanService
 
     public async Task<bool> DeleteAsync(int id, int trainerId)
     {
-        var plan = await _context.WorkoutPlans.FirstOrDefaultAsync(plan =>
+        var plan = await _db.WorkoutPlans.FirstOrDefaultAsync(plan =>
             plan.Id == id && plan.TrainerId == trainerId
         );
 
@@ -150,9 +168,9 @@ public class WorkoutPlanService : IWorkoutPlanService
             return false;
         }
 
-        _context.WorkoutPlans.Remove(plan);
+        _db.WorkoutPlans.Remove(plan);
 
-        await _context.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return true;
     }
@@ -163,7 +181,7 @@ public class WorkoutPlanService : IWorkoutPlanService
         int trainerId
     )
     {
-        var planExists = await _context.WorkoutPlans.AnyAsync(plan =>
+        var planExists = await _db.WorkoutPlans.AnyAsync(plan =>
             plan.Id == workoutPlanId && plan.TrainerId == trainerId
         );
 
@@ -182,9 +200,9 @@ public class WorkoutPlanService : IWorkoutPlanService
             RestSeconds = request.RestSeconds,
         };
 
-        _context.Exercises.Add(exercise);
+        _db.Exercises.Add(exercise);
 
-        await _context.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return new ExerciseResponse
         {
@@ -204,7 +222,7 @@ public class WorkoutPlanService : IWorkoutPlanService
         int trainerId
     )
     {
-        var exercise = await _context
+        var exercise = await _db
             .Exercises.Include(exercise => exercise.WorkoutPlan)
             .FirstOrDefaultAsync(exercise =>
                 exercise.Id == exerciseId && exercise.WorkoutPlan.TrainerId == trainerId
@@ -221,7 +239,7 @@ public class WorkoutPlanService : IWorkoutPlanService
         exercise.Reps = request.Reps;
         exercise.RestSeconds = request.RestSeconds;
 
-        await _context.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return new ExerciseResponse
         {
@@ -237,7 +255,7 @@ public class WorkoutPlanService : IWorkoutPlanService
 
     public async Task<bool> DeleteExerciseAsync(int exerciseId, int trainerId)
     {
-        var exercise = await _context
+        var exercise = await _db
             .Exercises.Include(exercise => exercise.WorkoutPlan)
             .FirstOrDefaultAsync(exercise =>
                 exercise.Id == exerciseId && exercise.WorkoutPlan.TrainerId == trainerId
@@ -248,9 +266,9 @@ public class WorkoutPlanService : IWorkoutPlanService
             return false;
         }
 
-        _context.Exercises.Remove(exercise);
+        _db.Exercises.Remove(exercise);
 
-        await _context.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return true;
     }

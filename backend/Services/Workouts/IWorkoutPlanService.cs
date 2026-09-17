@@ -1,10 +1,11 @@
+using backend.DTOs.Common;
 using backend.DTOs.Workouts;
 
 namespace backend.Services.Workouts;
 
 public interface IWorkoutPlanService
 {
-    Task<List<WorkoutPlanResponse>> GetAllAsync(int trainerId);
+    Task<PagedResponse<WorkoutPlanResponse>> GetAllAsync(int trainerId, int page , int pageSize);
 
     Task<WorkoutPlanResponse?> GetByIdAsync(int id, int trainerId);
 
