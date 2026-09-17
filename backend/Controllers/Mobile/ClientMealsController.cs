@@ -1,11 +1,10 @@
 using System.Security.Claims;
-using backend.Data;
-using backend.DTOs.MealAssignments;
-using backend.DTOs.Mobile;
-using backend.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using backend.DTOs.Common;
+using backend.DTOs.MealAssignments;
+using backend.DTOs.Mobile;
+using backend.Services.Mobile;
 
 namespace backend.Controllers.Mobile;
 
@@ -14,79 +13,58 @@ namespace backend.Controllers.Mobile;
 [Authorize(Roles = "Client")]
 public class ClientMealsController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IClientMealService _service;
 
-    public ClientMealsController(ApplicationDbContext db)
+    public ClientMealsController(IClientMealService service)
     {
-        _db = db;
+        _service = service;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<MobileMealPlanResponse>>> GetMeals()
+    public async Task<ActionResult<PagedResponse<MobileMealPlanResponse>>> GetMeals([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var clientIdValue = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (!int.TryParse(clientIdValue, out var clientId))
+        var clientId = GetClientId();
+        if (clientId is null)
         {
             return Unauthorized();
         }
 
-        var mealPlans = await _db
-            .ClientMealPlans.Where(a => a.ClientId == clientId)
-            .Select(a => new MobileMealPlanResponse
-            {
-                AssignmentId = a.Id,
-                MealPlanId = a.MealPlanId,
-                MealPlanName = a.MealPlan.Name,
-                Description = a.MealPlan.Description,
-                AssignedDate = a.AssignedDate,
+        if (page < 1 || pageSize < 1 || pageSize > 50)
+        {
+            return BadRequest(new { message = "Page must be at least 1 and pageSize must be between 1 and 50." });
+        }
 
-                Meals = a
-                    .MealStatuses.Select(status => new MobileMealStatusResponse
-                    {
-                        MealStatusId = status.Id,
-                        MealId = status.MealId,
-                        MealName = status.Meal.Name,
-                        Instructions = status.Meal.Instructions,
-                        Status = status.Status,
-                        CompletedAt = status.CompletedAt,
-                    })
-                    .ToList(),
-            })
-            .ToListAsync();
-
+        var mealPlans = await _service.GetMealsAsync(clientId.Value, page, pageSize);
         return Ok(mealPlans);
     }
 
     [HttpPatch("{mealStatusId}/status")]
-    public async Task<IActionResult> UpdateMealStatus(
-        int mealStatusId,
-        UpdateMealStatusRequest request
-    )
+    public async Task<IActionResult> UpdateMealStatus(int mealStatusId, UpdateMealStatusRequest request)
     {
-        var clientIdValue = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (!int.TryParse(clientIdValue, out var clientId))
+        var clientId = GetClientId();
+        if (clientId is null)
         {
             return Unauthorized();
         }
 
-        var mealStatus = await _db.ClientMealStatuses.FirstOrDefaultAsync(status =>
-            status.Id == mealStatusId && status.ClientMealPlan.ClientId == clientId
-        );
-
-        if (mealStatus is null)
+        var updated = await _service.UpdateMealStatusAsync(mealStatusId, request, clientId.Value);
+        if (!updated)
         {
             return NotFound();
         }
 
-        mealStatus.Status = request.Status;
-
-        mealStatus.CompletedAt =
-            request.Status == CompletionStatus.Completed ? DateTime.UtcNow : null;
-
-        await _db.SaveChangesAsync();
-
         return NoContent();
+    }
+
+    private int? GetClientId()
+    {
+        var clientIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(clientIdClaim, out var clientId))
+        {
+            return null;
+        }
+
+        return clientId;
     }
 }

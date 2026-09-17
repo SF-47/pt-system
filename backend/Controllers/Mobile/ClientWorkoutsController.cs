@@ -1,11 +1,10 @@
 using System.Security.Claims;
-using backend.Data;
-using backend.DTOs.Mobile;
-using backend.DTOs.WorkoutAssignments;
-using backend.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using backend.DTOs.Common;
+using backend.DTOs.Mobile;
+using backend.DTOs.WorkoutAssignments;
+using backend.Services.Mobile;
 
 namespace backend.Controllers.Mobile;
 
@@ -14,76 +13,41 @@ namespace backend.Controllers.Mobile;
 [Authorize(Roles = "Client")]
 public class ClientWorkoutsController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IClientWorkoutService _service;
 
-    public ClientWorkoutsController(ApplicationDbContext db)
+    public ClientWorkoutsController(IClientWorkoutService service)
     {
-        _db = db;
+        _service = service;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<MobileWorkoutResponse>>> GetWorkouts()
+    public async Task<ActionResult<PagedResponse<MobileWorkoutResponse>>> GetWorkouts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var clientIdValue = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (!int.TryParse(clientIdValue, out var clientId))
+        var clientId = GetClientId();
+        if (clientId is null)
         {
             return Unauthorized();
         }
 
-        var workouts = await _db
-            .ClientWorkoutAssignments.Where(a => a.ClientId == clientId)
-            .Select(a => new MobileWorkoutResponse
-            {
-                AssignmentId = a.Id,
-                WorkoutPlanId = a.WorkoutPlanId,
-                WorkoutPlanName = a.WorkoutPlan.Name,
-                Description = a.WorkoutPlan.Description,
-                AssignedDate = a.AssignedDate,
-                Status = a.Status,
-                CompletedAt = a.CompletedAt,
-            })
-            .ToListAsync();
+        if (page < 1 || pageSize < 1 || pageSize > 50)
+        {
+            return BadRequest(new { message = "Page must be at least 1 and pageSize must be between 1 and 50." });
+        }
 
+        var workouts = await _service.GetWorkoutsAsync(clientId.Value, page, pageSize);
         return Ok(workouts);
     }
 
     [HttpGet("{assignmentId}")]
     public async Task<ActionResult<MobileWorkoutDetailsResponse>> GetWorkout(int assignmentId)
     {
-        var clientIdValue = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (!int.TryParse(clientIdValue, out var clientId))
+        var clientId = GetClientId();
+        if (clientId is null)
         {
             return Unauthorized();
         }
 
-        var workout = await _db
-            .ClientWorkoutAssignments.Where(a => a.Id == assignmentId && a.ClientId == clientId)
-            .Select(a => new MobileWorkoutDetailsResponse
-            {
-                AssignmentId = a.Id,
-                WorkoutPlanId = a.WorkoutPlanId,
-                WorkoutPlanName = a.WorkoutPlan.Name,
-                Description = a.WorkoutPlan.Description,
-                AssignedDate = a.AssignedDate,
-                Status = a.Status,
-                CompletedAt = a.CompletedAt,
-
-                Exercises = a
-                    .WorkoutPlan.Exercises.Select(exercise => new MobileExerciseResponse
-                    {
-                        Id = exercise.Id,
-                        Name = exercise.Name,
-                        Description = exercise.Description,
-                        Sets = exercise.Sets,
-                        Reps = exercise.Reps,
-                        RestSeconds = exercise.RestSeconds,
-                    })
-                    .ToList(),
-            })
-            .FirstOrDefaultAsync();
-
+        var workout = await _service.GetWorkoutAsync(assignmentId, clientId.Value);
         if (workout is null)
         {
             return NotFound();
@@ -93,34 +57,32 @@ public class ClientWorkoutsController : ControllerBase
     }
 
     [HttpPatch("{assignmentId}/status")]
-    public async Task<IActionResult> UpdateStatus(
-        int assignmentId,
-        UpdateWorkoutStatusRequest request
-    )
+    public async Task<IActionResult> UpdateStatus(int assignmentId, UpdateWorkoutStatusRequest request)
     {
-        var clientIdValue = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (!int.TryParse(clientIdValue, out var clientId))
+        var clientId = GetClientId();
+        if (clientId is null)
         {
             return Unauthorized();
         }
 
-        var assignment = await _db.ClientWorkoutAssignments.FirstOrDefaultAsync(a =>
-            a.Id == assignmentId && a.ClientId == clientId
-        );
-
-        if (assignment is null)
+        var updated = await _service.UpdateStatusAsync(assignmentId, request, clientId.Value);
+        if (!updated)
         {
             return NotFound();
         }
 
-        assignment.Status = request.Status;
-
-        assignment.CompletedAt =
-            request.Status == CompletionStatus.Completed ? DateTime.UtcNow : null;
-
-        await _db.SaveChangesAsync();
-
         return NoContent();
+    }
+
+    private int? GetClientId()
+    {
+        var clientIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(clientIdClaim, out var clientId))
+        {
+            return null;
+        }
+
+        return clientId;
     }
 }

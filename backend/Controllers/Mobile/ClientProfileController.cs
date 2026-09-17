@@ -1,9 +1,8 @@
 using System.Security.Claims;
-using backend.Data;
-using backend.DTOs.Mobile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using backend.DTOs.Mobile;
+using backend.Services.Mobile;
 
 namespace backend.Controllers.Mobile;
 
@@ -12,40 +11,40 @@ namespace backend.Controllers.Mobile;
 [Authorize(Roles = "Client")]
 public class ClientProfileController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IClientProfileService _service;
 
-    public ClientProfileController(ApplicationDbContext db)
+    public ClientProfileController(IClientProfileService service)
     {
-        _db = db;
+        _service = service;
     }
 
     [HttpGet]
     public async Task<ActionResult<ClientProfileResponse>> GetProfile()
     {
-        var clientIdValue = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (!int.TryParse(clientIdValue, out var clientId))
+        var clientId = GetClientId();
+        if (clientId is null)
         {
             return Unauthorized();
         }
 
-        var client = await _db
-            .Clients.Where(client => client.Id == clientId)
-            .Select(client => new ClientProfileResponse
-            {
-                Id = client.Id,
-                FullName = client.FullName,
-                Username = client.Username,
-                Email = client.Email,
-                PhoneNumber = client.PhoneNumber,
-            })
-            .FirstOrDefaultAsync();
-
+        var client = await _service.GetProfileAsync(clientId.Value);
         if (client is null)
         {
             return NotFound();
         }
 
         return Ok(client);
+    }
+
+    private int? GetClientId()
+    {
+        var clientIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(clientIdClaim, out var clientId))
+        {
+            return null;
+        }
+
+        return clientId;
     }
 }

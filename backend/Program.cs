@@ -4,6 +4,7 @@ using backend.Services.Auth;
 using backend.Services.Clients;
 using backend.Services.MealAssignments;
 using backend.Services.Meals;
+using backend.Services.Mobile;
 using backend.Services.Payments;
 using backend.Services.WorkoutAssignments;
 using backend.Services.Workouts;
@@ -29,6 +30,11 @@ builder.Services.AddScoped<IMealAssignmentService, MealAssignmentService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IClientAuthService, ClientAuthService>();
 builder.Services.AddScoped<ITrainerAuthService, TrainerAuthService>();
+
+builder.Services.AddScoped<IClientProfileService, ClientProfileService>();
+builder.Services.AddScoped<IClientWorkoutService, ClientWorkoutService>();
+builder.Services.AddScoped<IClientMealService, ClientMealService>();
+builder.Services.AddScoped<IClientProgressService, ClientProgressService>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 

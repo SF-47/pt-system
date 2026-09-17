@@ -1,10 +1,8 @@
 using System.Security.Claims;
-using backend.Data;
-using backend.DTOs.Mobile;
-using backend.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using backend.DTOs.Mobile;
+using backend.Services.Mobile;
 
 namespace backend.Controllers.Mobile;
 
@@ -13,52 +11,35 @@ namespace backend.Controllers.Mobile;
 [Authorize(Roles = "Client")]
 public class ClientProgressController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IClientProgressService _service;
 
-    public ClientProgressController(ApplicationDbContext db)
+    public ClientProgressController(IClientProgressService service)
     {
-        _db = db;
+        _service = service;
     }
 
     [HttpGet]
     public async Task<ActionResult<ClientProgressResponse>> GetProgress()
     {
-        var clientIdValue = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (!int.TryParse(clientIdValue, out var clientId))
+        var clientId = GetClientId();
+        if (clientId is null)
         {
             return Unauthorized();
         }
 
-        var workouts = _db.ClientWorkoutAssignments.Where(a => a.ClientId == clientId);
-
-        var mealStatuses = _db.ClientMealStatuses.Where(status =>
-            status.ClientMealPlan.ClientId == clientId
-        );
-
-        var response = new ClientProgressResponse
-        {
-            TotalWorkouts = await workouts.CountAsync(),
-
-            CompletedWorkouts = await workouts.CountAsync(w =>
-                w.Status == CompletionStatus.Completed
-            ),
-
-            PendingWorkouts = await workouts.CountAsync(w => w.Status == CompletionStatus.Pending),
-
-            SkippedWorkouts = await workouts.CountAsync(w => w.Status == CompletionStatus.Skipped),
-
-            TotalMeals = await mealStatuses.CountAsync(),
-
-            CompletedMeals = await mealStatuses.CountAsync(m =>
-                m.Status == CompletionStatus.Completed
-            ),
-
-            PendingMeals = await mealStatuses.CountAsync(m => m.Status == CompletionStatus.Pending),
-
-            SkippedMeals = await mealStatuses.CountAsync(m => m.Status == CompletionStatus.Skipped),
-        };
-
+        var response = await _service.GetProgressAsync(clientId.Value);
         return Ok(response);
+    }
+
+    private int? GetClientId()
+    {
+        var clientIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(clientIdClaim, out var clientId))
+        {
+            return null;
+        }
+
+        return clientId;
     }
 }
