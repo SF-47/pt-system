@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using backend.DTOs.Common;
 using backend.DTOs.MealAssignments;
 using backend.Services.MealAssignments;
 using Microsoft.AspNetCore.Authorization;
@@ -20,14 +21,32 @@ public class MealAssignmentsController : ControllerBase
     }
 
     [HttpGet("api/clients/{clientId}/meal-plans")]
-    public async Task<ActionResult<List<MealAssignmentResponse>>> GetByClientId(int clientId)
+    public async Task<ActionResult<PagedResponse<MealAssignmentResponse>>> GetByClientId(
+        int clientId,
+        int page = 1,
+        int pageSize = 10
+    )
     {
         var trainerId = GetTrainerId();
         if (trainerId is null)
         {
             return Unauthorized();
         }
-        var assignments = await _mealAssignmentService.GetByClientIdAsync(clientId, trainerId.Value);
+        if (page < 1)
+        {
+            return BadRequest(new { message = "Page must be at least 1." });
+        }
+
+        if (pageSize < 1 || pageSize > 50)
+        {
+            return BadRequest(new { message = "Page size must be between 1 and 50." });
+        }
+        var assignments = await _mealAssignmentService.GetByClientIdAsync(
+            clientId,
+            trainerId.Value,
+            page,
+            pageSize
+        );
 
         return Ok(assignments);
     }

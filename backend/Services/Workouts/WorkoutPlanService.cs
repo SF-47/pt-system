@@ -24,9 +24,24 @@ public class WorkoutPlanService : IWorkoutPlanService
     {
         var query = _db.WorkoutPlans.Where(plan => plan.TrainerId == trainerId);
         var totalCount = await query.CountAsync();
+        var response = new PagedResponse<WorkoutPlanResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+        };
+
+        // Calculate in long so large page numbers cannot overflow the offset.
+        var offset = ((long)page - 1) * pageSize;
+        if (offset >= totalCount)
+        {
+            return response;
+        }
+
         var plans = await query
             .OrderBy(plan => plan.Id)
-            .Skip((page - 1) * pageSize)
+            .Skip((int)offset)
             .Take(pageSize)
             .Select(plan => new WorkoutPlanResponse
             {
@@ -50,14 +65,8 @@ public class WorkoutPlanService : IWorkoutPlanService
             })
             .ToListAsync();
 
-        return new PagedResponse<WorkoutPlanResponse>
-        {
-            Items = plans,
-            Page = page,
-            PageSize = pageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
-        };
+        response.Items = plans;
+        return response;
     }
 
     public async Task<WorkoutPlanResponse?> GetByIdAsync(int id, int trainerId)

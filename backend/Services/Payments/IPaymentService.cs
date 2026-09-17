@@ -1,12 +1,18 @@
+using backend.DTOs.Common;
 using backend.DTOs.Payments;
 
 namespace backend.Services.Payments;
 
 public interface IPaymentService
 {
-    Task<List<PaymentResponse>> GetAllAsync(int trainerId);
+    Task<PagedResponse<PaymentResponse>> GetAllAsync(int trainerId, int page, int pageSize);
 
-    Task<List<PaymentResponse>> GetByClientIdAsync(int clientId, int trainerId);
+    Task<PagedResponse<PaymentResponse>> GetByClientIdAsync(
+        int clientId,
+        int trainerId,
+        int page,
+        int pageSize
+    );
 
     Task<PaymentResponse?> CreateAsync(
         int clientId,

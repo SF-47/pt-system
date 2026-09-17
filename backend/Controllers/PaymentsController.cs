@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using backend.DTOs.Common;
 using backend.DTOs.Payments;
 using backend.Services.Payments;
 using Microsoft.AspNetCore.Authorization;
@@ -20,27 +21,57 @@ public class PaymentsController : ControllerBase
     }
 
     [HttpGet("api/payments")]
-    public async Task<ActionResult<List<PaymentResponse>>> GetAll()
+    public async Task<ActionResult<PagedResponse<PaymentResponse>>> GetAll(
+        int page = 1,
+        int pageSize = 10
+    )
     {
         var trainerId = GetTrainerId();
         if (trainerId is null)
         {
             return Unauthorized();
         }
-        var payments = await _paymentService.GetAllAsync(trainerId.Value);
+        if (page < 1)
+        {
+            return BadRequest(new { message = "Page must be at least 1." });
+        }
+
+        if (pageSize < 1 || pageSize > 50)
+        {
+            return BadRequest(new { message = "Page size must be between 1 and 50." });
+        }
+        var payments = await _paymentService.GetAllAsync(trainerId.Value, page, pageSize);
 
         return Ok(payments);
     }
 
     [HttpGet("api/clients/{clientId}/payments")]
-    public async Task<ActionResult<List<PaymentResponse>>> GetByClientId(int clientId)
+    public async Task<ActionResult<PagedResponse<PaymentResponse>>> GetByClientId(
+        int clientId,
+        int page = 1,
+        int pageSize = 10
+    )
     {
         var trainerId = GetTrainerId();
         if (trainerId is null)
         {
             return Unauthorized();
         }
-        var payments = await _paymentService.GetByClientIdAsync(clientId, trainerId.Value);
+        if (page < 1)
+        {
+            return BadRequest(new { message = "Page must be at least 1." });
+        }
+
+        if (pageSize < 1 || pageSize > 50)
+        {
+            return BadRequest(new { message = "Page size must be between 1 and 50." });
+        }
+        var payments = await _paymentService.GetByClientIdAsync(
+            clientId,
+            trainerId.Value,
+            page,
+            pageSize
+        );
 
         return Ok(payments);
     }

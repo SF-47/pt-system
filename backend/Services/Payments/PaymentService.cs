@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.DTOs.Common;
 using backend.DTOs.Payments;
 using backend.Enums;
 using backend.Models;
@@ -15,10 +16,35 @@ public class PaymentService : IPaymentService
         _context = context;
     }
 
-    public async Task<List<PaymentResponse>> GetAllAsync(int trainerId)
+    public async Task<PagedResponse<PaymentResponse>> GetAllAsync(
+        int trainerId,
+        int page,
+        int pageSize
+    )
     {
-        return await _context
-            .Payments.Where(payment => payment.Client.TrainerId == trainerId)
+        var query = _context
+            .Payments.Where(payment => payment.Client.TrainerId == trainerId);
+        var totalCount = await query.CountAsync();
+        var response = new PagedResponse<PaymentResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+        };
+
+        // Calculate in long so large page numbers cannot overflow the offset.
+        var offset = ((long)page - 1) * pageSize;
+        if (offset >= totalCount)
+        {
+            return response;
+        }
+
+        var items = await query
+            .OrderByDescending(payment => payment.DueDate)
+            .ThenByDescending(payment => payment.Id)
+            .Skip((int)offset)
+            .Take(pageSize)
             .Select(payment => new PaymentResponse
             {
                 Id = payment.Id,
@@ -30,14 +56,43 @@ public class PaymentService : IPaymentService
                 PaidAt = payment.PaidAt,
             })
             .ToListAsync();
+
+        response.Items = items;
+        return response;
     }
 
-    public async Task<List<PaymentResponse>> GetByClientIdAsync(int clientId, int trainerId)
+    public async Task<PagedResponse<PaymentResponse>> GetByClientIdAsync(
+        int clientId,
+        int trainerId,
+        int page,
+        int pageSize
+    )
     {
-        return await _context
+        var query = _context
             .Payments.Where(payment =>
                 payment.ClientId == clientId && payment.Client.TrainerId == trainerId
-            )
+            );
+        var totalCount = await query.CountAsync();
+        var response = new PagedResponse<PaymentResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+        };
+
+        // Calculate in long so large page numbers cannot overflow the offset.
+        var offset = ((long)page - 1) * pageSize;
+        if (offset >= totalCount)
+        {
+            return response;
+        }
+
+        var items = await query
+            .OrderByDescending(payment => payment.DueDate)
+            .ThenByDescending(payment => payment.Id)
+            .Skip((int)offset)
+            .Take(pageSize)
             .Select(payment => new PaymentResponse
             {
                 Id = payment.Id,
@@ -49,6 +104,9 @@ public class PaymentService : IPaymentService
                 PaidAt = payment.PaidAt,
             })
             .ToListAsync();
+
+        response.Items = items;
+        return response;
     }
 
     public async Task<PaymentResponse?> CreateAsync(

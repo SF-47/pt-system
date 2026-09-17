@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using backend.DTOs.Common;
 using backend.DTOs.WorkoutAssignments;
 using backend.Services.WorkoutAssignments;
 using Microsoft.AspNetCore.Authorization;
@@ -20,16 +21,31 @@ public class WorkoutAssignmentsController : ControllerBase
     }
 
     [HttpGet("api/clients/{clientId}/workout-plans")]
-    public async Task<ActionResult<List<WorkoutAssignmentResponse>>> GetByClientId(int clientId)
+    public async Task<ActionResult<PagedResponse<WorkoutAssignmentResponse>>> GetByClientId(
+        int clientId,
+        int page = 1,
+        int pageSize = 10
+    )
     {
         var trainerId = GetTrainerId();
         if (trainerId is null)
         {
             return Unauthorized();
         }
+        if (page < 1)
+        {
+            return BadRequest(new { message = "Page must be at least 1." });
+        }
+
+        if (pageSize < 1 || pageSize > 50)
+        {
+            return BadRequest(new { message = "Page size must be between 1 and 50." });
+        }
         var assignments = await _workoutAssignmentService.GetByClientIdAsync(
             clientId,
-            trainerId.Value
+            trainerId.Value,
+            page,
+            pageSize
         );
 
         return Ok(assignments);

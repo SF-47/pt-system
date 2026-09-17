@@ -23,9 +23,24 @@ public class MealPlanService : IMealPlanService
     {
         var query = _db.MealPlans.Where(plan => plan.TrainerId == trainerId);
         var totalCount = await query.CountAsync();
+        var response = new PagedResponse<MealPlanResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+        };
+
+        // Calculate in long so large page numbers cannot overflow the offset.
+        var offset = ((long)page - 1) * pageSize;
+        if (offset >= totalCount)
+        {
+            return response;
+        }
+
         var plans = await query
             .OrderBy(plan => plan.Id)
-            .Skip((page - 1) * pageSize)
+            .Skip((int)offset)
             .Take(pageSize)
             .Select(plan => new MealPlanResponse
             {
@@ -46,14 +61,8 @@ public class MealPlanService : IMealPlanService
             })
             .ToListAsync();
 
-        return new PagedResponse<MealPlanResponse>
-        {
-            Items = plans,
-            Page = page,
-            PageSize = pageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
-        };
+        response.Items = plans;
+        return response;
     }
 
     public async Task<MealPlanResponse?> GetByIdAsync(int id, int trainerId)

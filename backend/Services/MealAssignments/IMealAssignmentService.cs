@@ -1,3 +1,4 @@
+using backend.DTOs.Common;
 using backend.DTOs.MealAssignments;
 using backend.Services;
 
@@ -5,7 +6,12 @@ namespace backend.Services.MealAssignments;
 
 public interface IMealAssignmentService
 {
-    Task<List<MealAssignmentResponse>> GetByClientIdAsync(int clientId, int trainerId);
+    Task<PagedResponse<MealAssignmentResponse>> GetByClientIdAsync(
+        int clientId,
+        int trainerId,
+        int page,
+        int pageSize
+    );
 
     Task<ServiceResult<MealAssignmentResponse>> AssignAsync(
         int clientId,

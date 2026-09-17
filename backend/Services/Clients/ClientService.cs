@@ -24,9 +24,24 @@ public class ClientService : IClientService
     {
         var query = _db.Clients.Where(client => client.TrainerId == trainerId);
         var totalCount = await query.CountAsync();
+        var response = new PagedResponse<ClientResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+        };
+
+        // Calculate in long so large page numbers cannot overflow the offset.
+        var offset = ((long)page - 1) * pageSize;
+        if (offset >= totalCount)
+        {
+            return response;
+        }
+
         var clients = await query
             .OrderBy(client => client.Id)
-            .Skip((page - 1) * pageSize)
+            .Skip((int)offset)
             .Take(pageSize)
             .Select(client => new ClientResponse
             {
@@ -41,14 +56,8 @@ public class ClientService : IClientService
             })
             .ToListAsync();
 
-        return new PagedResponse<ClientResponse>
-        {
-            Items = clients,
-            Page = page,
-            PageSize = pageSize,
-            TotalCount = totalCount,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
-        };
+        response.Items = clients;
+        return response;
     }
 
     public async Task<ClientResponse?> GetByIdAsync(int id, int trainerId)

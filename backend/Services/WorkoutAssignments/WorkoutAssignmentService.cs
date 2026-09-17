@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.DTOs.Common;
 using backend.DTOs.WorkoutAssignments;
 using backend.Enums;
 using backend.Models;
@@ -16,15 +17,38 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         _context = context;
     }
 
-    public async Task<List<WorkoutAssignmentResponse>> GetByClientIdAsync(
+    public async Task<PagedResponse<WorkoutAssignmentResponse>> GetByClientIdAsync(
         int clientId,
-        int trainerId
+        int trainerId,
+        int page,
+        int pageSize
     )
     {
-        return await _context
+        var query = _context
             .ClientWorkoutAssignments.Where(assignment =>
                 assignment.ClientId == clientId && assignment.Client.TrainerId == trainerId
-            )
+            );
+        var totalCount = await query.CountAsync();
+        var response = new PagedResponse<WorkoutAssignmentResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+        };
+
+        // Calculate in long so large page numbers cannot overflow the offset.
+        var offset = ((long)page - 1) * pageSize;
+        if (offset >= totalCount)
+        {
+            return response;
+        }
+
+        var items = await query
+            .OrderByDescending(assignment => assignment.AssignedDate)
+            .ThenByDescending(assignment => assignment.Id)
+            .Skip((int)offset)
+            .Take(pageSize)
             .Select(assignment => new WorkoutAssignmentResponse
             {
                 Id = assignment.Id,
@@ -36,6 +60,9 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
                 CompletedAt = assignment.CompletedAt,
             })
             .ToListAsync();
+
+        response.Items = items;
+        return response;
     }
 
     public async Task<ServiceResult<WorkoutAssignmentResponse>> AssignAsync(

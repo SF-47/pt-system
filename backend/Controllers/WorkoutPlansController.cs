@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using backend.DTOs.Common;
 using backend.DTOs.Workouts;
 using backend.Services.Workouts;
 using Microsoft.AspNetCore.Authorization;
@@ -21,7 +22,7 @@ public class WorkoutPlansController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<WorkoutPlanResponse>>> GetAll(
+    public async Task<ActionResult<PagedResponse<WorkoutPlanResponse>>> GetAll(
         int page = 1,
         int pageSize = 10
     )

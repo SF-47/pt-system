@@ -1,3 +1,4 @@
+using backend.DTOs.Common;
 using backend.DTOs.WorkoutAssignments;
 using backend.Services;
 
@@ -5,7 +6,12 @@ namespace backend.Services.WorkoutAssignments;
 
 public interface IWorkoutAssignmentService
 {
-    Task<List<WorkoutAssignmentResponse>> GetByClientIdAsync(int clientId, int trainerId);
+    Task<PagedResponse<WorkoutAssignmentResponse>> GetByClientIdAsync(
+        int clientId,
+        int trainerId,
+        int page,
+        int pageSize
+    );
 
     Task<ServiceResult<WorkoutAssignmentResponse>> AssignAsync(
         int clientId,

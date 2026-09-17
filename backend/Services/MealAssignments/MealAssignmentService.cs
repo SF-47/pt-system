@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.DTOs.Common;
 using backend.DTOs.MealAssignments;
 using backend.Enums;
 using backend.Models;
@@ -16,12 +17,38 @@ public class MealAssignmentService : IMealAssignmentService
         _db = db;
     }
 
-    public async Task<List<MealAssignmentResponse>> GetByClientIdAsync(int clientId, int trainerId)
+    public async Task<PagedResponse<MealAssignmentResponse>> GetByClientIdAsync(
+        int clientId,
+        int trainerId,
+        int page,
+        int pageSize
+    )
     {
-        return await _db
+        var query = _db
             .ClientMealPlans.Where(assignment =>
                 assignment.ClientId == clientId && assignment.Client.TrainerId == trainerId
-            )
+            );
+        var totalCount = await query.CountAsync();
+        var response = new PagedResponse<MealAssignmentResponse>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+        };
+
+        // Calculate in long so large page numbers cannot overflow the offset.
+        var offset = ((long)page - 1) * pageSize;
+        if (offset >= totalCount)
+        {
+            return response;
+        }
+
+        var items = await query
+            .OrderByDescending(assignment => assignment.AssignedDate)
+            .ThenByDescending(assignment => assignment.Id)
+            .Skip((int)offset)
+            .Take(pageSize)
             .Select(assignment => new MealAssignmentResponse
             {
                 Id = assignment.Id,
@@ -42,6 +69,9 @@ public class MealAssignmentService : IMealAssignmentService
                     .ToList(),
             })
             .ToListAsync();
+
+        response.Items = items;
+        return response;
     }
 
     public async Task<ServiceResult<MealAssignmentResponse>> AssignAsync(
