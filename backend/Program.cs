@@ -8,6 +8,7 @@ using backend.Services.MealAssignments;
 using backend.Services.Meals;
 using backend.Services.Mobile;
 using backend.Services.Payments;
+using backend.Services.Stats;
 using backend.Services.WorkoutAssignments;
 using backend.Services.Workouts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -33,6 +34,7 @@ builder.Services.AddScoped<IMealAssignmentService, MealAssignmentService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IClientAuthService, ClientAuthService>();
 builder.Services.AddScoped<ITrainerAuthService, TrainerAuthService>();
+builder.Services.AddScoped<IStatsService, StatsService>();
 
 builder.Services.AddScoped<IClientProfileService, ClientProfileService>();
 builder.Services.AddScoped<IClientWorkoutService, ClientWorkoutService>();
