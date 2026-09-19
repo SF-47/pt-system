@@ -1,85 +1,124 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import EmptyState from "@/components/EmptyState";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
-import Link from "next/link";
+import Pagination from "@/components/Pagination";
+import PlanCard, { PlanCardSkeleton } from "@/components/PlanCard";
+import SummaryMetric from "@/components/SummaryMetric";
+import api from "@/lib/api";
+import { Endpoints } from "@/lib/Endpoints";
+import type { PagedResponse } from "@/types/api";
+import MealPlansLoading from "./loading";
 
 type MealPlan = {
   id: number;
   name: string;
   description: string;
-  mealCount: number;
+  meals: unknown[];
 };
 
-const mealPlans: MealPlan[] = [
-  {
-    id: 1,
-    name: "Weight Loss Plan",
-    description: "Simple low-calorie meal plan",
-    mealCount: 3,
-  },
-  {
-    id: 2,
-    name: "Muscle Gain Plan",
-    description: "High-protein meal plan",
-    mealCount: 4,
-  },
-];
+type MealStats = {
+  totalPlans: number;
+  totalAssignments: number;
+};
 
 export default function MealPlansPage() {
+  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [stats, setStats] = useState<MealStats | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+  const [listError, setListError] = useState("");
+  const [statsError, setStatsError] = useState("");
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function getMealPlans() {
+      setIsFetching(true);
+      setListError("");
+      try {
+        const response = await api.get<PagedResponse<MealPlan>>(
+          Endpoints.mealPlans(page, pageSize),
+        );
+        if (ignore) return;
+        setMealPlans(response.data.items);
+        setTotalCount(response.data.totalCount);
+        setTotalPages(response.data.totalPages);
+      } catch {
+        if (!ignore) setListError("Meal plans could not be loaded. Please try again.");
+      } finally {
+        if (!ignore) {
+          setIsFetching(false);
+          setIsInitialLoading(false);
+        }
+      }
+    }
+
+    void getMealPlans();
+    return () => { ignore = true; };
+  }, [page]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function getMealStats() {
+      try {
+        const response = await api.get<MealStats>(Endpoints.mealPlansStats);
+        if (!ignore) setStats(response.data);
+      } catch {
+        if (!ignore) setStatsError("Meal plan totals are currently unavailable.");
+      }
+    }
+
+    void getMealStats();
+    return () => { ignore = true; };
+  }, []);
+
+  if (isInitialLoading) return <MealPlansLoading />;
+
   return (
-    <div>
-      <PageHeader
-        title="Meal Plans"
-        description="Keep daily nutrition clear and easy to follow."
-      >
-        <Link
-          href="/meal-plans/new"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover"
-        >
+    <div className="[&>header_h1]:text-[28px] [&>header_p]:text-sm [&>header_p]:leading-relaxed">
+      <PageHeader title="Meal Plans" description="Reusable meal plans with clear instructions for daily nutrition.">
+        <Link href="/meal-plans/new" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover">
           <Icon name="plus" />
           Create Meal Plan
         </Link>
       </PageHeader>
-      <div className="grid grid-cols-1 gap-4 min-[1001px]:grid-cols-2">
-        {mealPlans.map((plan) => (
-          <article
-            key={plan.id}
-            className="overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-[#9dc8ae] dark:border-[#2C3238] dark:bg-[#1B1F24] dark:hover:border-[#2F855A]"
-          >
-            <div className="flex items-center justify-between gap-4 p-5">
-              <div>
-                <h2 className="text-lg font-semibold">{plan.name}</h2>
-                <p className="mt-2 text-muted">{plan.description}</p>
-              </div>
-              <div className="min-w-16 border-l border-border pl-4 text-center">
-                <strong className="block text-xl font-semibold text-foreground">
-                  {plan.mealCount}
-                </strong>
-                <span className="text-xs text-muted">meals</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between gap-3 border-t border-border bg-[#fafcfb] px-5 py-3 dark:border-[#2C3238] dark:bg-[#20252A]">
-              <Link
-                href={`/meal-plans/${plan.id}`}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-semibold text-foreground transition-colors hover:bg-hover"
-              >
-                <Icon name="view" />
-                View Plan
-              </Link>
-              <button
-                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2 rounded-md border border-transparent px-3 py-2 text-muted"
-                disabled
-                title="Plan editing is not available yet"
-              >
-                <Icon name="edit" />
-                Edit
-              </button>
-            </div>
-          </article>
-        ))}
+
+      <section aria-label="Meal plan summary" className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <SummaryMetric compact label="Meal plans" value={stats?.totalPlans ?? "—"} />
+        <SummaryMetric compact label="Total assigned plans" value={stats?.totalAssignments ?? "—"} />
+      </section>
+
+      {statsError && <p className="mb-4 text-sm text-warning" role="status">{statsError}</p>}
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
+        <h2 className="text-sm font-semibold">Meal plan library</h2>
+        <p className="text-sm text-muted">{totalCount} meal plans</p>
       </div>
-      <p className="my-4 text-[13px] text-muted">
-        Plan editing is not available yet.
-      </p>
+
+      {listError ? (
+        <div className="rounded-lg border border-danger/30 bg-danger-soft p-4 text-sm text-danger" role="alert">{listError}</div>
+      ) : isFetching ? (
+        <div className="grid grid-cols-1 gap-4 min-[640px]:grid-cols-2 min-[1200px]:grid-cols-3" aria-label="Loading meal plans" aria-busy="true">
+          {Array.from({ length: 6 }).map((_, index) => <PlanCardSkeleton key={index} kind="meal" />)}
+        </div>
+      ) : mealPlans.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 min-[640px]:grid-cols-2 min-[1200px]:grid-cols-3">
+          {mealPlans.map((plan) => <PlanCard key={plan.id} id={plan.id} name={plan.name} description={plan.description} count={plan.meals.length} kind="meal" />)}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-border bg-surface"><EmptyState icon="meal" title="No meal plans found" description="Create a meal plan to start your library." /></div>
+      )}
+
+      <Pagination page={page} totalPages={totalPages} isLoading={isFetching} onPrevious={() => setPage((current) => Math.max(1, current - 1))} onNext={() => setPage((current) => Math.min(totalPages, current + 1))} />
     </div>
   );
 }

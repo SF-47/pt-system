@@ -1,64 +1,196 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Avatar from "@/components/Avatar";
+import EmptyState from "@/components/EmptyState";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
+import Pagination from "@/components/Pagination";
 import StatusBadge from "@/components/StatusBadge";
 import SummaryMetric from "@/components/SummaryMetric";
-import { payments } from "@/data/mock-data";
+import api from "@/lib/api";
+import { Endpoints } from "@/lib/Endpoints";
+import type { PagedResponse } from "@/types/api";
+import PaymentsLoading from "./loading";
 
 type StatusFilter = "All" | "Paid" | "Pending";
+type PaymentStatus = "Paid" | "Pending" | "Unknown";
+type Payment = {
+  id: number;
+  clientName: string;
+  amount: number;
+  status: number;
+  dueDate: string;
+  paidAt: string | null;
+};
+type PaymentStats = {
+  totalPayments: number;
+  paidPayments: number;
+  pendingPayments: number;
+  totalPaidAmount: number;
+  totalPendingAmount: number;
+};
+
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+
+function getPaymentStatus(status: number): PaymentStatus {
+  if (status === 0) return "Pending";
+  if (status === 1) return "Paid";
+  return "Unknown";
+}
+
+function PaymentsTableSkeleton() {
+  return (
+    <div
+      className="overflow-hidden rounded-lg border border-border bg-surface"
+      aria-label="Loading payment records"
+      aria-busy="true"
+    >
+      <div className="grid min-w-190 grid-cols-5 gap-4 bg-background px-5 py-4">
+        {[0, 1, 2, 3, 4].map((cell) => (
+          <div
+            key={cell}
+            className="h-4 w-16 animate-pulse rounded bg-border"
+          />
+        ))}
+      </div>
+      {[0, 1, 2, 3, 4].map((row) => (
+        <div
+          key={row}
+          className="grid min-w-190 grid-cols-5 gap-4 border-t border-border px-5 py-5"
+        >
+          {[0, 1, 2, 3, 4].map((cell) => (
+            <div
+              key={cell}
+              className="h-5 w-4/5 animate-pulse rounded bg-border"
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function PaymentsPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [stats, setStats] = useState<PaymentStats | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+  const [listError, setListError] = useState("");
+  const [statsError, setStatsError] = useState("");
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function getPayments() {
+      setIsFetching(true);
+      setListError("");
+      try {
+        const response = await api.get<PagedResponse<Payment>>(
+          Endpoints.payments(page, pageSize),
+        );
+        if (ignore) return;
+        setPayments(response.data.items);
+        setPage(response.data.page);
+        setPageSize(response.data.pageSize);
+        setTotalPages(response.data.totalPages);
+        setTotalCount(response.data.totalCount);
+      } catch {
+        if (!ignore)
+          setListError("Payments could not be loaded. Please try again.");
+      } finally {
+        if (!ignore) {
+          setIsFetching(false);
+          setIsInitialLoading(false);
+        }
+      }
+    }
+
+    void getPayments();
+    return () => {
+      ignore = true;
+    };
+  }, [page, pageSize]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function getPaymentStats() {
+      try {
+        const response = await api.get<PaymentStats>(Endpoints.paymentsStats);
+        if (!ignore) setStats(response.data);
+      } catch {
+        if (!ignore) setStatsError("Payment totals are currently unavailable.");
+      }
+    }
+
+    void getPaymentStats();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  if (isInitialLoading) return <PaymentsLoading />;
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredPayments = payments.filter((payment) => {
-    const matchesQuery = payment.clientName
-      .toLowerCase()
-      .includes(normalizedQuery);
-    const matchesStatus =
-      statusFilter === "All" || payment.status === statusFilter;
-
-    return matchesQuery && matchesStatus;
+    const status = getPaymentStatus(payment.status);
+    return (
+      payment.clientName.toLowerCase().includes(normalizedQuery) &&
+      (statusFilter === "All" || status === statusFilter)
+    );
   });
-  const paidPayments = payments.filter((payment) => payment.status === "Paid");
-  const pendingPayments = payments.filter(
-    (payment) => payment.status === "Pending",
-  );
-  const totalAmount = payments.reduce(
-    (total, payment) => total + payment.amount,
-    0,
-  );
 
   return (
-    <div>
+    <div className="[&>header_h1]:text-[28px] [&>header_p]:text-sm [&>header_p]:leading-relaxed">
       <PageHeader
         title="Payments"
-        description="Payment updates are not available yet."
+        description="Review client payments, due dates, and paid or pending balances."
       />
 
       <section
-        className="mb-4 grid grid-cols-2 gap-3 min-[761px]:grid-cols-4"
+        className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>div:last-child>p:last-child]:text-warning"
         aria-label="Payment summary"
       >
-        <SummaryMetric label="Total Payments" value={payments.length} />
-        <SummaryMetric label="Paid" value={paidPayments.length} />
-        <SummaryMetric label="Pending" value={pendingPayments.length} />
-        <SummaryMetric label="Total Amount" value={`$${totalAmount}`} />
+        <SummaryMetric
+          compact
+          label="Paid amount"
+          value={stats ? currencyFormatter.format(stats.totalPaidAmount) : "—"}
+        />
+        <SummaryMetric
+          compact
+          label="Pending amount"
+          value={
+            stats ? currencyFormatter.format(stats.totalPendingAmount) : "—"
+          }
+        />
       </section>
 
+      {statsError && (
+        <p className="mb-4 text-sm text-warning" role="status">
+          {statsError}
+        </p>
+      )}
+
       <section
-        className="mb-3 flex flex-col gap-2 min-[761px]:flex-row min-[761px]:items-end"
+        className="mb-4 flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 sm:flex-row sm:items-end sm:justify-between"
         aria-label="Payment tools"
       >
-        <div className="min-w-0 min-[761px]:w-96">
+        <div className="min-w-0 sm:w-96">
           <label
             htmlFor="payment-search"
             className="mb-1 block text-sm font-medium text-foreground"
           >
-            Search payments
+            Search this page
           </label>
           <input
             id="payment-search"
@@ -69,7 +201,7 @@ export default function PaymentsPage() {
             className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
           />
         </div>
-        <div className="min-[761px]:w-44">
+        <div className="sm:w-44">
           <label
             htmlFor="payment-status-filter"
             className="mb-1 block text-sm font-medium text-foreground"
@@ -91,82 +223,116 @@ export default function PaymentsPage() {
         </div>
       </section>
 
-      <p className="mb-2 text-xs text-muted" aria-live="polite">
-        Showing {filteredPayments.length} of {payments.length} payments
+      <p className="mb-2 text-sm text-muted" aria-live="polite">
+        Payments · {filteredPayments.length} visible on this page · {totalCount}{" "}
+        total
       </p>
 
-      <div
-        className="w-full overflow-x-auto rounded-md border border-border bg-surface dark:border-[#2C3238] dark:bg-[#1B1F24]"
-        role="region"
-        aria-label="Payments table"
-        tabIndex={0}
-      >
-        <table className="w-full border-collapse whitespace-nowrap tabular-nums">
-          <thead>
-            <tr>
-              {["Client", "Amount", "Due Date", "Status", "Action"].map(
-                (heading) => (
+      {listError ? (
+        <div
+          className="rounded-lg border border-danger/30 bg-danger-soft p-4 text-sm text-danger"
+          role="alert"
+        >
+          {listError}
+        </div>
+      ) : isFetching ? (
+        <PaymentsTableSkeleton />
+      ) : (
+        <div
+          className="w-full overflow-x-auto rounded-lg border border-border bg-surface"
+          role="region"
+          aria-label="Payments table"
+          tabIndex={0}
+        >
+          <table className="w-full min-w-190 border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border bg-background">
+                {[
+                  ["Client", "text-left"],
+                  ["Amount", "text-right"],
+                  ["Due Date", "text-left"],
+                  ["Status", "text-left"],
+                  ["Action", "text-right"],
+                ].map(([heading, alignment]) => (
                   <th
                     key={heading}
-                    scope="col"
-                    className={`bg-[#f3f7f4] px-4 py-3 align-middle text-sm font-semibold text-muted dark:bg-[#20252A] ${
-                      heading === "Amount" ? "text-right" : "text-left"
-                    }`}
+                    className={`px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted ${alignment}`}
                   >
                     {heading}
                   </th>
-                ),
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {filteredPayments.length > 0 ? (
-              filteredPayments.map((payment) => (
-                <tr
-                  key={payment.id}
-                  className="border-t border-border transition-colors hover:bg-hover focus-within:bg-hover dark:border-[#2C3238] dark:hover:bg-[#23292F] dark:focus-within:bg-[#23292F]"
-                >
-                  <td className="px-4 py-3 align-middle font-semibold">
-                    {payment.clientName}
-                  </td>
-                  <td className="px-4 py-3 text-right align-middle font-medium">
-                    ${payment.amount}
-                  </td>
-                  <td className="px-4 py-3 align-middle text-muted">
-                    {payment.dueDate}
-                  </td>
-                  <td className="px-4 py-3 align-middle">
-                    <StatusBadge status={payment.status} />
-                  </td>
-                  <td className="px-4 py-3 align-middle">
-                    {payment.status === "Pending" ? (
-                      <button
-                        className="inline-flex min-h-9 cursor-not-allowed items-center justify-center gap-2 whitespace-nowrap rounded-md border border-transparent px-2 py-2 text-[13px] text-muted"
-                        disabled
-                        title="Payment updates are not available yet"
-                      >
-                        <Icon name="check" className="size-3.5" />
-                        Mark Paid
-                      </button>
-                    ) : (
-                      <span className="text-muted" aria-label="No action available">
-                        —
-                      </span>
-                    )}
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPayments.length > 0 ? (
+                filteredPayments.map((payment) => {
+                  const status = getPaymentStatus(payment.status);
+                  return (
+                    <tr
+                      key={payment.id}
+                      className={`border-b border-border last:border-b-0 transition-colors hover:bg-hover ${status === "Pending" ? "bg-warning-soft/20" : ""}`}
+                    >
+                      <td className="px-5 py-4 align-middle">
+                        <div className="flex items-center gap-3">
+                          <Avatar name={payment.clientName} />
+                          <span className="font-semibold text-foreground">
+                            {payment.clientName}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-right align-middle font-semibold tabular-nums text-foreground">
+                        {currencyFormatter.format(payment.amount)}
+                      </td>
+                      <td className="px-5 py-4 align-middle text-muted">
+                        {new Date(payment.dueDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td className="px-5 py-4 align-middle">
+                        <StatusBadge status={status} />
+                      </td>
+                      <td className="px-5 py-4 text-right align-middle">
+                        {status === "Pending" ? (
+                          <button
+                            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-muted"
+                            disabled
+                            title="Payment updates are not available yet"
+                          >
+                            <Icon name="check" className="size-4" />
+                            Mark Paid
+                          </button>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={5} className="p-0">
+                    <EmptyState
+                      icon="payment"
+                      title="No matching payments"
+                      description="Try another client name or payment status on this page."
+                    />
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr className="border-t border-border dark:border-[#2C3238]">
-                <td className="px-4 py-8 text-center text-muted" colSpan={5}>
-                  No payments match your search and status filter.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        isLoading={isFetching}
+        onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+        onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
+      />
     </div>
   );
 }
