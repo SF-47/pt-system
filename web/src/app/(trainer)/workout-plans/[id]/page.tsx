@@ -29,30 +29,33 @@ export default async function WorkoutPlanPage({
   ];
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-5xl">
       <BackLink href="/workout-plans">Back to Workout Plans</BackLink>
-      <PageHeader title="Push Day" />
+      <PageHeader title="Push Day" description="Chest, shoulders and triceps workout." />
 
-      <p className="text-sm text-muted">Workout Plan ID: {id}</p>
+      <section aria-label="Plan overview" className="mb-6 border-b border-border pb-4">
+        <dl className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
+          <div><dt className="text-muted">Plan ID</dt><dd className="mt-1 font-medium tabular-nums">{id}</dd></div>
+          <div><dt className="text-muted">Exercises</dt><dd className="mt-1 font-medium tabular-nums">{exercises.length}</dd></div>
+        </dl>
+      </section>
 
-      <p className="mt-2">Chest, shoulders and triceps workout.</p>
-
-      <h2 className="mb-3 mt-8 text-lg font-semibold">Exercises</h2>
+      <h2 className="mb-3 text-lg font-semibold">Exercises</h2>
 
       <div
-        className="w-full overflow-x-auto rounded-md border border-border bg-surface dark:border-[#2C3238] dark:bg-[#1B1F24]"
+        className="w-full overflow-x-auto rounded-lg border border-border bg-surface dark:border-border dark:bg-surface"
         role="region"
         aria-label="Exercises"
         tabIndex={0}
       >
-        <table className="w-full border-collapse whitespace-nowrap tabular-nums">
+        <table className="workspace-table w-full border-collapse whitespace-nowrap tabular-nums">
           <thead>
             <tr>
               {["Exercise", "Sets", "Reps", "Rest"].map((heading) => (
                 <th
                   key={heading}
                   scope="col"
-                  className="bg-[#f3f7f4] px-4 py-3 text-left align-middle text-sm font-semibold text-muted dark:bg-[#20252A]"
+                  className={`bg-background px-5 py-3 align-middle text-sm font-medium text-muted ${heading === "Exercise" ? "text-left" : "text-right"}`}
                 >
                   {heading}
                 </th>
@@ -63,12 +66,12 @@ export default async function WorkoutPlanPage({
             {exercises.map((exercise) => (
               <tr
                 key={exercise.id}
-                className="border-t border-border transition-colors hover:bg-hover focus-within:bg-hover dark:border-[#2C3238] dark:hover:bg-[#23292F] dark:focus-within:bg-[#23292F]"
+                className="border-t border-border transition-colors hover:bg-hover focus-within:bg-hover dark:border-border dark:hover:bg-hover dark:focus-within:bg-hover"
               >
-                <td className="px-4 py-3 align-middle font-medium">{exercise.name}</td>
-                <td className="px-4 py-3 align-middle">{exercise.sets}</td>
-                <td className="px-4 py-3 align-middle">{exercise.reps}</td>
-                <td className="px-4 py-3 align-middle text-muted">
+                <td className="px-5 py-5 align-middle font-medium"><span className="mr-4 inline-block w-6 text-sm font-normal text-muted tabular-nums">{String(exercise.id).padStart(2, "0")}</span>{exercise.name}</td>
+                <td className="px-5 py-5 text-right align-middle">{exercise.sets}</td>
+                <td className="px-5 py-5 text-right align-middle">{exercise.reps}</td>
+                <td className="px-5 py-5 text-right align-middle text-muted">
                   {exercise.restSeconds} seconds
                 </td>
               </tr>
