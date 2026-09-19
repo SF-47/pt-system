@@ -19,11 +19,25 @@ public class ClientService : IClientService
     public async Task<PagedResponse<ClientResponse>> GetAllAsync(
         int trainerId,
         int page,
-        int pageSize
+        int pageSize,
+        string? search
     )
     {
         var query = _db.Clients.Where(client => client.TrainerId == trainerId);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.Trim();
+
+            query = query.Where(client =>
+                client.FullName.Contains(search)
+                || (client.Email != null && client.Email.Contains(search))
+                || client.PhoneNumber.Contains(search)
+            );
+        }
+
         var totalCount = await query.CountAsync();
+
         var response = new PagedResponse<ClientResponse>
         {
             Page = page,
@@ -33,12 +47,13 @@ public class ClientService : IClientService
         };
 
         var offset = ((long)page - 1) * pageSize;
+
         if (offset >= totalCount)
         {
             return response;
         }
 
-        var clients = await query
+        response.Items = await query
             .OrderBy(client => client.Id)
             .Skip((int)offset)
             .Take(pageSize)
@@ -55,7 +70,6 @@ public class ClientService : IClientService
             })
             .ToListAsync();
 
-        response.Items = clients;
         return response;
     }
 
