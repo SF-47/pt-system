@@ -24,6 +24,7 @@ public class PaymentService : IPaymentService
     {
         var query = _context
             .Payments.Where(payment => payment.Client.TrainerId == trainerId);
+
         var totalCount = await query.CountAsync();
         var response = new PagedResponse<PaymentResponse>
         {
