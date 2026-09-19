@@ -4,44 +4,39 @@
 
 :root {
   color-scheme: light;
-  --background: #f6f8f6;
-  --surface: #ffffff;
-  --sidebar: #ffffff;
-  --border: #d1d5db;
-  --border-strong: #c7cdd4;
-  --input-border: #8b978f;
-  --primary: #2f855a;
+  --background: #F6F8F6;
+  --surface: #FFFFFF;
+  --sidebar: #FFFFFF;
+  --border: #D1D5DB;
+  --border-strong: var(--border);
+  --input-border: var(--border);
+  --primary: #2F855A;
   --primary-hover: #276749;
-  --primary-soft: #eaf6ef;
-  --text: #1f2937;
-  --text-muted: #6b7280;
-  --success: #2f855a;
-  --warning: #a65b05;
-  --danger: #dc2626;
-  --warning-soft: #fff4df;
-  --danger-soft: #fef2f2;
-  --hover: #f0f6f2;
+  --primary-soft: #EAF6EF;
+  --text: #1F2937;
+  --text-muted: #6B7280;
+  --success: var(--primary);
+  --warning: #A65B05;
+  --danger: #DC2626;
+  --warning-soft: color-mix(in srgb, var(--warning) 8%, var(--surface));
+  --danger-soft: color-mix(in srgb, var(--danger) 8%, var(--surface));
+  --hover: color-mix(in srgb, var(--primary-soft) 45%, var(--surface));
 }
 
 html.dark {
   color-scheme: dark;
-  --background: #0f1115;
-  --surface: #1b1f24;
-  --sidebar: #15181c;
-  --border: #2c3238;
-  --border-strong: #3a4149;
-  --input-border: #4b5563;
-  --primary: #2f855a;
+  --background: #0F1115;
+  --surface: #1B1F24;
+  --sidebar: #15181C;
+  --border: #2C3238;
+  --primary: #2F855A;
   --primary-hover: #276749;
-  --primary-soft: #173d2a;
-  --text: #f3f4f6;
-  --text-muted: #9ca3af;
-  --success: #2f855a;
-  --warning: #d97706;
-  --danger: #f87171;
-  --warning-soft: #3f2a0c;
-  --danger-soft: #451a1a;
-  --hover: #23292f;
+  --primary-soft: #173D2A;
+  --text: #F3F4F6;
+  --text-muted: #9CA3AF;
+  --warning: #D97706;
+  --danger: #F87171;
+  --hover: color-mix(in srgb, var(--border) 45%, var(--surface));
 }
 
 @theme inline {
@@ -70,7 +65,7 @@ body {
   background: var(--background);
   color: var(--text);
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
 }
 
@@ -86,10 +81,40 @@ textarea {
   outline-offset: 3px;
 }
 
+.login-input:focus-visible {
+  outline: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }
+
+/* Reusable presentation for the trainer workspace. */
+::selection { background: var(--primary-soft); color: var(--text); }
+button:not(:disabled), select, a { -webkit-tap-highlight-color: transparent; }
+input, select, textarea { min-height: 48px; }
+input, textarea { box-shadow: inset 0 1px 2px color-mix(in srgb, var(--text) 3%, transparent); }
+textarea { line-height: 1.65; }
+.workspace-table { font-size: 1rem; }
+.workspace-table thead th { background: var(--surface); border-bottom: 1px solid var(--border); color: var(--text); font-weight: 600; }
+.workspace-table tbody td { line-height: 1.5; padding-top: 20px; padding-bottom: 20px; }
+.workspace-table tbody tr { border-color: color-mix(in srgb, var(--border) 55%, transparent); }
+.workspace-table tbody tr:hover, .workspace-table tbody tr:focus-within { background: var(--hover); }
+.form-sheet { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.form-sheet fieldset + fieldset { border-color: color-mix(in srgb, var(--border) 55%, transparent); }
+.form-sheet label { font-size: 1rem; }
+.form-sheet input, .form-sheet textarea { background: var(--background); }
+.form-sheet [role=status]:not(:empty) { padding-top: 16px; padding-bottom: 16px; }
+@media (max-width: 760px) {
+  main header > div:last-child > a { flex-grow: 1; justify-content: center; }
+  .workspace-table { font-size: 0.9375rem; }
+}
+
+html.dark :focus-visible { outline-color: var(--text); }

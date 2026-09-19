@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import ThemeToggle from "@/components/ThemeToggle";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
 
@@ -34,28 +33,25 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center bg-background px-4 dark:bg-[#0F1115]">
-      <ThemeToggle className="absolute top-4 right-4" />
-      <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6 dark:border-[#2C3238] dark:bg-[#1B1F24] min-[601px]:p-8">
-        <div className="mb-6">
-          <p className="text-sm font-semibold text-primary dark:text-[#86D5A9]">
-            PT System
-          </p>
-
-          <h1 className="mt-2 text-[30px] font-bold text-foreground dark:text-[#F3F4F6]">
-            Trainer Login
+    <main className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
+      <div className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <span
+            className="mx-auto grid size-11 place-items-center rounded-lg bg-primary text-sm font-bold tracking-tight text-white"
+            aria-hidden="true"
+          >
+            PT
+          </span>
+          <h1 className="mt-5 text-3xl font-semibold tracking-tight text-foreground">
+            Login
           </h1>
-
-          <p className="mt-2 text-sm text-muted dark:text-[#9CA3AF]">
-            Sign in to manage your clients, workouts, meals, and payments.
-          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
             <label
               htmlFor="username"
-              className="mb-2 block text-sm font-medium text-foreground dark:text-[#D1D5DB]"
+              className="block text-base font-medium text-foreground"
             >
               Username
             </label>
@@ -72,14 +68,14 @@ export default function LoginPage() {
               autoComplete="username"
               required
               disabled={isLoading}
-              className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary-soft dark:border-[#4B5563] dark:bg-[#1B1F24] dark:text-[#F3F4F6] dark:placeholder:text-[#6B7280] dark:focus:ring-[#173D2A]"
+              className="login-input w-full rounded-md border border-input-border bg-surface px-4 py-3 text-base text-foreground transition-colors placeholder:text-muted focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
             />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <label
               htmlFor="password"
-              className="mb-2 block text-sm font-medium text-foreground dark:text-[#D1D5DB]"
+              className="block text-base font-medium text-foreground"
             >
               Password
             </label>
@@ -96,14 +92,14 @@ export default function LoginPage() {
               autoComplete="current-password"
               required
               disabled={isLoading}
-              className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary-soft dark:border-[#4B5563] dark:bg-[#1B1F24] dark:text-[#F3F4F6] dark:placeholder:text-[#6B7280] dark:focus:ring-[#173D2A]"
+              className="login-input w-full rounded-md border border-input-border bg-surface px-4 py-3 text-base text-foreground transition-colors placeholder:text-muted focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
             />
           </div>
 
           {error && (
             <p
               role="alert"
-              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+              className="rounded-md border border-danger/30 bg-danger-soft px-4 py-3 text-base text-danger"
             >
               {error}
             </p>
@@ -113,7 +109,7 @@ export default function LoginPage() {
             type="submit"
             disabled={isLoading}
             aria-busy={isLoading}
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 text-base font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isLoading && (
               <span
@@ -124,6 +120,13 @@ export default function LoginPage() {
             {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
+
+        <p className="mt-12 text-center text-base text-muted">
+          Need an account?{" "}
+          <span className="font-medium text-foreground">
+            Contact your administrator
+          </span>
+        </p>
       </div>
     </main>
   );

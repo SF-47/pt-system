@@ -6,6 +6,7 @@ type PageHeaderProps = {
   description?: string;
   children?: ReactNode;
   compact?: boolean;
+  metadata?: ReactNode;
 };
 
 export default function PageHeader({
@@ -14,27 +15,31 @@ export default function PageHeader({
   description,
   children,
   compact = false,
+  metadata,
 }: PageHeaderProps) {
-  const spacing = compact ? "mb-5 min-[761px]:mb-4" : "mb-5";
-
   return (
     <header
-      className={`${spacing} flex flex-col items-start gap-4 min-[761px]:flex-row min-[761px]:items-center min-[761px]:justify-between`}
+      className={`flex flex-col items-start justify-between gap-4 ${compact ? "mb-6" : "mb-6"} sm:flex-row sm:items-center`}
     >
-      <div>
+      <div className="min-w-0">
         {eyebrow && (
-          <p className="mb-1 text-sm font-semibold text-primary">{eyebrow}</p>
+          <p className="mb-2 text-sm font-medium text-muted">{eyebrow}</p>
         )}
-        <h1 className="text-[28px] leading-tight font-bold tracking-tight text-foreground dark:text-[#F3F4F6] wrap-anywhere min-[761px]:text-[30px]">
+        <h1 className="text-3xl sm:text-[34px] leading-tight font-semibold tracking-tight wrap-anywhere">
           {title}
         </h1>
         {description && (
-          <p className="mt-1 max-w-[64ch] text-muted dark:text-[#9CA3AF]">
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted">
             {description}
           </p>
         )}
+        {metadata && <div className="mt-3 text-sm text-muted">{metadata}</div>}
       </div>
-      {children && <div className="flex flex-wrap items-center gap-3">{children}</div>}
+      {children && (
+        <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto">
+          {children}
+        </div>
+      )}
     </header>
   );
 }

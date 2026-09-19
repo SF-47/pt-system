@@ -35,7 +35,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body
-        className={`${inter.variable} bg-background text-foreground dark:bg-[#0F1115] dark:text-[#F3F4F6]`}
+        className={`${inter.variable} bg-background text-foreground dark:bg-background dark:text-foreground`}
       >
         {children}
       </body>

@@ -44,7 +44,7 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
     <button
       type="button"
       onClick={toggleTheme}
-      className={`inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-foreground transition-colors hover:bg-hover dark:border-[#2C3238] dark:bg-[#1B1F24] dark:text-[#F3F4F6] dark:hover:bg-[#23292F] ${className}`}
+      className={`inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-foreground transition-colors hover:bg-hover dark:border-border dark:bg-surface dark:text-foreground dark:hover:bg-hover ${className}`}
       aria-label={label}
       title={label}
     >

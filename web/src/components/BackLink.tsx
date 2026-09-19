@@ -7,7 +7,7 @@ export default function BackLink({ href, children }: BackLinkProps) {
   return (
     <Link
       href={href}
-      className="mb-2 inline-flex min-h-11 items-center gap-2 rounded-sm font-semibold text-primary transition-colors hover:text-primary-hover"
+      className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-md text-sm font-medium text-muted transition-colors hover:text-primary-hover dark:hover:text-foreground"
     >
       <ArrowLeft className="size-5" aria-hidden="true" />
       {children}

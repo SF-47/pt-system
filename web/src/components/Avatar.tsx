@@ -8,7 +8,7 @@ export default function Avatar({ name }: { name: string }) {
 
   return (
     <span
-      className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[13px] font-bold text-primary dark:bg-[#173D2A] dark:text-[#86D5A9]"
+      className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary-hover dark:bg-primary-soft dark:text-foreground"
       aria-hidden="true"
     >
       {initials}

@@ -1,11 +1,9 @@
 "use client";
 
 import Icon, { type IconName } from "@/components/Icon";
-import Avatar from "@/components/Avatar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import ThemeToggle from "@/components/ThemeToggle";
 
 const items: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
@@ -19,20 +17,20 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   return (
-    <aside className="relative flex h-auto flex-col overflow-y-auto border-b border-border bg-sidebar dark:border-[#2C3238] dark:bg-[#15181C] min-[761px]:sticky min-[761px]:top-0 min-[761px]:h-dvh min-[761px]:border-r min-[761px]:border-b-0">
-      <div className="flex items-center justify-between px-5 py-4 min-[761px]:pt-6 min-[761px]:pb-8">
+    <aside className="relative flex h-auto flex-col overflow-y-auto border-b border-border/60 bg-sidebar dark:border-border dark:bg-sidebar min-[761px]:sticky min-[761px]:top-0 min-[761px]:h-dvh min-[761px]:border-r min-[761px]:border-b-0">
+      <div className="flex items-center justify-between px-5 py-4 min-[761px]:pt-7 min-[761px]:pb-8">
         <Link
           href="/dashboard"
-          className="flex items-center gap-3 text-[21px] font-bold"
+          className="flex items-center gap-3 text-[22px] font-bold tracking-tight"
           onClick={() => setOpen(false)}
         >
-          <span className="grid size-10.5 place-items-center rounded-xl bg-primary text-white">
+          <span className="grid size-10 place-items-center rounded-xl bg-primary text-white">
             <Icon name="workout" className="size-7" />
           </span>
           <span>
             PT System
-            <small className="mt-1 block text-xs font-normal text-muted">
-              Trainer Dashboard
+            <small className="mt-1 block text-sm font-normal text-muted">
+              Personal training
             </small>
           </span>
         </Link>
@@ -57,10 +55,10 @@ export default function Sidebar() {
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`mb-2 flex min-h-12 items-center gap-3 rounded-md border px-3 py-3 text-[15px] transition-colors ${
+                className={`mb-2 flex min-h-13 items-center gap-3.5 rounded-lg border px-3 py-3 text-[17px] transition-colors ${
                   active
-                    ? "border-primary-soft bg-primary-soft font-semibold text-primary dark:border-[#173D2A] dark:bg-[#173D2A] dark:text-[#86D5A9]"
-                    : "border-transparent text-muted hover:bg-hover hover:text-foreground dark:text-[#9CA3AF] dark:hover:bg-[#23292F] dark:hover:text-[#F3F4F6]"
+                    ? "border-transparent bg-primary font-semibold text-white dark:border-transparent dark:bg-primary dark:text-white"
+                    : "border-transparent text-foreground hover:bg-hover hover:text-foreground dark:text-foreground dark:hover:bg-hover dark:hover:text-foreground"
                 }`}
                 onClick={() => setOpen(false)}
               >
@@ -70,21 +68,11 @@ export default function Sidebar() {
             );
           })}
         </nav>
-        <div className="mt-4 border-t border-border px-5 py-4 min-[761px]:mt-auto min-[761px]:p-5">
-          <div className="flex items-center gap-3">
-            <Avatar name="Trainer" />
-            <div className="min-w-0 flex-1">
-              <strong>Trainer</strong>
-              <span className="mt-1 block text-xs text-muted">
-                Personal training
-              </span>
-            </div>
-            <ThemeToggle />
-          </div>
+        <div className="mt-4 px-4 py-4 min-[761px]:mt-auto min-[761px]:p-4">
           <button
             disabled
-            className="mt-3 flex min-h-11 w-full cursor-not-allowed items-center gap-3 text-left text-muted"
-            title="Authentication is not connected yet"
+            className="flex min-h-11 w-full cursor-not-allowed items-center gap-3 px-3 text-left text-muted"
+            title="Logout is not available yet"
           >
             <Icon name="logout" />
             Logout

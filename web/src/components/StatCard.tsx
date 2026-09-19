@@ -17,10 +17,10 @@ export default function StatCard({
 
   return (
     <div
-      className={`flex min-h-32 flex-col rounded-lg border border-border bg-surface p-4 dark:border-[#2C3238] dark:bg-[#1B1F24] ${className}`}
+      className={`flex min-h-28 flex-col rounded-lg border border-border bg-surface p-5 ${className}`}
     >
       <p
-        className="text-sm font-semibold text-muted"
+        className="text-sm font-medium text-muted"
       >
         {title}
       </p>
