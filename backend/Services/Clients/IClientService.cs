@@ -6,7 +6,7 @@ namespace backend.Services.Clients;
 
 public interface IClientService
 {
-    Task<PagedResponse<ClientResponse>> GetAllAsync(int trainerId , int page , int pageSize , string search);
+    Task<PagedResponse<ClientResponse>> GetAllAsync(int trainerId , int page , int pageSize , string ?search);
 
     Task<ClientResponse?> GetByIdAsync(int id , int trainerId);
 
