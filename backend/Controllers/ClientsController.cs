@@ -24,7 +24,7 @@ public class ClientController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<PagedResponse<ClientResponse>>> GetAll(
         int page = 1,
-        int pageSize = 10
+        int pageSize = 5
     )
     {
         var trainerId = GetTrainerId();
