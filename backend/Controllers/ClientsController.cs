@@ -25,7 +25,8 @@ public class ClientController : ControllerBase
     public async Task<ActionResult<PagedResponse<ClientResponse>>> GetAll(
         int page = 1,
         int pageSize = 5,
-        string? search = null
+        string? search = null,
+        string? status = null
     )
     {
         var trainerId = GetTrainerId();
@@ -41,7 +42,13 @@ public class ClientController : ControllerBase
         {
             return BadRequest(new { message = "Page size must be between 1 and 50." });
         }
-        var result = await _clientService.GetAllAsync(trainerId.Value, page, pageSize, search);
+        var result = await _clientService.GetAllAsync(
+            trainerId.Value,
+            page,
+            pageSize,
+            search,
+            status
+        );
 
         return Ok(result);
     }

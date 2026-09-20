@@ -20,7 +20,8 @@ public class ClientService : IClientService
         int trainerId,
         int page,
         int pageSize,
-        string? search
+        string? search,
+        string? status
     )
     {
         var query = _db.Clients.Where(client => client.TrainerId == trainerId);
@@ -34,6 +35,20 @@ public class ClientService : IClientService
                 || (client.Email != null && client.Email.Contains(search))
                 || client.PhoneNumber.Contains(search)
             );
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            status = status.Trim().ToLower();
+
+            if (status == "active")
+            {
+                query = query.Where(client => client.IsActive);
+            }
+            else if (status == "inactive")
+            {
+                query = query.Where(client => !client.IsActive);
+            }
         }
 
         var totalCount = await query.CountAsync();
