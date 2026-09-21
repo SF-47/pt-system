@@ -5,7 +5,12 @@ namespace backend.Services.Payments;
 
 public interface IPaymentService
 {
-    Task<PagedResponse<PaymentResponse>> GetAllAsync(int trainerId, int page, int pageSize);
+    Task<PagedResponse<PaymentResponse>> GetAllAsync(
+        int trainerId,
+        int page,
+        int pageSize,
+        string? status
+    );
 
     Task<PagedResponse<PaymentResponse>> GetByClientIdAsync(
         int clientId,

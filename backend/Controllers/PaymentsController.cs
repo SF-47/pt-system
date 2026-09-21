@@ -23,7 +23,8 @@ public class PaymentsController : ControllerBase
     [HttpGet("api/payments")]
     public async Task<ActionResult<PagedResponse<PaymentResponse>>> GetAll(
         int page = 1,
-        int pageSize = 10
+        int pageSize = 10,
+        string? status = null
     )
     {
         var trainerId = GetTrainerId();
@@ -40,7 +41,12 @@ public class PaymentsController : ControllerBase
         {
             return BadRequest(new { message = "Page size must be between 1 and 50." });
         }
-        var payments = await _paymentService.GetAllAsync(trainerId.Value, page, pageSize);
+        var payments = await _paymentService.GetAllAsync(
+            trainerId.Value,
+            page,
+            pageSize,
+            status
+        );
 
         return Ok(payments);
     }

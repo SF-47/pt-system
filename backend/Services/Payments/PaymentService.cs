@@ -19,11 +19,26 @@ public class PaymentService : IPaymentService
     public async Task<PagedResponse<PaymentResponse>> GetAllAsync(
         int trainerId,
         int page,
-        int pageSize
+        int pageSize,
+        string? status
     )
     {
         var query = _context
             .Payments.Where(payment => payment.Client.TrainerId == trainerId);
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            status = status.Trim().ToLower();
+
+            if (status == "paid")
+            {
+                query = query.Where(payment => payment.Status == PaymentStatus.Paid);
+            }
+            else if (status == "pending")
+            {
+                query = query.Where(payment => payment.Status == PaymentStatus.Pending);
+            }
+        }
 
         var totalCount = await query.CountAsync();
         var response = new PagedResponse<PaymentResponse>
