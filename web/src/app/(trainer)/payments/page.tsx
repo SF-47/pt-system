@@ -87,6 +87,10 @@ export default function PaymentsPage() {
   const [isFetching, setIsFetching] = useState(false);
   const [listError, setListError] = useState("");
   const [statsError, setStatsError] = useState("");
+  const [updatingPaymentId, setUpdatingPaymentId] = useState<number | null>(
+    null,
+  );
+  const [updateError, setUpdateError] = useState("");
 
   useEffect(() => {
     let ignore = false;
@@ -96,11 +100,15 @@ export default function PaymentsPage() {
       setListError("");
       try {
         const response = await api.get<PagedResponse<Payment>>(
-          Endpoints.payments(page, pageSize),
+          Endpoints.payments(page, pageSize, query, statusFilter),
         );
         if (ignore) return;
+        const resolvedPage = Math.min(
+          response.data.page,
+          Math.max(response.data.totalPages, 1),
+        );
         setPayments(response.data.items);
-        setPage(response.data.page);
+        setPage(resolvedPage);
         setPageSize(response.data.pageSize);
         setTotalPages(response.data.totalPages);
         setTotalCount(response.data.totalCount);
@@ -119,7 +127,7 @@ export default function PaymentsPage() {
     return () => {
       ignore = true;
     };
-  }, [page, pageSize]);
+  }, [page, pageSize, query, statusFilter]);
 
   useEffect(() => {
     let ignore = false;
@@ -139,16 +147,43 @@ export default function PaymentsPage() {
     };
   }, []);
 
-  if (isInitialLoading) return <PaymentsLoading />;
+  async function updatePaymentStatus(paymentId: number, status: number) {
+    try {
+      setUpdatingPaymentId(paymentId);
+      setUpdateError("");
 
-  const normalizedQuery = query.trim().toLowerCase();
-  const filteredPayments = payments.filter((payment) => {
-    const status = getPaymentStatus(payment.status);
-    return (
-      payment.clientName.toLowerCase().includes(normalizedQuery) &&
-      (statusFilter === "All" || status === statusFilter)
-    );
-  });
+      await api.put(Endpoints.paymentStatus(paymentId), {
+        status,
+      });
+
+      const [paymentsResponse, statsResponse] = await Promise.all([
+        api.get<PagedResponse<Payment>>(
+          Endpoints.payments(page, pageSize, query, statusFilter),
+        ),
+        api.get<PaymentStats>(Endpoints.paymentsStats),
+      ]);
+
+      const resolvedPage = Math.min(
+        paymentsResponse.data.page,
+        Math.max(paymentsResponse.data.totalPages, 1),
+      );
+      setPayments(paymentsResponse.data.items);
+      setPage(resolvedPage);
+      setPageSize(paymentsResponse.data.pageSize);
+      setTotalPages(paymentsResponse.data.totalPages);
+      setTotalCount(paymentsResponse.data.totalCount);
+      setStats(statsResponse.data);
+      setListError("");
+      setStatsError("");
+    } catch (error) {
+      console.error("Failed to update payment status:", error);
+      setUpdateError("Payment status could not be updated. Please try again.");
+    } finally {
+      setUpdatingPaymentId(null);
+    }
+  }
+
+  if (isInitialLoading) return <PaymentsLoading />;
 
   return (
     <div className="[&>header_h1]:text-[28px] [&>header_p]:text-sm [&>header_p]:leading-relaxed">
@@ -190,13 +225,16 @@ export default function PaymentsPage() {
             htmlFor="payment-search"
             className="mb-1 block text-sm font-medium text-foreground"
           >
-            Search this page
+            Search clients
           </label>
           <input
             id="payment-search"
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setPage(1);
+            }}
             placeholder="Client name"
             className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
           />
@@ -211,9 +249,10 @@ export default function PaymentsPage() {
           <select
             id="payment-status-filter"
             value={statusFilter}
-            onChange={(event) =>
-              setStatusFilter(event.target.value as StatusFilter)
-            }
+            onChange={(event) => {
+              setStatusFilter(event.target.value as StatusFilter);
+              setPage(1);
+            }}
             className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
           >
             <option value="All">All</option>
@@ -224,9 +263,18 @@ export default function PaymentsPage() {
       </section>
 
       <p className="mb-2 text-sm text-muted" aria-live="polite">
-        Payments · {filteredPayments.length} visible on this page · {totalCount}{" "}
+        Payments · {payments.length} visible on this page · {totalCount}{" "}
         total
       </p>
+
+      {updateError && (
+        <p
+          role="alert"
+          className="mb-3 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger"
+        >
+          {updateError}
+        </p>
+      )}
 
       {listError ? (
         <div
@@ -244,7 +292,14 @@ export default function PaymentsPage() {
           aria-label="Payments table"
           tabIndex={0}
         >
-          <table className="w-full min-w-190 border-collapse text-sm">
+          <table className="w-full min-w-180 table-fixed border-collapse text-sm">
+            <colgroup>
+              <col className="w-[35%]" />
+              <col className="w-[14%]" />
+              <col className="w-[20%]" />
+              <col className="w-[14%]" />
+              <col className="w-[17%]" />
+            </colgroup>
             <thead>
               <tr className="border-b border-border bg-background">
                 {[
@@ -256,7 +311,7 @@ export default function PaymentsPage() {
                 ].map(([heading, alignment]) => (
                   <th
                     key={heading}
-                    className={`px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted ${alignment}`}
+                    className={`px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted ${alignment}`}
                   >
                     {heading}
                   </th>
@@ -264,47 +319,73 @@ export default function PaymentsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredPayments.length > 0 ? (
-                filteredPayments.map((payment) => {
+              {payments.length > 0 ? (
+                payments.map((payment) => {
                   const status = getPaymentStatus(payment.status);
                   return (
                     <tr
                       key={payment.id}
                       className={`border-b border-border last:border-b-0 transition-colors hover:bg-hover ${status === "Pending" ? "bg-warning-soft/20" : ""}`}
                     >
-                      <td className="px-5 py-4 align-middle">
-                        <div className="flex items-center gap-3">
+                      <td className="px-4 py-4 align-middle">
+                        <div className="flex min-w-0 items-center gap-3">
                           <Avatar name={payment.clientName} />
-                          <span className="font-semibold text-foreground">
+                          <span className="truncate font-semibold text-foreground">
                             {payment.clientName}
                           </span>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-right align-middle font-semibold tabular-nums text-foreground">
+                      <td className="px-4 py-4 text-right align-middle font-semibold tabular-nums text-foreground">
                         {currencyFormatter.format(payment.amount)}
                       </td>
-                      <td className="px-5 py-4 align-middle text-muted">
+                      <td className="px-4 py-4 align-middle text-muted">
                         {new Date(payment.dueDate).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
                         })}
                       </td>
-                      <td className="px-5 py-4 align-middle">
+                      <td className="px-4 py-4 align-middle">
                         <StatusBadge status={status} />
                       </td>
-                      <td className="px-5 py-4 text-right align-middle">
+                      <td className="px-4 py-4 text-right align-middle">
                         {status === "Pending" ? (
                           <button
-                            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-muted"
-                            disabled
-                            title="Payment updates are not available yet"
+                            type="button"
+                            disabled={updatingPaymentId === payment.id}
+                            onClick={() =>
+                              void updatePaymentStatus(payment.id, 1)
+                            }
+                            className="inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-primary bg-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            <Icon name="check" className="size-4" />
-                            Mark Paid
+                            {updatingPaymentId === payment.id ? (
+                              "Updating..."
+                            ) : (
+                              <>
+                                <Icon name="check" className="size-4" />
+                                Mark Paid
+                              </>
+                            )}
                           </button>
                         ) : (
-                          <span className="text-muted">—</span>
+                          <button
+                            type="button"
+                            disabled={updatingPaymentId === payment.id}
+                            onClick={() => {
+                              const confirmed = window.confirm(
+                                "Are you sure you want to mark this payment as Pending?",
+                              );
+
+                              if (confirmed) {
+                                void updatePaymentStatus(payment.id, 0);
+                              }
+                            }}
+                            className="inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-hover hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {updatingPaymentId === payment.id
+                              ? "Updating..."
+                              : "Mark Pending"}
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -316,7 +397,7 @@ export default function PaymentsPage() {
                     <EmptyState
                       icon="payment"
                       title="No matching payments"
-                      description="Try another client name or payment status on this page."
+                      description="Try another client name or payment status."
                     />
                   </td>
                 </tr>
