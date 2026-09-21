@@ -3,72 +3,279 @@
 import BackLink from "@/components/BackLink";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
+import api from "@/lib/api";
+import { Endpoints } from "@/lib/Endpoints";
 import Link from "next/link";
-import { use, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import EditClientLoading from "./loading";
 
-type EditClientPageProps = {
-  params: Promise<{
-    id: string;
-  }>;
+type PersonalInfoFormType = {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  isActive: boolean;
 };
 
-export default function EditClientPage({ params }: EditClientPageProps) {
-  const { id } = use(params);
+type CredentialsFormType = {
+  username: string;
+  password: string;
+  newPassword: string;
+  confirmNewPassword: string;
+};
 
-  const [fullName, setFullName] = useState("Ahmad Hassan");
-  const [email, setEmail] = useState("ahmad@example.com");
-  const [phoneNumber, setPhoneNumber] = useState("70123456");
+export default function EditClientPage() {
+  const params = useParams<{ id: string }>();
+  const clientId = Number(params.id);
 
-  const [submitted, setSubmitted] = useState(false);
+  const [personalInfoForm, setPersonalInfoForm] =
+    useState<PersonalInfoFormType>({
+      fullName: "",
+      email: "",
+      phoneNumber: "",
+      isActive: true,
+    });
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const [credentialsForm, setCredentialsForm] = useState<CredentialsFormType>({
+    username: "",
+    password: "",
+    newPassword: "",
+    confirmNewPassword: "",
+  });
+
+  const [isLoadingClient, setIsLoadingClient] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  const [isSavingPersonalInfo, setIsSavingPersonalInfo] = useState(false);
+
+  const [personalInfoMessage, setPersonalInfoMessage] = useState("");
+
+  const [personalInfoError, setPersonalInfoError] = useState("");
+
+  const [isSavingCredentials, setIsSavingCredentials] = useState(false);
+
+  const [credentialsMessage, setCredentialsMessage] = useState("");
+
+  const [credentialsError, setCredentialsError] = useState("");
+
+  async function handleSubmitPersonalInfo(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
 
-    setSubmitted(true);
+    try {
+      setIsSavingPersonalInfo(true);
+      setPersonalInfoMessage("");
+      setPersonalInfoError("");
+
+      await api.put(Endpoints.clientById(clientId), {
+        ...personalInfoForm,
+        username: credentialsForm.username,
+      });
+
+      setPersonalInfoMessage("Personal information updated successfully.");
+    } catch (error) {
+      console.error(error);
+
+      setPersonalInfoError("Failed to update personal information.");
+    } finally {
+      setIsSavingPersonalInfo(false);
+    }
+  }
+
+  async function handleSubmitCredentials(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+
+    if (credentialsForm.newPassword !== credentialsForm.confirmNewPassword) {
+      setCredentialsMessage("");
+      setCredentialsError("New passwords do not match.");
+
+      return;
+    }
+
+    try {
+      setIsSavingCredentials(true);
+      setCredentialsMessage("");
+      setCredentialsError("");
+
+      await api.put(
+        Endpoints.updateClientCredentials(clientId),
+        credentialsForm,
+      );
+
+      setCredentialsMessage("Client credentials updated successfully.");
+    } catch (error) {
+      console.error(error);
+
+      setCredentialsError("Failed to update client credentials.");
+    } finally {
+      setIsSavingCredentials(false);
+    }
+  }
+
+  useEffect(() => {
+    if (Number.isNaN(clientId)) {
+      return;
+    }
+
+    async function loadClient() {
+      try {
+        setLoadError("");
+
+        const response = await api.get(Endpoints.clientById(clientId));
+
+        const client = response.data;
+
+        setPersonalInfoForm({
+          fullName: client.fullName,
+          email: client.email ?? "",
+          phoneNumber: client.phoneNumber,
+          isActive: client.isActive,
+        });
+
+        setCredentialsForm((prev) => ({
+          ...prev,
+          username: client.username,
+        }));
+      } catch (error) {
+        console.error(error);
+
+        setLoadError("Failed to load client information.");
+      } finally {
+        setIsLoadingClient(false);
+      }
+    }
+
+    void loadClient();
+  }, [clientId]);
+
+  if (Number.isNaN(clientId)) {
+    return (
+      <div className="max-w-5xl">
+        <BackLink href="/clients">Back to Clients</BackLink>
+
+        <p
+          role="alert"
+          className="mt-6 rounded-md border border-danger/30 bg-danger-soft px-4 py-3 text-danger"
+        >
+          Invalid client ID.
+        </p>
+      </div>
+    );
+  }
+
+  if (isLoadingClient) {
+    return <EditClientLoading />;
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-5xl">
+        <BackLink href="/clients">Back to Clients</BackLink>
+
+        <p
+          role="alert"
+          className="mt-6 rounded-md border border-danger/30 bg-danger-soft px-4 py-3 text-danger"
+        >
+          {loadError}
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-3xl">
-      <BackLink href={`/clients/${id}`}>Back to Client Details</BackLink>
+    <div className="w-full">
+      <BackLink href={`/clients/${clientId}`}>Back to Client Details</BackLink>
+
       <PageHeader
         title="Edit Client"
-        description={`Update profile and contact details · Client ${id}`}
+        description="Update client information and login credentials."
       />
 
-      <p className="mb-4 text-sm text-muted">
-        Demo form. Submissions are not saved yet.
-      </p>
-      <form
-        onChange={() => setSubmitted(false)}
-        onSubmit={handleSubmit}
-        className="form-sheet overflow-hidden"
-      >
-        <fieldset className="grid gap-5 p-5 sm:p-6">
-          <legend className="sr-only">Personal information</legend>
-          <div>
-            <h2 className="text-lg font-semibold">Personal information</h2>
+      {/* Personal info (left) + credentials (right) on wide screens, stacked below. Fields fill every cell: no empty slots. */}
+      <div className="grid gap-5 xl:grid-cols-2">
+        {/* Personal Information (left) */}
+        <form
+          onSubmit={handleSubmitPersonalInfo}
+          className="flex flex-col rounded-xl border border-border bg-surface"
+        >
+          <div className="border-b border-border px-5 py-4 sm:px-6">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <Icon name="clients" className="size-4 text-muted" />
+              Personal information
+            </h2>
+
             <p className="mt-1 text-sm text-muted">
-              How to reach your client.
+              Update contact details and account status.
             </p>
           </div>
-          <div>
-            <label
-              htmlFor="fullName"
-              className="mb-2 block text-sm font-medium"
-            >
-              Full Name
-            </label>
 
-            <input
-              id="fullName"
-              name="fullName"
-              value={fullName}
-              onChange={(event) => setFullName(event.target.value)}
-              className="block min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
-            />
-          </div>
+          <div className="grid flex-1 content-start gap-4 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-1 2xl:grid-cols-2">
+            <div>
+              <label
+                htmlFor="fullName"
+                className="mb-2 block text-sm font-medium"
+              >
+                Full Name
+              </label>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+              <input
+                id="fullName"
+                name="fullName"
+                required
+                value={personalInfoForm.fullName}
+                onChange={(event) =>
+                  setPersonalInfoForm((prev) => ({
+                    ...prev,
+                    fullName: event.target.value,
+                  }))
+                }
+                className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="isActive"
+                className="mb-2 block text-sm font-medium"
+              >
+                Account Status
+              </label>
+
+              <div className="relative">
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute top-1/2 left-3 size-2 -translate-y-1/2 rounded-full ${
+                    personalInfoForm.isActive ? "bg-primary" : "bg-muted"
+                  }`}
+                />
+
+                <select
+                  id="isActive"
+                  name="isActive"
+                  value={personalInfoForm.isActive ? "active" : "inactive"}
+                  onChange={(event) =>
+                    setPersonalInfoForm((prev) => ({
+                      ...prev,
+                      isActive: event.target.value === "active",
+                    }))
+                  }
+                  className="min-h-11 w-full appearance-none rounded-md border border-input-border bg-background py-2 pr-10 pl-8 text-foreground transition-colors hover:border-border-strong focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+
+                <ChevronDown
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted"
+                />
+              </div>
+            </div>
+
             <div>
               <label htmlFor="email" className="mb-2 block text-sm font-medium">
                 Email
@@ -78,9 +285,14 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                 id="email"
                 name="email"
                 type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="block min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+                value={personalInfoForm.email}
+                onChange={(event) =>
+                  setPersonalInfoForm((prev) => ({
+                    ...prev,
+                    email: event.target.value,
+                  }))
+                }
+                className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
 
@@ -95,62 +307,209 @@ export default function EditClientPage({ params }: EditClientPageProps) {
               <input
                 id="phoneNumber"
                 name="phoneNumber"
-                value={phoneNumber}
-                onChange={(event) => setPhoneNumber(event.target.value)}
-                className="block min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+                required
+                value={personalInfoForm.phoneNumber}
+                onChange={(event) =>
+                  setPersonalInfoForm((prev) => ({
+                    ...prev,
+                    phoneNumber: event.target.value,
+                  }))
+                }
+                className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
           </div>
-        </fieldset>
-        <fieldset className="grid gap-5 border-t border-border p-5 sm:p-6">
-          <legend className="sr-only">Client account</legend>
-          <h2 className="text-lg font-semibold">Client account</h2>
-          <div>
-            <label
-              htmlFor="username-preview"
-              className="mb-2 block text-sm font-medium"
+
+          {(personalInfoError || personalInfoMessage) && (
+            <div className="px-5 pb-4 sm:px-6">
+              {personalInfoError && (
+                <p role="alert" className="text-sm text-danger">
+                  {personalInfoError}
+                </p>
+              )}
+
+              {personalInfoMessage && (
+                <p role="status" className="text-sm text-primary-hover">
+                  {personalInfoMessage}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap justify-end gap-3 border-t border-border px-5 py-4 sm:px-6">
+            <Link
+              href={`/clients/${clientId}`}
+              className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
             >
-              Username
-            </label>
-            <input
-              id="username-preview"
-              type="text"
-              disabled
-              placeholder="Client username"
-              className="min-h-11 w-full rounded-lg border border-input-border bg-background px-3 py-2 text-muted disabled:cursor-not-allowed"
-              aria-describedby="username-preview-help"
-            />
-            <p id="username-preview-help" className="mt-2 text-sm text-muted">
-              Username field preview. Account editing is not connected in this
-              form.
+              Cancel
+            </Link>
+
+            <button
+              type="submit"
+              disabled={isSavingPersonalInfo}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Icon name="check" className="size-4" />
+
+              {isSavingPersonalInfo ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </form>
+
+        {/* Credentials (right) */}
+        <form
+          onSubmit={handleSubmitCredentials}
+          className="flex flex-col rounded-xl border border-border bg-surface"
+        >
+          <div className="border-b border-border px-5 py-4 sm:px-6">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <Icon name="edit" className="size-4 text-muted" />
+              Client account
+            </h2>
+
+            <p className="mt-1 text-sm text-muted">
+              Update the credentials used to sign in.
             </p>
           </div>
-        </fieldset>
 
-        <div className="flex flex-wrap items-center gap-3 border-t border-border bg-primary-soft/40 px-5 py-4 sm:px-7">
-          <button
-            type="submit"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover"
-          >
-            <Icon name="check" />
-            Save Changes
-          </button>
-          <Link
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-semibold text-foreground transition-colors hover:bg-hover"
-            href={`/clients/${id}`}
-          >
-            Cancel
-          </Link>
-        </div>
-        <p
-          role="status"
-          className="px-5 text-sm text-muted empty:hidden sm:px-7"
-        >
-          {submitted
-            ? "Form reviewed. No changes were saved in this demo."
-            : ""}
-        </p>
-      </form>
+          <div className="grid flex-1 content-start gap-4 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-1 2xl:grid-cols-2">
+            <div>
+              <label
+                htmlFor="username"
+                className="mb-2 block text-sm font-medium"
+              >
+                Username
+              </label>
+
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                value={credentialsForm.username}
+                onChange={(event) =>
+                  setCredentialsForm((prev) => ({
+                    ...prev,
+                    username: event.target.value,
+                  }))
+                }
+                placeholder="Client username"
+                className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="mb-2 block text-sm font-medium"
+              >
+                Current Password
+              </label>
+
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={credentialsForm.password}
+                onChange={(event) =>
+                  setCredentialsForm((prev) => ({
+                    ...prev,
+                    password: event.target.value,
+                  }))
+                }
+                placeholder="Enter current password"
+                className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="newPassword"
+                className="mb-2 block text-sm font-medium"
+              >
+                New Password
+              </label>
+
+              <input
+                id="newPassword"
+                name="newPassword"
+                type="password"
+                required
+                value={credentialsForm.newPassword}
+                onChange={(event) =>
+                  setCredentialsForm((prev) => ({
+                    ...prev,
+                    newPassword: event.target.value,
+                  }))
+                }
+                placeholder="Enter new password"
+                className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="confirmNewPassword"
+                className="mb-2 block text-sm font-medium"
+              >
+                Confirm New Password
+              </label>
+
+              <input
+                id="confirmNewPassword"
+                name="confirmNewPassword"
+                type="password"
+                required
+                value={credentialsForm.confirmNewPassword}
+                onChange={(event) =>
+                  setCredentialsForm((prev) => ({
+                    ...prev,
+                    confirmNewPassword: event.target.value,
+                  }))
+                }
+                placeholder="Confirm new password"
+                className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          {(credentialsError || credentialsMessage) && (
+            <div className="px-5 pb-4 sm:px-6">
+              {credentialsError && (
+                <p role="alert" className="text-sm text-danger">
+                  {credentialsError}
+                </p>
+              )}
+
+              {credentialsMessage && (
+                <p role="status" className="text-sm text-primary-hover">
+                  {credentialsMessage}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap justify-end gap-3 border-t border-border px-5 py-4 sm:px-6">
+            <Link
+              href={`/clients/${clientId}`}
+              className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
+            >
+              Cancel
+            </Link>
+
+            <button
+              type="submit"
+              disabled={isSavingCredentials}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Icon name="check" className="size-4" />
+
+              {isSavingCredentials ? "Saving..." : "Save Credentials"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

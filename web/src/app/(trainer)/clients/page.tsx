@@ -31,6 +31,8 @@ type Stats = {
   inactiveClients: number;
 };
 
+type ClientStatusFilter = "all" | "active" | "inactive";
+
 function formatCreatedAt(value: string) {
   const date = new Date(value);
 
@@ -93,6 +95,7 @@ function ClientsTableSkeleton() {
 
 export default function ClientsPage() {
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<ClientStatusFilter>("all");
   const [clients, setClients] = useState<Client[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [page, setPage] = useState(1);
@@ -113,7 +116,7 @@ export default function ClientsPage() {
       setListError("");
       try {
         const response = await api.get<PagedResponse<Client>>(
-          Endpoints.clients(page, pageSize, query),
+          Endpoints.clients(page, pageSize, query, statusFilter),
         );
         if (ignore) return;
         setClients(response.data.items);
@@ -134,7 +137,7 @@ export default function ClientsPage() {
     return () => {
       ignore = true;
     };
-  }, [page, query]);
+  }, [page, query, statusFilter]);
 
   useEffect(() => {
     let ignore = false;
@@ -157,6 +160,35 @@ export default function ClientsPage() {
   if (isInitialLoading) {
     return <ClientsLoading />;
   }
+
+  const statusFilters: {
+    value: ClientStatusFilter;
+    label: string;
+    count: number;
+    selectedClass: string;
+  }[] = [
+    {
+      value: "all",
+      label: "All",
+      count: stats?.totalClients ?? 0,
+      selectedClass:
+        "peer-checked:border-foreground peer-checked:bg-background peer-checked:text-foreground",
+    },
+    {
+      value: "active",
+      label: "Active",
+      count: stats?.activeClients ?? 0,
+      selectedClass:
+        "peer-checked:border-primary peer-checked:bg-primary-soft peer-checked:text-primary-hover dark:peer-checked:text-foreground",
+    },
+    {
+      value: "inactive",
+      label: "Inactive",
+      count: stats?.inactiveClients ?? 0,
+      selectedClass:
+        "peer-checked:border-danger peer-checked:bg-danger-soft peer-checked:text-danger",
+    },
+  ];
 
   return (
     <div>
@@ -188,34 +220,63 @@ export default function ClientsPage() {
         </p>
       )}
 
-      <section
-        className="mb-5 flex flex-col gap-4 min-[761px]:flex-row min-[761px]:items-end"
-        aria-label="Client tools"
-      >
-        <div className="min-w-0 flex-1">
-          <label
-            htmlFor="client-search"
-            className="mb-1 block text-sm font-medium text-foreground"
-          >
-            Search clients
-          </label>
-          <input
-            id="client-search"
-            type="search"
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Name, email, or phone"
-            className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary min-[761px]:max-w-sm"
-          />
+      <section className="mb-5" aria-label="Client tools">
+        <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-4 min-[761px]:flex-row min-[761px]:items-end min-[761px]:justify-between">
+          <div className="min-w-0 flex-1">
+            <label
+              htmlFor="client-search"
+              className="mb-1 block text-sm font-medium text-foreground"
+            >
+              Search clients
+            </label>
+            <input
+              id="client-search"
+              type="search"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Name, email, or phone"
+              className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary min-[761px]:max-w-sm"
+            />
+          </div>
+
+          <fieldset className="shrink-0">
+            <legend className="mb-1 text-sm font-medium text-foreground">
+              Status
+            </legend>
+            <div className="flex flex-wrap gap-1 rounded-md bg-background p-1">
+              {statusFilters.map((filter) => (
+                <label key={filter.value} className="cursor-pointer">
+                  <input
+                    type="radio"
+                    name="client-status"
+                    value={filter.value}
+                    checked={statusFilter === filter.value}
+                    onChange={() => {
+                      setStatusFilter(filter.value);
+                      setPage(1);
+                    }}
+                    className="peer sr-only"
+                  />
+                  <span
+                    className={`flex min-h-11 items-center gap-2 rounded border border-transparent px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-hover hover:text-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary ${filter.selectedClass}`}
+                  >
+                    {filter.label}
+                    <span className="min-w-5 rounded bg-surface px-1.5 py-0.5 text-center text-xs tabular-nums text-muted">
+                      {filter.count}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
         </div>
       </section>
 
       <p className="mb-2 text-sm text-muted" aria-live="polite">
-        Clients · {clients.length} visible on this page · {totalCount}{" "}
-        total
+        Clients · {clients.length} visible on this page · {totalCount} total
       </p>
 
       {listError ? (
@@ -321,7 +382,7 @@ export default function ClientsPage() {
                     <EmptyState
                       icon="clients"
                       title="No clients to display"
-                      description="No clients match this page and search. Try another search or page."
+                      description="No clients match the selected status on this page. Try another filter, search, or page."
                     />
                   </td>
                 </tr>
