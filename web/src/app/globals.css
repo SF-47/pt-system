@@ -4,23 +4,23 @@
 
 :root {
   color-scheme: light;
-  --background: #F6F8F6;
+  --background: #EDF3EF;
   --surface: #FFFFFF;
-  --sidebar: #FFFFFF;
-  --border: #D1D5DB;
-  --border-strong: var(--border);
-  --input-border: var(--border);
+  --sidebar: #F5FAF7;
+  --border: #C7D4CB;
+  --border-strong: #AABCAF;
+  --input-border: #AFC1B4;
   --primary: #2F855A;
   --primary-hover: #276749;
-  --primary-soft: #EAF6EF;
-  --text: #1F2937;
-  --text-muted: #6B7280;
+  --primary-soft: #DFF1E6;
+  --text: #17231C;
+  --text-muted: #58685E;
   --success: var(--primary);
-  --warning: #A65B05;
-  --danger: #DC2626;
-  --warning-soft: color-mix(in srgb, var(--warning) 8%, var(--surface));
-  --danger-soft: color-mix(in srgb, var(--danger) 8%, var(--surface));
-  --hover: color-mix(in srgb, var(--primary-soft) 45%, var(--surface));
+  --warning: #94540A;
+  --danger: #C72E3D;
+  --warning-soft: #FFF1D6;
+  --danger-soft: #FDE8EA;
+  --hover: #E7F2EB;
 }
 
 html.dark {
@@ -29,6 +29,8 @@ html.dark {
   --surface: #1B1F24;
   --sidebar: #15181C;
   --border: #2C3238;
+  --border-strong: #424A53;
+  --input-border: #424A53;
   --primary: #2F855A;
   --primary-hover: #276749;
   --primary-soft: #173D2A;
@@ -36,6 +38,8 @@ html.dark {
   --text-muted: #9CA3AF;
   --warning: #D97706;
   --danger: #F87171;
+  --warning-soft: color-mix(in srgb, var(--warning) 12%, var(--surface));
+  --danger-soft: color-mix(in srgb, var(--danger) 12%, var(--surface));
   --hover: color-mix(in srgb, var(--border) 45%, var(--surface));
 }
 
@@ -101,6 +105,8 @@ textarea {
 button:not(:disabled), select, a { -webkit-tap-highlight-color: transparent; }
 input, select, textarea { min-height: 48px; }
 input, textarea { box-shadow: inset 0 1px 2px color-mix(in srgb, var(--text) 3%, transparent); }
+input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1; }
+select option { background: var(--surface); color: var(--text); }
 textarea { line-height: 1.65; }
 .workspace-table { font-size: 1rem; }
 .workspace-table thead th { background: var(--surface); border-bottom: 1px solid var(--border); color: var(--text); font-weight: 600; }

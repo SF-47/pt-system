@@ -2,7 +2,7 @@
 
 import Icon, { type IconName } from "@/components/Icon";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 const items: { href: string; label: string; icon: IconName }[] = [
@@ -15,9 +15,17 @@ const items: { href: string; label: string; icon: IconName }[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  function handleLogout() {
+    localStorage.removeItem("token");
+    setOpen(false);
+    router.replace("/login");
+  }
+
   return (
-    <aside className="relative flex h-auto flex-col overflow-y-auto border-b border-border/60 bg-sidebar dark:border-border dark:bg-sidebar min-[761px]:sticky min-[761px]:top-0 min-[761px]:h-dvh min-[761px]:border-r min-[761px]:border-b-0">
+    <aside className="relative flex h-auto flex-col overflow-y-auto border-b border-border bg-sidebar dark:border-border dark:bg-sidebar min-[761px]:sticky min-[761px]:top-0 min-[761px]:h-dvh min-[761px]:border-r min-[761px]:border-b-0">
       <div className="flex items-center justify-between px-5 py-4 min-[761px]:pt-7 min-[761px]:pb-8">
         <Link
           href="/dashboard"
@@ -70,9 +78,9 @@ export default function Sidebar() {
         </nav>
         <div className="mt-4 px-4 py-4 min-[761px]:mt-auto min-[761px]:p-4">
           <button
-            disabled
-            className="flex min-h-11 w-full cursor-not-allowed items-center gap-3 px-3 text-left text-muted"
-            title="Logout is not available yet"
+            type="button"
+            onClick={handleLogout}
+            className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-muted transition-colors hover:bg-hover hover:text-foreground"
           >
             <Icon name="logout" />
             Logout

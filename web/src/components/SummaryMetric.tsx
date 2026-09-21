@@ -23,7 +23,7 @@ export default function SummaryMetric({
         {label}
       </p>
       <p
-        className={`${compact ? "text-2xl" : "text-[32px]"} leading-none font-semibold tracking-tight text-foreground tabular-nums`}
+        className={`${compact ? "text-2xl" : "text-[32px]"} leading-none font-semibold tracking-tight text-primary-hover tabular-nums dark:text-foreground`}
       >
         {value}
       </p>
