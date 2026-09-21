@@ -5,8 +5,10 @@ export const Endpoints = {
   // Clients
   clientsBase: "/api/clients",
 
-  clients: (page: number, pageSize: number, search?: string) =>
-    `/api/clients?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search ?? "")}`,
+  clients: (page: number, pageSize: number, search?: string, status?: string) =>
+    `/api/clients?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(
+      search ?? "",
+    )}&status=${encodeURIComponent(status ?? "")}`,
   clientsStats: "/api/stats/clients",
 
   clientById: (id: number) => `/api/clients/${id}`,
@@ -68,8 +70,15 @@ export const Endpoints = {
   // Payments
   paymentsBase: "/api/payments",
 
-  payments: (page: number, pageSize: number) =>
-    `/api/payments?page=${page}&pageSize=${pageSize}`,
+  payments: (
+    page: number,
+    pageSize: number,
+    search?: string,
+    status?: string,
+  ) =>
+    `/api/payments?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(
+      search ?? "",
+    )}&status=${encodeURIComponent(status ?? "")}`,
 
   paymentsStats: "/api/stats/payments",
 
