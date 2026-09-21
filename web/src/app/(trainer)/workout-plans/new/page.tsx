@@ -3,19 +3,50 @@
 import BackLink from "@/components/BackLink";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
+import api from "@/lib/api";
+import { Endpoints } from "@/lib/Endpoints";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function CreateWorkoutPlanPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  const [submitted, setSubmitted] = useState(false);
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setSubmitted(true);
+    const trimmedName = name.trim();
+
+    if (trimmedName.length < 2) {
+      setError("Plan name must be at least 2 characters.");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setError("");
+
+      const response = await api.post(Endpoints.workoutPlansBase, {
+        name: trimmedName,
+        description: description.trim(),
+      });
+
+      const createdId = response.data?.id;
+      router.push(
+        typeof createdId === "number"
+          ? `/workout-plans/${createdId}`
+          : "/workout-plans",
+      );
+    } catch (error) {
+      console.error("Failed to create workout plan:", error);
+      setError("Workout plan could not be created. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -23,11 +54,7 @@ export default function CreateWorkoutPlanPage() {
       <BackLink href="/workout-plans">Back to Workout Plans</BackLink>
       <PageHeader title="Create Workout Plan" />
 
-      <p className="mb-4 text-sm text-muted">
-        Demo form. Submissions are not saved yet.
-      </p>
       <form
-        onChange={() => setSubmitted(false)}
         onSubmit={handleSubmit}
         className="form-sheet overflow-hidden"
       >
@@ -46,8 +73,14 @@ export default function CreateWorkoutPlanPage() {
             <input
               id="name"
               name="name"
+              required
+              minLength={2}
+              maxLength={100}
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                setError("");
+              }}
               className="block min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
             />
           </div>
@@ -63,19 +96,33 @@ export default function CreateWorkoutPlanPage() {
             <textarea
               id="description"
               name="description"
+              maxLength={500}
               value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={(event) => {
+                setDescription(event.target.value);
+                setError("");
+              }}
               className="block min-h-32 w-full resize-y rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
             />
           </div>
         </div>
+        {error && (
+          <p
+            role="alert"
+            className="mx-5 mb-4 rounded-md border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger sm:mx-6"
+          >
+            {error}
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-3 border-t border-border bg-primary-soft/40 px-5 py-4 sm:px-7">
           <button
             type="submit"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover"
+            disabled={isSaving}
+            aria-busy={isSaving}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Icon name="check" />
-            Save Workout Plan
+            {isSaving ? "Saving..." : "Save Workout Plan"}
           </button>
           <Link
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-semibold text-foreground transition-colors hover:bg-hover"
@@ -84,14 +131,6 @@ export default function CreateWorkoutPlanPage() {
             Cancel
           </Link>
         </div>
-        <p
-          role="status"
-          className="px-5 text-sm text-muted empty:hidden sm:px-7"
-        >
-          {submitted
-            ? "Form reviewed. No changes were saved in this demo."
-            : ""}
-        </p>
       </form>
     </div>
   );

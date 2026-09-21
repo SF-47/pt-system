@@ -8,7 +8,7 @@ export default function Loading() {
         <div className="h-10 w-24 rounded bg-border" />
       </div>
       <div className="mb-3 h-6 w-20 rounded bg-border" />
-      <div className="divide-y divide-border/50 rounded-xl bg-surface px-6">
+      <div className="divide-y divide-border rounded-xl border border-border bg-surface px-6">
         {[0, 1, 2, 3].map((row) => (
           <div key={row} className="grid gap-4 py-6 sm:grid-cols-[14rem_minmax(0,1fr)]">
             <div className="h-6 w-36 rounded bg-border" />

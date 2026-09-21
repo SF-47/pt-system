@@ -1,20 +1,70 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import BackLink from "@/components/BackLink";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
-export default function CreateMealPlanPage() {
+type WorkoutPlan = {
+  id: number;
+  name: string;
+  description: string | null;
+};
+
+export default function EditWorkoutPlanPage() {
+  const params = useParams<{ id: string }>();
   const router = useRouter();
+  const planId = Number(params.id);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [saveError, setSaveError] = useState("");
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadWorkoutPlan() {
+      if (Number.isNaN(planId)) {
+        setLoadError("Invalid workout plan ID.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setLoadError("");
+        const response = await api.get<WorkoutPlan>(
+          Endpoints.workoutPlanById(planId),
+        );
+
+        if (!ignore) {
+          setName(response.data.name);
+          setDescription(response.data.description ?? "");
+        }
+      } catch (error) {
+        console.error("Failed to load workout plan:", error);
+
+        if (!ignore) {
+          setLoadError("Workout plan could not be loaded. Please try again.");
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadWorkoutPlan();
+
+    return () => {
+      ignore = true;
+    };
+  }, [planId]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,54 +72,73 @@ export default function CreateMealPlanPage() {
     const trimmedName = name.trim();
 
     if (trimmedName.length < 2) {
-      setError("Plan name must be at least 2 characters.");
+      setSaveError("Plan name must be at least 2 characters.");
       return;
     }
 
     try {
       setIsSaving(true);
-      setError("");
+      setSaveError("");
 
-      const response = await api.post(Endpoints.mealPlansBase, {
+      await api.put(Endpoints.workoutPlanById(planId), {
         name: trimmedName,
         description: description.trim(),
       });
 
-      const createdId = response.data?.id;
-      router.push(
-        typeof createdId === "number"
-          ? `/meal-plans/${createdId}`
-          : "/meal-plans",
-      );
+      router.push(`/workout-plans/${planId}`);
     } catch (error) {
-      console.error("Failed to create meal plan:", error);
-      setError("Meal plan could not be created. Please try again.");
+      console.error("Failed to update workout plan:", error);
+      setSaveError("Workout plan could not be updated. Please try again.");
     } finally {
       setIsSaving(false);
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="max-w-3xl py-10 text-sm text-muted" role="status">
+        Loading workout plan...
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-3xl">
+        <BackLink href="/workout-plans">Back to Workout Plans</BackLink>
+        <div
+          role="alert"
+          className="mt-6 rounded-lg border border-danger/30 bg-danger-soft p-4 text-sm text-danger"
+        >
+          {loadError}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl">
-      <BackLink href="/meal-plans">Back to Meal Plans</BackLink>
-      <PageHeader title="Create Meal Plan" />
+      <BackLink href={`/workout-plans/${planId}`}>
+        Back to Workout Plan
+      </BackLink>
+      <PageHeader
+        title="Edit Workout Plan"
+        description="Update the plan name and description."
+      />
 
-      <form
-        onSubmit={handleSubmit}
-        className="form-sheet overflow-hidden"
-      >
+      <form onSubmit={handleSubmit} className="form-sheet overflow-hidden">
         <div className="grid gap-6 p-5 sm:p-6">
           <div className="border-b border-border pb-5">
             <h2 className="text-lg font-semibold">Plan details</h2>
             <p className="mt-1 text-sm text-muted">
-              Give the plan a clear name and describe its purpose.
+              Update the basic information for this workout plan.
             </p>
           </div>
+
           <div>
             <label htmlFor="name" className="mb-2 block text-sm font-medium">
               Plan Name
             </label>
-
             <input
               id="name"
               name="name"
@@ -79,7 +148,7 @@ export default function CreateMealPlanPage() {
               value={name}
               onChange={(event) => {
                 setName(event.target.value);
-                setError("");
+                setSaveError("");
               }}
               className="block min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
             />
@@ -92,7 +161,6 @@ export default function CreateMealPlanPage() {
             >
               Description
             </label>
-
             <textarea
               id="description"
               name="description"
@@ -100,20 +168,22 @@ export default function CreateMealPlanPage() {
               value={description}
               onChange={(event) => {
                 setDescription(event.target.value);
-                setError("");
+                setSaveError("");
               }}
               className="block min-h-32 w-full resize-y rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
             />
           </div>
         </div>
-        {error && (
+
+        {saveError && (
           <p
             role="alert"
             className="mx-5 mb-4 rounded-md border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger sm:mx-6"
           >
-            {error}
+            {saveError}
           </p>
         )}
+
         <div className="flex flex-wrap items-center gap-3 border-t border-border bg-primary-soft/40 px-5 py-4 sm:px-7">
           <button
             type="submit"
@@ -122,11 +192,11 @@ export default function CreateMealPlanPage() {
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Icon name="check" />
-            {isSaving ? "Saving..." : "Save Meal Plan"}
+            {isSaving ? "Saving..." : "Save Changes"}
           </button>
           <Link
+            href={`/workout-plans/${planId}`}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-semibold text-foreground transition-colors hover:bg-hover"
-            href="/meal-plans"
           >
             Cancel
           </Link>
