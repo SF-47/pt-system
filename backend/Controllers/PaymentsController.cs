@@ -24,6 +24,7 @@ public class PaymentsController : ControllerBase
     public async Task<ActionResult<PagedResponse<PaymentResponse>>> GetAll(
         int page = 1,
         int pageSize = 10,
+        string? search = null,
         string? status = null
     )
     {
@@ -45,6 +46,7 @@ public class PaymentsController : ControllerBase
             trainerId.Value,
             page,
             pageSize,
+            search,
             status
         );
 

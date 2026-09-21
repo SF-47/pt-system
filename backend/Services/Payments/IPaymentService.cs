@@ -9,6 +9,7 @@ public interface IPaymentService
         int trainerId,
         int page,
         int pageSize,
+        string? search,
         string? status
     );
 

@@ -20,11 +20,18 @@ public class PaymentService : IPaymentService
         int trainerId,
         int page,
         int pageSize,
+        string? search,
         string? status
     )
     {
         var query = _context
             .Payments.Where(payment => payment.Client.TrainerId == trainerId);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.Trim();
+            query = query.Where(payment => payment.Client.FullName.Contains(search));
+        }
 
         if (!string.IsNullOrWhiteSpace(status))
         {
