@@ -5,7 +5,12 @@ namespace backend.Services.Workouts;
 
 public interface IWorkoutPlanService
 {
-    Task<PagedResponse<WorkoutPlanResponse>> GetAllAsync(int trainerId, int page , int pageSize);
+    Task<PagedResponse<WorkoutPlanResponse>> GetAllAsync(
+        int trainerId,
+        int page,
+        int pageSize,
+        string? search
+    );
 
     Task<WorkoutPlanResponse?> GetByIdAsync(int id, int trainerId);
 

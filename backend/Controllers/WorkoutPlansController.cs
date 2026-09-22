@@ -24,7 +24,8 @@ public class WorkoutPlansController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<PagedResponse<WorkoutPlanResponse>>> GetAll(
         int page = 1,
-        int pageSize = 10
+        int pageSize = 10,
+        string? search = null
     )
     {
         var trainerId = GetTrainerId();
@@ -41,7 +42,12 @@ public class WorkoutPlansController : ControllerBase
         {
             return BadRequest(new { message = "Page size must be between 1 and 50." });
         }
-        var result = await _workoutPlanService.GetAllAsync(trainerId.Value, page, pageSize);
+        var result = await _workoutPlanService.GetAllAsync(
+            trainerId.Value,
+            page,
+            pageSize,
+            search
+        );
 
         return Ok(result);
     }
