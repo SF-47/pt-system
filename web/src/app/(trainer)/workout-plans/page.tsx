@@ -9,6 +9,7 @@ import PlanCard, { PlanCardSkeleton } from "@/components/PlanCard";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
 import type { PagedResponse } from "@/types/api";
+import WorkoutPlansLoading from "./loading";
 
 type WorkoutPlan = {
   id: number;
@@ -29,10 +30,12 @@ export default function WorkoutPlansPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const [isFetching, setIsFetching] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [listError, setListError] = useState("");
   const [statsError, setStatsError] = useState("");
-  const pageSize = 10;
+  const pageSize = 6;
 
   useEffect(() => {
     let ignore = false;
@@ -42,7 +45,7 @@ export default function WorkoutPlansPage() {
       setListError("");
       try {
         const response = await api.get<PagedResponse<WorkoutPlan>>(
-          Endpoints.workoutPlans(page, pageSize),
+          Endpoints.workoutPlans(page, pageSize, searchTerm),
         );
         if (ignore) return;
         setWorkoutPlans(response.data.items);
@@ -51,13 +54,16 @@ export default function WorkoutPlansPage() {
       } catch {
         if (!ignore) setListError("Workout plans could not be loaded. Please try again.");
       } finally {
-        if (!ignore) setIsFetching(false);
+        if (!ignore) {
+          setIsFetching(false);
+          setIsInitialLoading(false);
+        }
       }
     }
 
     void getAllWorkoutPlans();
     return () => { ignore = true; };
-  }, [page]);
+  }, [page, searchTerm]);
 
   useEffect(() => {
     let ignore = false;
@@ -68,6 +74,8 @@ export default function WorkoutPlansPage() {
         if (!ignore) setStats(response.data);
       } catch {
         if (!ignore) setStatsError("Workout plan totals are currently unavailable.");
+      } finally {
+        if (!ignore) setIsStatsLoading(false);
       }
     }
 
@@ -75,11 +83,9 @@ export default function WorkoutPlansPage() {
     return () => { ignore = true; };
   }, []);
 
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filteredPlans = workoutPlans.filter((plan) =>
-    plan.name.toLowerCase().includes(normalizedSearch) ||
-    plan.description?.toLowerCase().includes(normalizedSearch),
-  );
+  if (isInitialLoading || isStatsLoading) {
+    return <WorkoutPlansLoading />;
+  }
 
   return (
     <div className="w-full">
@@ -113,16 +119,39 @@ export default function WorkoutPlansPage() {
 
       {statsError && <p className="mb-4 text-sm text-warning" role="status">{statsError}</p>}
 
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div className="w-full max-w-sm">
-          <label htmlFor="workout-search" className="mb-1 block text-sm font-medium text-foreground">Search this page</label>
-          <div className="flex items-center gap-2.5 rounded-lg border border-input-border bg-surface px-3.5 py-2 shadow-xs">
-            <Search className="size-4 shrink-0 text-muted" />
-            <input id="workout-search" type="search" placeholder="Workout plan name" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="min-h-0 w-full border-0 bg-transparent text-sm text-foreground placeholder:text-muted focus:outline-none" />
+      <section
+        className="mb-6 flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 sm:flex-row sm:items-end sm:justify-between"
+        aria-label="Workout plan tools"
+      >
+        <div className="min-w-0 flex-1">
+          <label
+            htmlFor="workout-search"
+            className="mb-1 block text-sm font-medium text-foreground"
+          >
+            Search workout plans
+          </label>
+          <div className="relative min-[761px]:max-w-sm">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted"
+              aria-hidden="true"
+            />
+            <input
+              id="workout-search"
+              type="search"
+              placeholder="Plan name or description"
+              value={searchTerm}
+              onChange={(event) => {
+                setSearchTerm(event.target.value);
+                setPage(1);
+              }}
+              className="min-h-11 w-full rounded-md border border-input-border bg-background py-2 pr-3 pl-10 text-sm text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+            />
           </div>
         </div>
-        <p className="text-xs font-medium text-muted sm:text-sm">{filteredPlans.length} visible on this page · {totalCount} total</p>
-      </div>
+        <p className="shrink-0 text-sm text-muted" aria-live="polite">
+          {workoutPlans.length} visible on this page · {totalCount} total
+        </p>
+      </section>
 
       {listError ? (
         <div className="rounded-lg border border-danger/30 bg-danger-soft p-4 text-sm text-danger" role="alert">{listError}</div>
@@ -130,12 +159,12 @@ export default function WorkoutPlansPage() {
         <div aria-busy="true" aria-label="Loading workout plans" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1, 2, 3, 4, 5].map((placeholder) => <PlanCardSkeleton key={placeholder} />)}
         </div>
-      ) : filteredPlans.length > 0 ? (
+      ) : workoutPlans.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredPlans.map((plan) => <PlanCard key={plan.id} id={plan.id} name={plan.name} description={plan.description} count={plan.exercises?.length || 0} kind="workout" />)}
+          {workoutPlans.map((plan) => <PlanCard key={plan.id} id={plan.id} name={plan.name} description={plan.description} count={plan.exercises?.length || 0} kind="workout" />)}
         </div>
       ) : (
-        <div className="rounded-2xl border border-border bg-surface p-12 text-center shadow-xs"><EmptyState icon="workout" title="No workout plans found" description={searchTerm.trim() ? "No plans on this page match your search." : "Create a plan to start your workout library."} /></div>
+        <div className="rounded-2xl border border-border bg-surface p-12 text-center shadow-xs"><EmptyState icon="workout" title="No workout plans found" description={searchTerm.trim() ? "No workout plans match your search." : "Create a plan to start your workout library."} /></div>
       )}
 
       <div className="mt-8 border-t border-border pt-4">

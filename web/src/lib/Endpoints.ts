@@ -18,8 +18,10 @@ export const Endpoints = {
   // Workout Plans
   workoutPlansBase: "/api/workout-plans",
 
-  workoutPlans: (page: number, pageSize: number) =>
-    `/api/workout-plans?page=${page}&pageSize=${pageSize}`,
+  workoutPlans: (page: number, pageSize: number, search?: string) =>
+    `/api/workout-plans?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(
+      search ?? "",
+    )}`,
 
   workoutPlansStats: "/api/stats/workouts",
 

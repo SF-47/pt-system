@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 import BackLink from "@/components/BackLink";
+import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
 import Icon from "@/components/Icon";
@@ -89,6 +90,7 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 
 export default function ClientDetailsPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const clientId = Number(params.id);
 
   const [client, setClient] = useState<Client | null>(null);
@@ -101,6 +103,9 @@ export default function ClientDetailsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const pageSize = 5;
 
@@ -167,6 +172,21 @@ export default function ClientDetailsPage() {
     };
   }, [clientId]);
 
+  async function handleDeleteClient() {
+    try {
+      setIsDeleting(true);
+      setDeleteError("");
+
+      await api.delete(Endpoints.clientById(clientId));
+      router.push("/clients");
+    } catch (error) {
+      console.error("Failed to delete client:", error);
+      setDeleteError("Client could not be deleted. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   if (isLoading) {
     return <ClientDetailsLoading />;
   }
@@ -209,6 +229,16 @@ export default function ClientDetailsPage() {
                 <Icon name="edit" className="size-4" />
                 Edit Client
               </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteError("");
+                  setIsDeleteOpen(true);
+                }}
+                className="inline-flex min-h-11 items-center gap-2 rounded-md border border-danger/40 bg-surface px-4 py-2 font-medium text-danger transition-colors hover:bg-danger-soft"
+              >
+                Delete Client
+              </button>
             </div>
           </PageHeader>
         </div>
@@ -471,6 +501,23 @@ export default function ClientDetailsPage() {
           </section>
         </div>
       </div>
+
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        title={`Delete ${client.fullName}?`}
+        description="This action removes the client and related records such as payments and assigned plans."
+        isDeleting={isDeleting}
+        error={deleteError}
+        onCancel={() => {
+          if (!isDeleting) {
+            setIsDeleteOpen(false);
+            setDeleteError("");
+          }
+        }}
+        onConfirm={() => {
+          void handleDeleteClient();
+        }}
+      />
     </div>
   );
 }

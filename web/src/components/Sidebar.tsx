@@ -55,7 +55,10 @@ export default function Sidebar() {
         id="trainer-navigation"
         className={`${open ? "flex" : "hidden"} flex-1 flex-col min-[761px]:flex`}
       >
-        <nav className="px-4 pt-2 min-[761px]:pt-0" aria-label="Trainer navigation">
+        <nav
+          className="px-4 pt-2 min-[761px]:pt-0"
+          aria-label="Trainer navigation"
+        >
           {items.map(({ href, label, icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (

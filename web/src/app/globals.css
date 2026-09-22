@@ -85,7 +85,9 @@ textarea {
   outline-offset: 3px;
 }
 
-.login-input:focus-visible {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: none;
 }
 

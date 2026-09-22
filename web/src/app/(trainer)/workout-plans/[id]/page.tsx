@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import BackLink from "@/components/BackLink";
+import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import EmptyState from "@/components/EmptyState";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
@@ -30,18 +31,38 @@ type WorkoutPlan = {
   exercises: Exercise[];
 };
 
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown date";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
 export default function WorkoutPlanPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const planId = Number(params.id);
+  const hasValidPlanId = Number.isInteger(planId) && planId > 0;
   const [plan, setPlan] = useState<WorkoutPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     let ignore = false;
 
     async function loadWorkoutPlan() {
-      if (Number.isNaN(planId)) {
+      if (!hasValidPlanId) {
         setError("Invalid workout plan ID.");
         setIsLoading(false);
         return;
@@ -76,7 +97,22 @@ export default function WorkoutPlanPage() {
     return () => {
       ignore = true;
     };
-  }, [planId]);
+  }, [hasValidPlanId, loadAttempt, planId]);
+
+  async function handleDeletePlan() {
+    try {
+      setIsDeleting(true);
+      setDeleteError("");
+
+      await api.delete(Endpoints.workoutPlanById(planId));
+      router.push("/workout-plans");
+    } catch (error) {
+      console.error("Failed to delete workout plan:", error);
+      setDeleteError("Workout plan could not be deleted. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   if (isLoading) {
     return <WorkoutPlanLoading />;
@@ -92,102 +128,183 @@ export default function WorkoutPlanPage() {
         >
           {error || "Workout plan could not be found."}
         </div>
+        {hasValidPlanId && (
+          <button
+            type="button"
+            onClick={() => setLoadAttempt((current) => current + 1)}
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
+          >
+            Try Again
+          </button>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full">
       <BackLink href="/workout-plans">Back to Workout Plans</BackLink>
+
       <PageHeader
         title={plan.name}
         description={plan.description || "No description provided."}
+        eyebrow="Workout plan"
+        metadata={
+          <dl className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <div className="flex items-center gap-2">
+              <dt className="flex items-center gap-1.5 text-muted">
+                <Icon name="workout" className="size-4 text-primary" />
+                Total exercises
+              </dt>
+              <dd className="font-semibold text-foreground tabular-nums">
+                {plan.exercises.length}
+              </dd>
+            </div>
+            <div className="flex items-center gap-2">
+              <dt className="flex items-center gap-1.5 text-muted">
+                <Icon name="calendar" className="size-4 text-primary" />
+                Created
+              </dt>
+              <dd className="font-semibold text-foreground">
+                {formatDate(plan.createdAt)}
+              </dd>
+            </div>
+          </dl>
+        }
       >
         <Link
           href={`/workout-plans/${plan.id}/edit`}
-          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-medium transition-colors hover:bg-hover"
+          className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-hover sm:w-auto"
         >
           <Icon name="edit" className="size-4" />
           Edit Plan
         </Link>
+        <button
+          type="button"
+          onClick={() => {
+            setDeleteError("");
+            setIsDeleteOpen(true);
+          }}
+          className="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-md border border-danger/40 bg-surface px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-soft sm:w-auto"
+        >
+          Delete Plan
+        </button>
       </PageHeader>
 
-      <section
-        aria-label="Plan overview"
-        className="mb-6 border-b border-border pb-4"
-      >
-        <dl className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
+      <section aria-labelledby="exercises-heading">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3 border-t border-border pt-4">
           <div>
-            <dt className="text-muted">Plan ID</dt>
-            <dd className="mt-1 font-medium tabular-nums">{plan.id}</dd>
+            <h2 id="exercises-heading" className="text-xl font-semibold">
+              Exercises
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              Sets, repetitions, and recovery time for this plan.
+            </p>
           </div>
-          <div>
-            <dt className="text-muted">Exercises</dt>
-            <dd className="mt-1 font-medium tabular-nums">
-              {plan.exercises.length}
-            </dd>
+          <span className="rounded-md border border-border bg-surface px-2.5 py-1 text-sm font-medium text-muted tabular-nums">
+            {plan.exercises.length}{" "}
+            {plan.exercises.length === 1 ? "exercise" : "exercises"}
+          </span>
+        </div>
+
+        {plan.exercises.length > 0 ? (
+          <div
+            className="w-full overflow-x-auto rounded-lg border border-border bg-surface"
+            role="region"
+            aria-label="Exercises in this workout plan"
+            tabIndex={0}
+          >
+            <table className="workspace-table w-full min-w-180 table-fixed border-collapse tabular-nums">
+              <colgroup>
+                <col className="w-[60%]" />
+                <col className="w-[12%]" />
+                <col className="w-[12%]" />
+                <col className="w-[16%]" />
+              </colgroup>
+              <thead>
+                <tr>
+                  {[
+                    ["Exercise", "text-left"],
+                    ["Sets", "text-center"],
+                    ["Reps", "text-center"],
+                    ["Rest", "text-right"],
+                  ].map(([heading, alignment]) => (
+                    <th
+                      key={heading}
+                      scope="col"
+                      className={`bg-background px-4 py-2.5 align-middle text-xs font-semibold uppercase tracking-wide text-muted ${alignment}`}
+                    >
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {plan.exercises.map((exercise, index) => (
+                  <tr
+                    key={exercise.id}
+                    className="border-t border-border transition-colors hover:bg-hover"
+                  >
+                    <td className="px-4 py-3 align-middle">
+                      <div className="flex min-w-0 items-start gap-2.5">
+                        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-primary-hover tabular-nums dark:text-foreground">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground wrap-anywhere">
+                            {exercise.name}
+                          </p>
+                          {exercise.description && (
+                            <p className="mt-0.5 line-clamp-2 text-sm leading-snug text-muted whitespace-normal">
+                              {exercise.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center align-middle font-medium text-foreground">
+                      {exercise.sets}
+                    </td>
+                    <td className="px-4 py-3 text-center align-middle font-medium text-foreground">
+                      {exercise.reps}
+                    </td>
+                    <td className="px-4 py-3 text-right align-middle text-muted">
+                      {exercise.restSeconds > 0
+                        ? `${exercise.restSeconds} sec`
+                        : "No rest"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </dl>
+        ) : (
+          <div className="rounded-lg border border-border bg-surface">
+            <EmptyState
+              icon="workout"
+              title="No exercises yet"
+              description="This workout plan does not have any exercises yet."
+            />
+          </div>
+        )}
       </section>
 
-      <h2 className="mb-3 text-lg font-semibold">Exercises</h2>
-
-      {plan.exercises.length > 0 ? (
-        <div
-          className="w-full overflow-x-auto rounded-lg border border-border bg-surface dark:border-border dark:bg-surface"
-          role="region"
-          aria-label="Exercises"
-          tabIndex={0}
-        >
-          <table className="workspace-table w-full border-collapse whitespace-nowrap tabular-nums">
-            <thead>
-              <tr>
-                {["Exercise", "Sets", "Reps", "Rest"].map((heading) => (
-                  <th
-                    key={heading}
-                    scope="col"
-                    className={`bg-background px-5 py-3 align-middle text-sm font-medium text-muted ${heading === "Exercise" ? "text-left" : "text-right"}`}
-                  >
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {plan.exercises.map((exercise) => (
-                <tr
-                  key={exercise.id}
-                  className="border-t border-border transition-colors hover:bg-hover focus-within:bg-hover dark:border-border dark:hover:bg-hover dark:focus-within:bg-hover"
-                >
-                  <td className="px-5 py-5 align-middle font-medium">
-                    <span className="mr-4 inline-block w-6 text-sm font-normal text-muted tabular-nums">
-                      {String(exercise.id).padStart(2, "0")}
-                    </span>
-                    {exercise.name}
-                  </td>
-                  <td className="px-5 py-5 text-right align-middle">
-                    {exercise.sets}
-                  </td>
-                  <td className="px-5 py-5 text-right align-middle">
-                    {exercise.reps}
-                  </td>
-                  <td className="px-5 py-5 text-right align-middle text-muted">
-                    {exercise.restSeconds} seconds
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="rounded-lg border border-border bg-surface">
-          <EmptyState
-            icon="workout"
-            title="No exercises yet"
-            description="This workout plan does not have any exercises."
-          />
-        </div>
-      )}
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        title={`Delete "${plan.name}"?`}
+        description="This action removes the workout plan, its exercises, and any client assignments for this plan."
+        isDeleting={isDeleting}
+        error={deleteError}
+        onCancel={() => {
+          if (!isDeleting) {
+            setIsDeleteOpen(false);
+            setDeleteError("");
+          }
+        }}
+        onConfirm={() => {
+          void handleDeletePlan();
+        }}
+      />
     </div>
   );
 }

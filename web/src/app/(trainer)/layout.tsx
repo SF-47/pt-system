@@ -16,7 +16,7 @@ export default function TrainerLayout({
 
   return (
     <TrainerAuthGuard>
-      <div className="min-h-dvh min-[761px]:grid min-[761px]:grid-cols-[248px_minmax(0,1fr)]">
+      <div className="min-h-dvh min-[761px]:grid min-[761px]:grid-cols-[270px_minmax(0,1fr)]">
         <a
           className="fixed -top-24 left-3 z-10 bg-primary p-3 text-white focus:top-3"
           href="#main-content"

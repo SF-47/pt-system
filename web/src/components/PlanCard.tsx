@@ -45,14 +45,25 @@ export default function PlanCard({ id, name, description, count, kind }: PlanCar
   }
 
   return (
-    <article className="flex min-h-[220px] min-w-0 flex-col rounded-lg border border-border bg-surface p-5 transition-colors hover:border-primary">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h3 className="min-w-0 flex-1 text-lg leading-snug font-semibold tracking-tight wrap-anywhere">{name}</h3>
-        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary-hover dark:text-foreground">
-          <Icon name="meal" className="size-3.5" />{countLabel}
+    <article className="flex min-h-[340px] min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-primary">
+      <div
+        className="flex aspect-[16/7] w-full flex-col items-center justify-center gap-2 border-b border-border bg-primary-soft text-muted"
+        aria-label="No meal plan image available"
+        role="img"
+      >
+        <span className="flex size-11 items-center justify-center rounded-full border border-border bg-surface">
+          <Icon name="meal" className="size-5 text-primary" />
         </span>
+        <span className="text-xs font-medium">No image available</span>
       </div>
-      <div className="flex flex-1 flex-col">
+
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h3 className="min-w-0 flex-1 text-lg leading-snug font-semibold tracking-tight wrap-anywhere">{name}</h3>
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary-hover dark:text-foreground">
+            <Icon name="meal" className="size-3.5" />{countLabel}
+          </span>
+        </div>
         <p className="mt-2 mb-5 line-clamp-3 min-h-[63px] text-sm leading-[21px] text-muted wrap-anywhere" title={description}>{description}</p>
         <Link href={`/meal-plans/${id}`} aria-label={`View ${name}`} className="mt-auto inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary-soft px-4 text-sm font-semibold text-primary-hover transition-colors hover:bg-primary hover:text-white dark:text-foreground">
           View Plan <Icon name="arrow" className="size-4" />
@@ -80,10 +91,13 @@ export function PlanCardSkeleton({ kind = "workout" }: { kind?: "workout" | "mea
   }
 
   return (
-    <div aria-hidden="true" className="flex min-h-[220px] animate-pulse flex-col rounded-lg border border-border bg-surface p-5">
-      <div className="flex justify-between gap-3"><div className="h-6 w-1/2 rounded bg-border" /><div className="h-6 w-20 rounded bg-border" /></div>
-      <div className="mt-4 min-h-[72px]"><div className="h-4 w-full rounded bg-border" /><div className="mt-2 h-4 w-2/3 rounded bg-border" /></div>
-      <div className="mt-auto h-11 rounded bg-primary-soft" />
+    <div aria-hidden="true" className="flex min-h-[340px] animate-pulse flex-col overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="aspect-[16/7] w-full border-b border-border bg-primary-soft" />
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex justify-between gap-3"><div className="h-6 w-1/2 rounded bg-border" /><div className="h-6 w-20 rounded bg-border" /></div>
+        <div className="mt-4 min-h-[72px]"><div className="h-4 w-full rounded bg-border" /><div className="mt-2 h-4 w-2/3 rounded bg-border" /></div>
+        <div className="mt-auto h-11 rounded bg-primary-soft" />
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import EmptyState from "@/components/EmptyState";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
@@ -28,7 +29,7 @@ type MealStats = {
 export default function MealPlansPage() {
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 6;
   const [totalPages, setTotalPages] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [stats, setStats] = useState<MealStats | null>(null);
@@ -98,6 +99,32 @@ export default function MealPlansPage() {
       </section>
 
       {statsError && <p className="mb-4 text-sm text-warning" role="status">{statsError}</p>}
+
+      <section
+        className="mb-5 rounded-lg border border-border bg-surface p-4"
+        aria-label="Meal plan tools"
+      >
+        <div className="min-w-0 max-w-sm">
+          <label
+            htmlFor="meal-plan-search"
+            className="mb-1 block text-sm font-medium text-foreground"
+          >
+            Search meal plans
+          </label>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted"
+              aria-hidden="true"
+            />
+            <input
+              id="meal-plan-search"
+              type="search"
+              placeholder="Plan name or description"
+              className="min-h-11 w-full rounded-md border border-input-border bg-background py-2 pr-3 pl-10 text-sm text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        </div>
+      </section>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
         <h2 className="text-sm font-semibold">Meal plan library</h2>

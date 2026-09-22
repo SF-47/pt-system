@@ -263,8 +263,7 @@ export default function PaymentsPage() {
       </section>
 
       <p className="mb-2 text-sm text-muted" aria-live="polite">
-        Payments · {payments.length} visible on this page · {totalCount}{" "}
-        total
+        Payments · {payments.length} visible on this page · {totalCount} total
       </p>
 
       {updateError && (

@@ -172,21 +172,21 @@ export default function ClientsPage() {
       label: "All",
       count: stats?.totalClients ?? 0,
       selectedClass:
-        "peer-checked:border-foreground peer-checked:bg-background peer-checked:text-foreground",
+        "peer-checked:bg-[color-mix(in_srgb,var(--primary)_12%,var(--surface))] peer-checked:font-semibold peer-checked:text-foreground peer-checked:shadow-sm",
     },
     {
       value: "active",
       label: "Active",
       count: stats?.activeClients ?? 0,
       selectedClass:
-        "peer-checked:border-primary peer-checked:bg-primary-soft peer-checked:text-primary-hover dark:peer-checked:text-foreground",
+        "peer-checked:bg-primary-soft peer-checked:font-semibold peer-checked:text-primary-hover dark:peer-checked:text-foreground",
     },
     {
       value: "inactive",
       label: "Inactive",
       count: stats?.inactiveClients ?? 0,
       selectedClass:
-        "peer-checked:border-danger peer-checked:bg-danger-soft peer-checked:text-danger",
+        "peer-checked:bg-danger-soft peer-checked:font-semibold peer-checked:text-danger",
     },
   ];
 
@@ -261,10 +261,10 @@ export default function ClientsPage() {
                     className="peer sr-only"
                   />
                   <span
-                    className={`flex min-h-11 items-center gap-2 rounded border border-transparent px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-hover hover:text-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary ${filter.selectedClass}`}
+                    className={`flex min-h-11 items-center gap-2 rounded px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-hover hover:text-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary ${filter.selectedClass}`}
                   >
                     {filter.label}
-                    <span className="min-w-5 rounded bg-surface px-1.5 py-0.5 text-center text-xs tabular-nums text-muted">
+                    <span className="min-w-5 rounded bg-hover px-1.5 py-0.5 text-center text-xs tabular-nums text-muted">
                       {filter.count}
                     </span>
                   </span>
