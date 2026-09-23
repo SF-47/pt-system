@@ -18,10 +18,22 @@ public class MealPlanService : IMealPlanService
     public async Task<PagedResponse<MealPlanResponse>> GetAllAsync(
         int trainerId,
         int page,
-        int pageSize
+        int pageSize,
+        string? search
     )
     {
         var query = _db.MealPlans.Where(plan => plan.TrainerId == trainerId);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.Trim();
+
+            query = query.Where(plan =>
+                plan.Name.Contains(search)
+                || (plan.Description != null && plan.Description.Contains(search))
+            );
+        }
+
         var totalCount = await query.CountAsync();
         var response = new PagedResponse<MealPlanResponse>
         {

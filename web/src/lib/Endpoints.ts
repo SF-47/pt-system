@@ -36,8 +36,10 @@ export const Endpoints = {
   // Meal Plans
   mealPlansBase: "/api/meal-plans",
 
-  mealPlans: (page: number, pageSize: number) =>
-    `/api/meal-plans?page=${page}&pageSize=${pageSize}`,
+  mealPlans: (page: number, pageSize: number, search?: string) =>
+    `/api/meal-plans?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(
+      search ?? "",
+    )}`,
 
   mealPlansStats: "/api/stats/meals",
 

@@ -68,6 +68,7 @@ public class MealAssignmentService : IMealAssignmentService
                 ClientId = assignment.ClientId,
                 MealPlanId = assignment.MealPlanId,
                 MealPlanName = assignment.MealPlan.Name,
+                MealCount = assignment.MealPlan.Meals.Count,
                 AssignedDate = assignment.AssignedDate,
 
                 Meals = assignment
@@ -260,6 +261,7 @@ public class MealAssignmentService : IMealAssignmentService
                 ClientId = assignment.ClientId,
                 MealPlanId = assignment.MealPlanId,
                 MealPlanName = assignment.MealPlan.Name,
+                MealCount = assignment.MealPlan.Meals.Count,
                 AssignedDate = assignment.AssignedDate,
 
                 Meals = assignment

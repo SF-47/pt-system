@@ -28,6 +28,7 @@ type MealStats = {
 
 export default function MealPlansPage() {
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 6;
   const [totalPages, setTotalPages] = useState(0);
@@ -46,7 +47,7 @@ export default function MealPlansPage() {
       setListError("");
       try {
         const response = await api.get<PagedResponse<MealPlan>>(
-          Endpoints.mealPlans(page, pageSize),
+          Endpoints.mealPlans(page, pageSize, searchTerm),
         );
         if (ignore) return;
         setMealPlans(response.data.items);
@@ -64,7 +65,7 @@ export default function MealPlansPage() {
 
     void getMealPlans();
     return () => { ignore = true; };
-  }, [page]);
+  }, [page, searchTerm]);
 
   useEffect(() => {
     let ignore = false;
@@ -101,17 +102,17 @@ export default function MealPlansPage() {
       {statsError && <p className="mb-4 text-sm text-warning" role="status">{statsError}</p>}
 
       <section
-        className="mb-5 rounded-xl border border-border bg-surface p-4"
+        className="mb-5 flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-end sm:justify-between"
         aria-label="Meal plan tools"
       >
-        <div className="min-w-0 max-w-sm">
+        <div className="min-w-0 flex-1">
           <label
             htmlFor="meal-plan-search"
             className="mb-1 block text-sm font-medium text-foreground"
           >
             Search meal plans
           </label>
-          <div className="relative">
+          <div className="relative min-[761px]:max-w-sm">
             <Search
               className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted"
               aria-hidden="true"
@@ -120,10 +121,18 @@ export default function MealPlansPage() {
               id="meal-plan-search"
               type="search"
               placeholder="Plan name or description"
-              className="min-h-11 w-full rounded-md border border-input-border bg-background py-2 pr-3 pl-10 text-sm text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              value={searchTerm}
+              onChange={(event) => {
+                setSearchTerm(event.target.value);
+                setPage(1);
+              }}
+              className="min-h-11 w-full rounded-md border border-input-border bg-background py-2 pr-3 pl-10 text-sm text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
             />
           </div>
         </div>
+        <p className="shrink-0 text-sm text-muted" aria-live="polite">
+          {mealPlans.length} visible on this page · {totalCount} total
+        </p>
       </section>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
@@ -142,7 +151,7 @@ export default function MealPlansPage() {
           {mealPlans.map((plan) => <PlanCard key={plan.id} id={plan.id} name={plan.name} description={plan.description} count={plan.meals.length} kind="meal" />)}
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-surface"><EmptyState icon="meal" title="No meal plans found" description="Create a meal plan to start your library." /></div>
+        <div className="rounded-xl border border-border bg-surface"><EmptyState icon="meal" title="No meal plans found" description={searchTerm.trim() ? "No meal plans match your search." : "Create a meal plan to start your library."} /></div>
       )}
 
       <Pagination page={page} totalPages={totalPages} isLoading={isFetching} onPrevious={() => setPage((current) => Math.max(1, current - 1))} onNext={() => setPage((current) => Math.min(totalPages, current + 1))} />

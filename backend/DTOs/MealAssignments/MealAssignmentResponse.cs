@@ -10,6 +10,8 @@ public class MealAssignmentResponse
 
     public string MealPlanName { get; set; } = string.Empty;
 
+    public int MealCount { get; set; }
+
     public DateTime AssignedDate { get; set; }
 
     public List<MealStatusResponse> Meals { get; set; }
