@@ -49,6 +49,11 @@ type Payment = {
   paidAt: string | null;
 };
 
+type WorkoutPlanOption = {
+  id: number;
+  name: string;
+};
+
 type ActiveTab = "overview" | "progress" | "activity";
 
 function formatDate(value: string) {
@@ -112,6 +117,24 @@ export default function ClientDetailsPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  const [isAssignWorkoutOpen, setIsAssignWorkoutOpen] = useState(false);
+
+  const [availableWorkoutPlans, setAvailableWorkoutPlans] = useState<
+    WorkoutPlanOption[]
+  >([]);
+
+  const [selectedWorkoutPlanId, setSelectedWorkoutPlanId] = useState("");
+
+  const [workoutPlanSearch, setWorkoutPlanSearch] = useState("");
+  const [isWorkoutPlanDropdownOpen, setIsWorkoutPlanDropdownOpen] =
+    useState(false);
+
+  const [assignedWorkoutDate, setAssignedWorkoutDate] = useState("");
+
+  const [isAssigningWorkout, setIsAssigningWorkout] = useState(false);
+
+  const [assignWorkoutError, setAssignWorkoutError] = useState("");
 
   const pageSize = 10;
 
@@ -180,6 +203,31 @@ export default function ClientDetailsPage() {
     };
   }, [clientId]);
 
+  async function openAssignWorkoutModal() {
+    try {
+      setAssignWorkoutError("");
+      setWorkoutPlanSearch("");
+      setIsWorkoutPlanDropdownOpen(false);
+
+      const response = await api.get<PagedResponse<WorkoutPlanOption>>(
+        Endpoints.workoutPlans(1, 50),
+      );
+
+      setAvailableWorkoutPlans(response.data.items);
+
+      setSelectedWorkoutPlanId(
+        response.data.items[0]?.id ? String(response.data.items[0].id) : "",
+      );
+
+      setAssignedWorkoutDate(new Date().toISOString().split("T")[0]);
+
+      setIsAssignWorkoutOpen(true);
+    } catch (error) {
+      console.error("Failed to load workout plans:", error);
+      setAssignWorkoutError("Workout plans could not be loaded.");
+    }
+  }
+
   async function handleDeleteClient() {
     try {
       setIsDeleting(true);
@@ -213,6 +261,14 @@ export default function ClientDetailsPage() {
       </div>
     );
   }
+
+  const selectedWorkoutPlanName = availableWorkoutPlans.find(
+    (plan) => String(plan.id) === selectedWorkoutPlanId,
+  )?.name;
+
+  const filteredWorkoutPlans = availableWorkoutPlans.filter((plan) =>
+    plan.name.toLowerCase().includes(workoutPlanSearch.trim().toLowerCase()),
+  );
 
   return (
     <div>
@@ -307,11 +363,7 @@ export default function ClientDetailsPage() {
       </nav>
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
-        <div
-          id="client-workspace-panel"
-          role="tabpanel"
-          className="min-w-0"
-        >
+        <div id="client-workspace-panel" role="tabpanel" className="min-w-0">
           {activeTab === "overview" && (
             <div className="grid gap-4 lg:grid-cols-2">
               <section className="min-w-0 rounded-xl border border-border bg-surface p-4">
@@ -322,7 +374,9 @@ export default function ClientDetailsPage() {
                     </div>
                     <div className="min-w-0">
                       <h2 className="font-semibold">Assigned Workout Plans</h2>
-                      <p className="text-xs text-muted">Current workout plans</p>
+                      <p className="text-xs text-muted">
+                        Current workout plans
+                      </p>
                     </div>
                   </div>
 
@@ -333,9 +387,10 @@ export default function ClientDetailsPage() {
                     {/* TODO: Connect when workout assignment creation UI is implemented. */}
                     <button
                       type="button"
-                      disabled
-                      title="Workout assignment is not available yet"
-                      className="inline-flex min-h-9 items-center rounded-md border border-border bg-background px-3 text-xs font-medium text-muted disabled:cursor-not-allowed disabled:opacity-60"
+                      onClick={() => {
+                        void openAssignWorkoutModal();
+                      }}
+                      className="inline-flex min-h-9 items-center rounded-md border border-border bg-background px-3 text-xs font-medium transition-colors hover:bg-hover"
                     >
                       + Assign Workout
                     </button>
@@ -386,7 +441,9 @@ export default function ClientDetailsPage() {
                     </div>
                     <div className="min-w-0">
                       <h2 className="font-semibold">Assigned Meal Plans</h2>
-                      <p className="text-xs text-muted">Current nutrition plans</p>
+                      <p className="text-xs text-muted">
+                        Current nutrition plans
+                      </p>
                     </div>
                   </div>
 
@@ -586,6 +643,169 @@ export default function ClientDetailsPage() {
           </section>
         </div>
       </div>
+      {isAssignWorkoutOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-xl">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Assign Workout Plan</h2>
+              <p className="mt-1 text-sm text-muted">
+                Choose a workout plan and assignment date.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="workout-plan"
+                  className="mb-2 block text-sm font-medium"
+                >
+                  Workout Plan
+                </label>
+
+                <div
+                  className="relative"
+                  onBlur={(event) => {
+                    if (
+                      !event.currentTarget.contains(
+                        event.relatedTarget as Node,
+                      )
+                    ) {
+                      setIsWorkoutPlanDropdownOpen(false);
+                    }
+                  }}
+                >
+                  <button
+                    type="button"
+                    id="workout-plan"
+                    onClick={() =>
+                      setIsWorkoutPlanDropdownOpen((open) => !open)
+                    }
+                    aria-haspopup="listbox"
+                    aria-expanded={isWorkoutPlanDropdownOpen}
+                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-input-border bg-background px-3 text-left text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <span
+                      className={`truncate ${selectedWorkoutPlanName ? "" : "text-muted"}`}
+                    >
+                      {selectedWorkoutPlanName ?? "Select a workout plan"}
+                    </span>
+                    <Icon
+                      name="arrow"
+                      className={`size-4 shrink-0 text-muted transition-transform ${
+                        isWorkoutPlanDropdownOpen ? "-rotate-90" : "rotate-90"
+                      }`}
+                    />
+                  </button>
+
+                  {isWorkoutPlanDropdownOpen && (
+                    <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-border bg-surface shadow-xl">
+                      <div className="border-b border-border p-2">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={workoutPlanSearch}
+                          onChange={(event) =>
+                            setWorkoutPlanSearch(event.target.value)
+                          }
+                          placeholder="Search workout plans..."
+                          className="min-h-9 w-full rounded-md border border-input-border bg-background px-2.5 text-sm text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+
+                      <ul role="listbox" className="max-h-[220px] overflow-y-auto py-1">
+                        {filteredWorkoutPlans.length > 0 ? (
+                          filteredWorkoutPlans.map((plan) => (
+                            <li key={plan.id}>
+                              <button
+                                type="button"
+                                role="option"
+                                aria-selected={
+                                  String(plan.id) === selectedWorkoutPlanId
+                                }
+                                onClick={() => {
+                                  setSelectedWorkoutPlanId(String(plan.id));
+                                  setWorkoutPlanSearch("");
+                                  setIsWorkoutPlanDropdownOpen(false);
+                                }}
+                                className={`flex min-h-9 w-full items-center px-3 text-left text-sm transition-colors hover:bg-hover ${
+                                  String(plan.id) === selectedWorkoutPlanId
+                                    ? "bg-primary-soft font-medium text-foreground"
+                                    : "text-foreground"
+                                }`}
+                              >
+                                {plan.name}
+                              </button>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="px-3 py-4 text-center text-sm text-muted">
+                            No workout plans found.
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="assigned-workout-date"
+                  className="mb-2 block text-sm font-medium"
+                >
+                  Assigned Date
+                </label>
+
+                <input
+                  id="assigned-workout-date"
+                  type="date"
+                  value={assignedWorkoutDate}
+                  onChange={(event) =>
+                    setAssignedWorkoutDate(event.target.value)
+                  }
+                  className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              {assignWorkoutError && (
+                <div
+                  className="rounded-md border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
+                  role="alert"
+                >
+                  {assignWorkoutError}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAssignWorkoutOpen(false);
+                  setAssignWorkoutError("");
+                  setWorkoutPlanSearch("");
+                  setIsWorkoutPlanDropdownOpen(false);
+                }}
+                className="min-h-10 rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-hover"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  !selectedWorkoutPlanId ||
+                  !assignedWorkoutDate ||
+                  isAssigningWorkout
+                }
+                className="min-h-10 rounded-md bg-primary px-4 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Assign
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <DeleteConfirmDialog
         open={isDeleteOpen}
