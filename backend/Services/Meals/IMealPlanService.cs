@@ -5,7 +5,12 @@ namespace backend.Services.Meals;
 
 public interface IMealPlanService
 {
-    Task<PagedResponse<MealPlanResponse>> GetAllAsync(int trainerId, int page, int pageSize);
+    Task<PagedResponse<MealPlanResponse>> GetAllAsync(
+        int trainerId,
+        int page,
+        int pageSize,
+        string? search
+    );
 
     Task<MealPlanResponse?> GetByIdAsync(int id, int trainerId);
 

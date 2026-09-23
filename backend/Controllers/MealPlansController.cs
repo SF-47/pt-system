@@ -24,7 +24,8 @@ public class MealPlansController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<PagedResponse<MealPlanResponse>>> GetAll(
         int page = 1,
-        int pageSize = 10
+        int pageSize = 10,
+        string? search = null
     )
     {
         var trainerId = GetTrainerId();
@@ -44,7 +45,7 @@ public class MealPlansController : ControllerBase
             return BadRequest(new { message = "Page size must be between 1 and 50." });
         }
 
-        var result = await _mealPlanService.GetAllAsync(trainerId.Value, page, pageSize);
+        var result = await _mealPlanService.GetAllAsync(trainerId.Value, page, pageSize, search);
 
         return Ok(result);
     }

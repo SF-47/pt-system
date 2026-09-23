@@ -12,6 +12,8 @@ public class WorkoutAssignmentResponse
 
     public string WorkoutPlanName { get; set; } = string.Empty;
 
+    public int ExerciseCount { get; set; }
+
     public DateTime AssignedDate { get; set; }
 
     public CompletionStatus Status { get; set; }

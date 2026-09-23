@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import BackLink from "@/components/BackLink";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import EmptyState from "@/components/EmptyState";
@@ -45,8 +45,16 @@ function formatDate(value: string) {
 export default function MealPlanPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const planId = Number(params.id);
   const hasValidPlanId = Number.isInteger(planId) && planId > 0;
+
+  // When opened from a client's weekly schedule (?fromClient=<id>), Back
+  // returns to that client instead of the plans list.
+  const fromClientId = Number(searchParams.get("fromClient"));
+  const hasFromClient = Number.isInteger(fromClientId) && fromClientId > 0;
+  const backHref = hasFromClient ? `/clients/${fromClientId}` : "/meal-plans";
+  const backLabel = hasFromClient ? "Back to Client" : "Back to Meal Plans";
   const [plan, setPlan] = useState<MealPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -154,7 +162,7 @@ export default function MealPlanPage() {
   if (error || !plan) {
     return (
       <div className="w-full">
-        <BackLink href="/meal-plans">Back to Meal Plans</BackLink>
+        <BackLink href={backHref}>{backLabel}</BackLink>
         <div
           role="alert"
           className="mt-6 rounded-lg border border-danger/30 bg-danger-soft p-4 text-sm text-danger"
@@ -176,7 +184,7 @@ export default function MealPlanPage() {
 
   return (
     <div className="w-full">
-      <BackLink href="/meal-plans">Back to Meal Plans</BackLink>
+      <BackLink href={backHref}>{backLabel}</BackLink>
 
       <PageHeader
         title={plan.name}

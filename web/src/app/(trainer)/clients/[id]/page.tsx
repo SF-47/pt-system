@@ -6,7 +6,6 @@ import Link from "next/link";
 
 import BackLink from "@/components/BackLink";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
-import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/Avatar";
 import Icon from "@/components/Icon";
 import StatusBadge from "@/components/StatusBadge";
@@ -28,7 +27,9 @@ type Client = {
 
 type AssignedWorkoutPlan = {
   id: number;
+  workoutPlanId: number;
   workoutPlanName: string;
+  exerciseCount: number;
   assignedDate: string;
   status: number;
   completedAt: string | null;
@@ -36,7 +37,9 @@ type AssignedWorkoutPlan = {
 
 type AssignedMealPlan = {
   id: number;
+  mealPlanId: number;
   mealPlanName: string;
+  mealCount: number;
   assignedDate: string;
 };
 
@@ -134,6 +137,22 @@ function getPaymentStatus(status: number) {
   return "Pending";
 }
 
+// Weekly schedule workout cards indicate status through background/border
+// tone instead of a separate visible status label. Same semantic colors
+// as StatusBadge: primary (green) for completed, warning for pending,
+// neutral gray for skipped.
+function getWorkoutCardTone(status: number) {
+  if (status === 1) {
+    return "border-primary/40 bg-primary-soft hover:bg-primary-soft/70";
+  }
+
+  if (status === 2) {
+    return "border-border-strong bg-background hover:bg-hover";
+  }
+
+  return "border-warning/40 bg-warning-soft hover:bg-warning-soft/70";
+}
+
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -175,6 +194,8 @@ export default function ClientDetailsPage() {
   >([]);
 
   const [selectedWorkoutPlanId, setSelectedWorkoutPlanId] = useState("");
+  const [isLoadingWorkoutPlanOptions, setIsLoadingWorkoutPlanOptions] =
+    useState(false);
 
   const [workoutPlanSearch, setWorkoutPlanSearch] = useState("");
   const [isWorkoutPlanDropdownOpen, setIsWorkoutPlanDropdownOpen] =
@@ -193,10 +214,11 @@ export default function ClientDetailsPage() {
   >([]);
 
   const [selectedMealPlanId, setSelectedMealPlanId] = useState("");
+  const [isLoadingMealPlanOptions, setIsLoadingMealPlanOptions] =
+    useState(false);
 
   const [mealPlanSearch, setMealPlanSearch] = useState("");
-  const [isMealPlanDropdownOpen, setIsMealPlanDropdownOpen] =
-    useState(false);
+  const [isMealPlanDropdownOpen, setIsMealPlanDropdownOpen] = useState(false);
 
   const [assignedMealDate, setAssignedMealDate] = useState("");
 
@@ -303,7 +325,9 @@ export default function ClientDetailsPage() {
         console.error("Failed to load weekly schedule:", error);
 
         if (!ignore) {
-          setWeekError("Weekly schedule could not be loaded. Please try again.");
+          setWeekError(
+            "Weekly schedule could not be loaded. Please try again.",
+          );
         }
       } finally {
         if (!ignore) {
@@ -319,11 +343,24 @@ export default function ClientDetailsPage() {
     };
   }, [clientId, weekStartKey, weekEndKey, weekRefreshKey]);
 
-  async function openAssignWorkoutModal() {
+  function openAssignWorkoutModal() {
+    // Open immediately with the modal's own loading state; don't make the
+    // button wait on the plan-library request.
+    setAssignWorkoutError("");
+    setWorkoutPlanSearch("");
+    setIsWorkoutPlanDropdownOpen(false);
+    setAvailableWorkoutPlans([]);
+    setSelectedWorkoutPlanId("");
+    setAssignedWorkoutDate(toDateKey(new Date()));
+    setIsAssignWorkoutOpen(true);
+
+    void loadWorkoutPlanOptions();
+  }
+
+  async function loadWorkoutPlanOptions() {
     try {
+      setIsLoadingWorkoutPlanOptions(true);
       setAssignWorkoutError("");
-      setWorkoutPlanSearch("");
-      setIsWorkoutPlanDropdownOpen(false);
 
       const response = await api.get<PagedResponse<WorkoutPlanOption>>(
         Endpoints.workoutPlans(1, 50),
@@ -334,13 +371,11 @@ export default function ClientDetailsPage() {
       setSelectedWorkoutPlanId(
         response.data.items[0]?.id ? String(response.data.items[0].id) : "",
       );
-
-      setAssignedWorkoutDate(toDateKey(new Date()));
-
-      setIsAssignWorkoutOpen(true);
     } catch (error) {
       console.error("Failed to load workout plans:", error);
       setAssignWorkoutError("Workout plans could not be loaded.");
+    } finally {
+      setIsLoadingWorkoutPlanOptions(false);
     }
   }
 
@@ -373,11 +408,24 @@ export default function ClientDetailsPage() {
     }
   }
 
-  async function openAssignMealModal() {
+  function openAssignMealModal() {
+    // Open immediately with the modal's own loading state; don't make the
+    // button wait on the plan-library request.
+    setAssignMealError("");
+    setMealPlanSearch("");
+    setIsMealPlanDropdownOpen(false);
+    setAvailableMealPlans([]);
+    setSelectedMealPlanId("");
+    setAssignedMealDate(toDateKey(new Date()));
+    setIsAssignMealOpen(true);
+
+    void loadMealPlanOptions();
+  }
+
+  async function loadMealPlanOptions() {
     try {
+      setIsLoadingMealPlanOptions(true);
       setAssignMealError("");
-      setMealPlanSearch("");
-      setIsMealPlanDropdownOpen(false);
 
       const response = await api.get<PagedResponse<MealPlanOption>>(
         Endpoints.mealPlans(1, 50),
@@ -388,13 +436,11 @@ export default function ClientDetailsPage() {
       setSelectedMealPlanId(
         response.data.items[0]?.id ? String(response.data.items[0].id) : "",
       );
-
-      setAssignedMealDate(toDateKey(new Date()));
-
-      setIsAssignMealOpen(true);
     } catch (error) {
       console.error("Failed to load meal plans:", error);
       setAssignMealError("Meal plans could not be loaded.");
+    } finally {
+      setIsLoadingMealPlanOptions(false);
     }
   }
 
@@ -480,20 +526,78 @@ export default function ClientDetailsPage() {
       <BackLink href="/clients">Back to Clients</BackLink>
 
       {/* Client Header */}
-      <div className="mb-5 flex items-start gap-4 rounded-xl border border-border bg-surface p-5 sm:gap-5 sm:p-6 [&>span]:size-14 [&>span]:text-lg sm:[&>span]:size-16 [&_header]:mb-0">
-        <Avatar name={client.fullName} />
+      <div className="mb-5 rounded-xl border border-border bg-surface p-5 sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center">
+          {/* Identity */}
+          <div className="flex min-w-0 items-center gap-4 [&>span]:size-14 [&>span]:text-lg sm:[&>span]:size-16">
+            <Avatar name={client.fullName} />
 
-        <div className="min-w-0 flex-1">
-          <PageHeader
-            title={client.fullName}
-            description={client.email ?? "No email provided"}
-          >
-            <div className="flex flex-wrap items-center gap-3">
-              <StatusBadge status={client.isActive ? "Active" : "Inactive"} />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl font-semibold wrap-anywhere sm:text-2xl">
+                  {client.fullName}
+                </h1>
+                <StatusBadge status={client.isActive ? "Active" : "Inactive"} />
+              </div>
+              <p className="mt-1 text-sm text-muted wrap-anywhere">
+                {client.email ?? "No email provided"}
+              </p>
+            </div>
+          </div>
 
+          {/* Contact / account info */}
+          <dl className="grid grid-cols-3 gap-x-4 gap-y-2 text-sm lg:grid-cols-1 lg:border-x lg:border-border lg:px-5">
+            <div>
+              <dt className="text-xs text-muted">Username</dt>
+              <dd className="mt-0.5 font-medium wrap-anywhere">
+                {client.username}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted">Phone</dt>
+              <dd className="mt-0.5 font-medium tabular-nums">
+                {client.phoneNumber}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted">Client since</dt>
+              <dd className="mt-0.5 font-medium">
+                {formatDate(client.createdAt)}
+              </dd>
+            </div>
+          </dl>
+
+          {/* Payment + actions */}
+          <div className="flex flex-col gap-3 lg:items-end">
+            <div className="w-full">
+              <p className="text-xs font-semibold tracking-wide text-muted uppercase lg:text-right">
+                Payment
+              </p>
+
+              {payment ? (
+                <div className="mt-1.5 lg:text-right">
+                  <div className="flex items-center gap-2 lg:flex-row-reverse">
+                    <StatusBadge status={getPaymentStatus(payment.status)} />
+                    <p className="text-lg font-semibold text-foreground tabular-nums">
+                      {currencyFormatter.format(payment.amount)}
+                    </p>
+                  </div>
+                  <p className="mt-1 text-xs text-muted">
+                    Due {formatDate(payment.dueDate)}
+                    {payment.paidAt && ` · Paid ${formatDate(payment.paidAt)}`}
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-1.5 text-sm text-muted lg:text-right">
+                  No payment information available.
+                </p>
+              )}
+            </div>
+
+            <div className="flex w-full flex-wrap gap-2 border-t border-border pt-3 lg:justify-end">
               <Link
                 href={`/clients/${client.id}/edit`}
-                className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-medium transition-colors hover:bg-hover"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors hover:bg-hover"
               >
                 <Icon name="edit" className="size-4" />
                 Edit Client
@@ -504,12 +608,13 @@ export default function ClientDetailsPage() {
                   setDeleteError("");
                   setIsDeleteOpen(true);
                 }}
-                className="inline-flex min-h-11 items-center gap-2 rounded-md border border-danger/40 bg-surface px-4 py-2 font-medium text-danger transition-colors hover:bg-danger-soft"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-danger/40 bg-surface px-3 text-sm font-medium text-danger transition-colors hover:bg-danger-soft"
               >
+                <Icon name="close" className="size-4" />
                 Delete Client
               </button>
             </div>
-          </PageHeader>
+          </div>
         </div>
       </div>
 
@@ -567,324 +672,285 @@ export default function ClientDetailsPage() {
         </button>
       </nav>
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
-        <div id="client-workspace-panel" role="tabpanel" className="min-w-0">
-          {activeTab === "overview" && (
-            <section className="rounded-xl border border-border bg-surface p-4">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                    <Icon name="calendar" className="size-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="font-semibold">Weekly Schedule</h2>
-                    <p className="text-xs text-muted tabular-nums">
-                      {shortDateFormatter.format(weekDates[0])} –{" "}
-                      {shortDateFormatter.format(weekDates[6])}
-                    </p>
-                  </div>
-                </div>
+      <div id="client-workspace-panel" role="tabpanel" className="min-w-0">
+        {activeTab === "overview" && (
+          <section className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Weekly Schedule</h2>
+                <p className="mt-0.5 text-sm font-medium text-muted tabular-nums">
+                  {shortDateFormatter.format(weekDates[0])} –{" "}
+                  {shortDateFormatter.format(weekDates[6])}
+                </p>
+              </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center rounded-md border border-border bg-background">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setCurrentWeekDate((current) => {
-                          const next = new Date(current);
-                          next.setDate(next.getDate() - 7);
-                          return next;
-                        })
-                      }
-                      aria-label="Previous week"
-                      className="inline-flex min-h-9 items-center px-2.5 text-xs font-medium transition-colors hover:bg-hover"
-                    >
-                      <Icon name="arrow" className="size-3.5 rotate-180" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentWeekDate(new Date())}
-                      className="inline-flex min-h-9 items-center border-x border-border px-3 text-xs font-medium transition-colors hover:bg-hover"
-                    >
-                      Today
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setCurrentWeekDate((current) => {
-                          const next = new Date(current);
-                          next.setDate(next.getDate() + 7);
-                          return next;
-                        })
-                      }
-                      aria-label="Next week"
-                      className="inline-flex min-h-9 items-center px-2.5 text-xs font-medium transition-colors hover:bg-hover"
-                    >
-                      <Icon name="arrow" className="size-3.5" />
-                    </button>
-                  </div>
-
+              <div className="flex flex-col items-start gap-2 sm:items-end">
+                <div className="flex items-center rounded-md border border-border bg-background">
                   <button
                     type="button"
-                    onClick={() => void openAssignWorkoutModal()}
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium transition-colors hover:bg-hover"
+                    onClick={() =>
+                      setCurrentWeekDate((current) => {
+                        const next = new Date(current);
+                        next.setDate(next.getDate() - 7);
+                        return next;
+                      })
+                    }
+                    aria-label="Previous week"
+                    title="Previous week"
+                    className="inline-flex min-h-9 items-center gap-1 px-2.5 text-sm font-medium transition-colors hover:bg-hover"
                   >
-                    <Icon name="workout" className="size-3.5" />
+                    <Icon name="arrow" className="size-4 rotate-180" />
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentWeekDate(new Date())}
+                    title="Jump to the current week"
+                    className="inline-flex min-h-9 items-center border-x border-border px-3 text-sm font-medium transition-colors hover:bg-hover"
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentWeekDate((current) => {
+                        const next = new Date(current);
+                        next.setDate(next.getDate() + 7);
+                        return next;
+                      })
+                    }
+                    aria-label="Next week"
+                    title="Next week"
+                    className="inline-flex min-h-9 items-center gap-1 px-2.5 text-sm font-medium transition-colors hover:bg-hover"
+                  >
+                    Next
+                    <Icon name="arrow" className="size-4" />
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={openAssignWorkoutModal}
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-primary/30 bg-primary-soft px-3 text-sm font-semibold text-primary-hover transition-colors hover:bg-primary-soft/70 dark:text-foreground"
+                  >
+                    <Icon name="workout" className="size-4" />
                     Schedule Workout
                   </button>
                   <button
                     type="button"
-                    onClick={() => void openAssignMealModal()}
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium transition-colors hover:bg-hover"
+                    onClick={openAssignMealModal}
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-primary/30 bg-primary-soft px-3 text-sm font-semibold text-primary-hover transition-colors hover:bg-primary-soft/70 dark:text-foreground"
                   >
-                    <Icon name="meal" className="size-3.5" />
+                    <Icon name="meal" className="size-4" />
                     Assign Meal
                   </button>
                 </div>
               </div>
-
-              {weekError && (
-                <p role="alert" className="mb-3 text-sm text-danger">
-                  {weekError}
-                </p>
-              )}
-
-              <div className="overflow-x-auto">
-                <div className="grid min-w-[910px] grid-cols-7 gap-2">
-                  {weekDates.map((date) => {
-                    const dateKey = toDateKey(date);
-                    const isToday = dateKey === toDateKey(new Date());
-
-                    const dayWorkouts = weeklyWorkoutAssignments.filter(
-                      (assignment) =>
-                        assignedDateKey(assignment.assignedDate) === dateKey,
-                    );
-                    const dayMeals = weeklyMealAssignments.filter(
-                      (assignment) =>
-                        assignedDateKey(assignment.assignedDate) === dateKey,
-                    );
-
-                    return (
-                      <div
-                        key={dateKey}
-                        className={`min-w-0 rounded-lg border p-2.5 ${
-                          isToday
-                            ? "border-primary bg-primary-soft/40"
-                            : "border-border bg-background"
-                        }`}
-                      >
-                        <p className="text-xs font-semibold text-foreground">
-                          {weekdayFormatter.format(date)}
-                        </p>
-                        <p className="mb-2 text-xs text-muted tabular-nums">
-                          {shortDateFormatter.format(date)}
-                        </p>
-
-                        <div className="space-y-1">
-                          <p className="flex items-center gap-1 text-[11px] font-medium tracking-wide text-muted uppercase">
-                            <Icon name="workout" className="size-3" />
-                            Workout
-                          </p>
-                          {dayWorkouts.length > 0 ? (
-                            dayWorkouts.map((assignment) => (
-                              <div
-                                key={assignment.id}
-                                className="rounded-md bg-surface p-1.5"
-                              >
-                                <p className="line-clamp-2 text-xs font-medium text-foreground wrap-anywhere">
-                                  {assignment.workoutPlanName}
-                                </p>
-                                <div className="mt-1">
-                                  <StatusBadge
-                                    status={getWorkoutStatus(assignment.status)}
-                                  />
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="text-xs text-muted">No workout</p>
-                          )}
-                        </div>
-
-                        <div className="mt-1.5 space-y-1">
-                          <p className="flex items-center gap-1 text-[11px] font-medium tracking-wide text-muted uppercase">
-                            <Icon name="meal" className="size-3" />
-                            Meal
-                          </p>
-                          {dayMeals.length > 0 ? (
-                            dayMeals.map((assignment) => (
-                              <div
-                                key={assignment.id}
-                                className="rounded-md bg-surface p-1.5"
-                              >
-                                <p className="line-clamp-2 text-xs font-medium text-foreground wrap-anywhere">
-                                  {assignment.mealPlanName}
-                                </p>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="text-xs text-muted">No meal</p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {isWeekLoading && (
-                <p role="status" className="mt-3 text-center text-xs text-muted">
-                  Loading weekly schedule…
-                </p>
-              )}
-            </section>
-          )}
-
-          {activeTab === "progress" && (
-            <section className="rounded-xl border border-border bg-surface p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                  <Icon name="dashboard" className="size-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold">Client Progress</h2>
-                  <p className="text-sm text-muted">
-                    Workout and meal completion summary
-                  </p>
-                </div>
-              </div>
-              <div className="mt-5 rounded-lg border border-dashed border-border p-8 text-center">
-                <p className="text-sm text-muted">
-                  Progress data is not available yet.
-                </p>
-              </div>
-            </section>
-          )}
-
-          {activeTab === "activity" && (
-            <div className="space-y-4">
-              <section className="rounded-xl border border-border bg-surface p-4">
-                <label
-                  htmlFor="activity-date"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Activity date
-                </label>
-                <input
-                  id="activity-date"
-                  type="date"
-                  value={activityDate}
-                  onChange={(event) => setActivityDate(event.target.value)}
-                  className="block min-h-11 w-full max-w-60 rounded-md border border-input-border bg-background px-3 py-2 text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </section>
-
-              <div className="grid gap-4 lg:grid-cols-2">
-                <section className="rounded-xl border border-border bg-surface p-4">
-                  <div className="flex items-center gap-2">
-                    <Icon name="workout" className="size-5 text-primary" />
-                    <h2 className="font-semibold">Workout Activity</h2>
-                  </div>
-                  <div className="mt-4 rounded-lg border border-dashed border-border p-6 text-center">
-                    <p className="text-sm text-muted">
-                      Workout activity is not available for this date yet.
-                    </p>
-                  </div>
-                </section>
-
-                <section className="rounded-xl border border-border bg-surface p-4">
-                  <div className="flex items-center gap-2">
-                    <Icon name="meal" className="size-5 text-primary" />
-                    <h2 className="font-semibold">Meal Activity</h2>
-                  </div>
-                  <div className="mt-4 rounded-lg border border-dashed border-border p-6 text-center">
-                    <p className="text-sm text-muted">
-                      Meal activity is not available for this date yet.
-                    </p>
-                  </div>
-                </section>
-              </div>
             </div>
-          )}
-        </div>
 
-        {/* Right Sidebar */}
-        <div className="grid gap-5">
-          {/* Contact Information */}
-          <section>
-            <h2 className="pb-1 text-base font-semibold">
-              Contact information
-            </h2>
+            {weekError && (
+              <p role="alert" className="mb-3 text-sm text-danger">
+                {weekError}
+              </p>
+            )}
 
-            <dl className="grid gap-5 pt-5">
-              <div>
-                <dt className="text-sm text-muted">Full name</dt>
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="w-full min-w-[1050px] table-fixed border-collapse">
+                <colgroup>
+                  {weekDates.map((date) => (
+                    <col key={toDateKey(date)} className="w-[14.2857%]" />
+                  ))}
+                </colgroup>
+                <thead>
+                  <tr className="divide-x divide-border border-b border-border">
+                    {weekDates.map((date) => {
+                      const dateKey = toDateKey(date);
+                      const isToday = dateKey === toDateKey(new Date());
 
-                <dd className="mt-1 font-medium wrap-anywhere">
-                  {client.fullName}
-                </dd>
-              </div>
+                      return (
+                        <th
+                          key={dateKey}
+                          scope="col"
+                          className={`px-3 py-2.5 text-left align-middle ${
+                            isToday ? "bg-primary-soft/25" : "bg-background"
+                          }`}
+                        >
+                          <p
+                            className={`text-sm font-semibold ${
+                              isToday
+                                ? "text-primary-hover dark:text-foreground"
+                                : "text-foreground"
+                            }`}
+                          >
+                            {weekdayFormatter.format(date)}
+                          </p>
+                          <p className="mt-0.5 text-xs font-normal text-muted tabular-nums">
+                            {shortDateFormatter.format(date)}
+                          </p>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="divide-x divide-border">
+                    {weekDates.map((date) => {
+                      const dateKey = toDateKey(date);
+                      const isToday = dateKey === toDateKey(new Date());
 
-              <div>
-                <dt className="text-sm text-muted">Username</dt>
+                      // At most one workout plan and one meal plan per day.
+                      const dayWorkout = weeklyWorkoutAssignments.find(
+                        (assignment) =>
+                          assignedDateKey(assignment.assignedDate) === dateKey,
+                      );
+                      const dayMeal = weeklyMealAssignments.find(
+                        (assignment) =>
+                          assignedDateKey(assignment.assignedDate) === dateKey,
+                      );
 
-                <dd className="mt-1 wrap-anywhere">{client.username}</dd>
-              </div>
+                      return (
+                        <td
+                          key={dateKey}
+                          className={`min-w-0 p-2.5 align-top ${
+                            isToday ? "bg-primary-soft/10" : "bg-surface"
+                          }`}
+                        >
+                          <div className="flex h-full flex-col gap-2">
+                            {dayWorkout ? (
+                              <Link
+                                href={`/workout-plans/${dayWorkout.workoutPlanId}?fromClient=${clientId}`}
+                                aria-label={`${dayWorkout.workoutPlanName} — ${getWorkoutStatus(dayWorkout.status)}`}
+                                title={getWorkoutStatus(dayWorkout.status)}
+                                className={`block rounded-md border px-3 py-2.5 transition-colors ${getWorkoutCardTone(dayWorkout.status)}`}
+                              >
+                                <p className="flex items-start gap-1.5 text-sm font-medium text-foreground">
+                                  <Icon
+                                    name="workout"
+                                    className="mt-0.5 size-4 shrink-0"
+                                  />
+                                  <span className="wrap-anywhere">
+                                    {dayWorkout.workoutPlanName}
+                                  </span>
+                                </p>
+                                <p className="mt-1 pl-[22px] text-xs text-muted">
+                                  {dayWorkout.exerciseCount}{" "}
+                                  {dayWorkout.exerciseCount === 1
+                                    ? "exercise"
+                                    : "exercises"}
+                                </p>
+                              </Link>
+                            ) : (
+                              <p className="px-1 py-1 text-sm text-muted">—</p>
+                            )}
 
-              <div>
-                <dt className="text-sm text-muted">Email</dt>
+                            {dayMeal ? (
+                              <Link
+                                href={`/meal-plans/${dayMeal.mealPlanId}?fromClient=${clientId}`}
+                                className="block rounded-md border border-border bg-background px-3 py-2.5 transition-colors hover:bg-hover"
+                              >
+                                <p className="flex items-start gap-1.5 text-sm font-medium text-foreground">
+                                  <Icon
+                                    name="meal"
+                                    className="mt-0.5 size-4 shrink-0"
+                                  />
+                                  <span className="wrap-anywhere">
+                                    {dayMeal.mealPlanName}
+                                  </span>
+                                </p>
+                                <p className="mt-1 pl-[22px] text-xs text-muted">
+                                  {dayMeal.mealCount}{" "}
+                                  {dayMeal.mealCount === 1 ? "meal" : "meals"}
+                                </p>
+                              </Link>
+                            ) : (
+                              <p className="px-1 py-1 text-sm text-muted">—</p>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-                <dd className="mt-1 wrap-anywhere">
-                  {client.email ?? "No email provided"}
-                </dd>
-              </div>
-
-              <div>
-                <dt className="text-sm text-muted">Phone</dt>
-
-                <dd className="mt-1 tabular-nums">{client.phoneNumber}</dd>
-              </div>
-
-              <div>
-                <dt className="text-sm text-muted">Client since</dt>
-
-                <dd className="mt-1">{formatDate(client.createdAt)}</dd>
-              </div>
-            </dl>
-          </section>
-
-          {/* Payment */}
-          <section className="rounded-xl border border-border bg-surface p-5">
-            <h2 className="mb-4 text-base font-semibold">Payment Status</h2>
-
-            {payment ? (
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-lg font-semibold text-foreground">
-                    {currencyFormatter.format(payment.amount)}
-                  </p>
-
-                  <p className="mt-1 text-sm text-muted">
-                    Due {formatDate(payment.dueDate)}
-                  </p>
-
-                  {payment.paidAt && (
-                    <p className="mt-1 text-xs text-muted">
-                      Paid {formatDate(payment.paidAt)}
-                    </p>
-                  )}
-                </div>
-
-                <StatusBadge status={getPaymentStatus(payment.status)} />
-              </div>
-            ) : (
-              <p className="text-sm text-muted">
-                No payment information available.
+            {isWeekLoading && (
+              <p role="status" className="mt-3 text-center text-xs text-muted">
+                Loading weekly schedule…
               </p>
             )}
           </section>
-        </div>
+        )}
+
+        {activeTab === "progress" && (
+          <section className="rounded-xl border border-border bg-surface p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                <Icon name="dashboard" className="size-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">Client Progress</h2>
+                <p className="text-sm text-muted">
+                  Workout and meal completion summary
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 rounded-lg border border-dashed border-border p-8 text-center">
+              <p className="text-sm text-muted">
+                Progress data is not available yet.
+              </p>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "activity" && (
+          <div className="space-y-4">
+            <section className="rounded-xl border border-border bg-surface p-4">
+              <label
+                htmlFor="activity-date"
+                className="mb-2 block text-sm font-medium"
+              >
+                Activity date
+              </label>
+              <input
+                id="activity-date"
+                type="date"
+                value={activityDate}
+                onChange={(event) => setActivityDate(event.target.value)}
+                className="block min-h-11 w-full max-w-60 rounded-md border border-input-border bg-background px-3 py-2 text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </section>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <section className="rounded-xl border border-border bg-surface p-4">
+                <div className="flex items-center gap-2">
+                  <Icon name="workout" className="size-5 text-primary" />
+                  <h2 className="font-semibold">Workout Activity</h2>
+                </div>
+                <div className="mt-4 rounded-lg border border-dashed border-border p-6 text-center">
+                  <p className="text-sm text-muted">
+                    Workout activity is not available for this date yet.
+                  </p>
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-border bg-surface p-4">
+                <div className="flex items-center gap-2">
+                  <Icon name="meal" className="size-5 text-primary" />
+                  <h2 className="font-semibold">Meal Activity</h2>
+                </div>
+                <div className="mt-4 rounded-lg border border-dashed border-border p-6 text-center">
+                  <p className="text-sm text-muted">
+                    Meal activity is not available for this date yet.
+                  </p>
+                </div>
+              </section>
+            </div>
+          </div>
+        )}
       </div>
+
       {isAssignWorkoutOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
           <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-xl">
@@ -908,9 +974,7 @@ export default function ClientDetailsPage() {
                   className="relative"
                   onBlur={(event) => {
                     if (
-                      !event.currentTarget.contains(
-                        event.relatedTarget as Node,
-                      )
+                      !event.currentTarget.contains(event.relatedTarget as Node)
                     ) {
                       setIsWorkoutPlanDropdownOpen(false);
                     }
@@ -922,15 +986,27 @@ export default function ClientDetailsPage() {
                     onClick={() =>
                       setIsWorkoutPlanDropdownOpen((open) => !open)
                     }
+                    disabled={isLoadingWorkoutPlanOptions}
                     aria-haspopup="listbox"
                     aria-expanded={isWorkoutPlanDropdownOpen}
-                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-input-border bg-background px-3 text-left text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    aria-busy={isLoadingWorkoutPlanOptions}
+                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-input-border bg-background px-3 text-left text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    <span
-                      className={`truncate ${selectedWorkoutPlanName ? "" : "text-muted"}`}
-                    >
-                      {selectedWorkoutPlanName ?? "Select a workout plan"}
-                    </span>
+                    {isLoadingWorkoutPlanOptions ? (
+                      <span className="flex items-center gap-2 text-muted">
+                        <span
+                          aria-hidden="true"
+                          className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-border border-t-primary"
+                        />
+                        Loading workout plans...
+                      </span>
+                    ) : (
+                      <span
+                        className={`truncate ${selectedWorkoutPlanName ? "" : "text-muted"}`}
+                      >
+                        {selectedWorkoutPlanName ?? "Select a workout plan"}
+                      </span>
+                    )}
                     <Icon
                       name="arrow"
                       className={`size-4 shrink-0 text-muted transition-transform ${
@@ -939,54 +1015,58 @@ export default function ClientDetailsPage() {
                     />
                   </button>
 
-                  {isWorkoutPlanDropdownOpen && (
-                    <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-border bg-surface shadow-xl">
-                      <div className="border-b border-border p-2">
-                        <input
-                          type="text"
-                          autoFocus
-                          value={workoutPlanSearch}
-                          onChange={(event) =>
-                            setWorkoutPlanSearch(event.target.value)
-                          }
-                          placeholder="Search workout plans..."
-                          className="min-h-9 w-full rounded-md border border-input-border bg-background px-2.5 text-sm text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
-                      </div>
+                  {isWorkoutPlanDropdownOpen &&
+                    !isLoadingWorkoutPlanOptions && (
+                      <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-border bg-surface shadow-xl">
+                        <div className="border-b border-border p-2">
+                          <input
+                            type="text"
+                            autoFocus
+                            value={workoutPlanSearch}
+                            onChange={(event) =>
+                              setWorkoutPlanSearch(event.target.value)
+                            }
+                            placeholder="Search workout plans..."
+                            className="min-h-9 w-full rounded-md border border-input-border bg-background px-2.5 text-sm text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
 
-                      <ul role="listbox" className="max-h-[220px] overflow-y-auto py-1">
-                        {filteredWorkoutPlans.length > 0 ? (
-                          filteredWorkoutPlans.map((plan) => (
-                            <li key={plan.id}>
-                              <button
-                                type="button"
-                                role="option"
-                                aria-selected={
-                                  String(plan.id) === selectedWorkoutPlanId
-                                }
-                                onClick={() => {
-                                  setSelectedWorkoutPlanId(String(plan.id));
-                                  setWorkoutPlanSearch("");
-                                  setIsWorkoutPlanDropdownOpen(false);
-                                }}
-                                className={`flex min-h-9 w-full items-center px-3 text-left text-sm transition-colors hover:bg-hover ${
-                                  String(plan.id) === selectedWorkoutPlanId
-                                    ? "bg-primary-soft font-medium text-foreground"
-                                    : "text-foreground"
-                                }`}
-                              >
-                                {plan.name}
-                              </button>
+                        <ul
+                          role="listbox"
+                          className="max-h-[220px] overflow-y-auto py-1"
+                        >
+                          {filteredWorkoutPlans.length > 0 ? (
+                            filteredWorkoutPlans.map((plan) => (
+                              <li key={plan.id}>
+                                <button
+                                  type="button"
+                                  role="option"
+                                  aria-selected={
+                                    String(plan.id) === selectedWorkoutPlanId
+                                  }
+                                  onClick={() => {
+                                    setSelectedWorkoutPlanId(String(plan.id));
+                                    setWorkoutPlanSearch("");
+                                    setIsWorkoutPlanDropdownOpen(false);
+                                  }}
+                                  className={`flex min-h-9 w-full items-center px-3 text-left text-sm transition-colors hover:bg-hover ${
+                                    String(plan.id) === selectedWorkoutPlanId
+                                      ? "bg-primary-soft font-medium text-foreground"
+                                      : "text-foreground"
+                                  }`}
+                                >
+                                  {plan.name}
+                                </button>
+                              </li>
+                            ))
+                          ) : (
+                            <li className="px-3 py-4 text-center text-sm text-muted">
+                              No workout plans found.
                             </li>
-                          ))
-                        ) : (
-                          <li className="px-3 py-4 text-center text-sm text-muted">
-                            No workout plans found.
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  )}
+                          )}
+                        </ul>
+                      </div>
+                    )}
                 </div>
               </div>
 
@@ -1011,10 +1091,20 @@ export default function ClientDetailsPage() {
 
               {assignWorkoutError && (
                 <div
-                  className="rounded-md border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
+                  className="flex items-center justify-between gap-3 rounded-md border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
                   role="alert"
                 >
-                  {assignWorkoutError}
+                  <span>{assignWorkoutError}</span>
+                  {!isLoadingWorkoutPlanOptions &&
+                    availableWorkoutPlans.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => void loadWorkoutPlanOptions()}
+                        className="shrink-0 font-medium underline underline-offset-2 hover:no-underline"
+                      >
+                        Retry
+                      </button>
+                    )}
                 </div>
               )}
             </div>
@@ -1039,6 +1129,7 @@ export default function ClientDetailsPage() {
                 disabled={
                   !selectedWorkoutPlanId ||
                   !assignedWorkoutDate ||
+                  isLoadingWorkoutPlanOptions ||
                   isAssigningWorkout
                 }
                 aria-busy={isAssigningWorkout}
@@ -1074,9 +1165,7 @@ export default function ClientDetailsPage() {
                   className="relative"
                   onBlur={(event) => {
                     if (
-                      !event.currentTarget.contains(
-                        event.relatedTarget as Node,
-                      )
+                      !event.currentTarget.contains(event.relatedTarget as Node)
                     ) {
                       setIsMealPlanDropdownOpen(false);
                     }
@@ -1085,18 +1174,28 @@ export default function ClientDetailsPage() {
                   <button
                     type="button"
                     id="meal-plan"
-                    onClick={() =>
-                      setIsMealPlanDropdownOpen((open) => !open)
-                    }
+                    onClick={() => setIsMealPlanDropdownOpen((open) => !open)}
+                    disabled={isLoadingMealPlanOptions}
                     aria-haspopup="listbox"
                     aria-expanded={isMealPlanDropdownOpen}
-                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-input-border bg-background px-3 text-left text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    aria-busy={isLoadingMealPlanOptions}
+                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-input-border bg-background px-3 text-left text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    <span
-                      className={`truncate ${selectedMealPlanName ? "" : "text-muted"}`}
-                    >
-                      {selectedMealPlanName ?? "Select a meal plan"}
-                    </span>
+                    {isLoadingMealPlanOptions ? (
+                      <span className="flex items-center gap-2 text-muted">
+                        <span
+                          aria-hidden="true"
+                          className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-border border-t-primary"
+                        />
+                        Loading meal plans...
+                      </span>
+                    ) : (
+                      <span
+                        className={`truncate ${selectedMealPlanName ? "" : "text-muted"}`}
+                      >
+                        {selectedMealPlanName ?? "Select a meal plan"}
+                      </span>
+                    )}
                     <Icon
                       name="arrow"
                       className={`size-4 shrink-0 text-muted transition-transform ${
@@ -1105,7 +1204,7 @@ export default function ClientDetailsPage() {
                     />
                   </button>
 
-                  {isMealPlanDropdownOpen && (
+                  {isMealPlanDropdownOpen && !isLoadingMealPlanOptions && (
                     <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-border bg-surface shadow-xl">
                       <div className="border-b border-border p-2">
                         <input
@@ -1120,7 +1219,10 @@ export default function ClientDetailsPage() {
                         />
                       </div>
 
-                      <ul role="listbox" className="max-h-[220px] overflow-y-auto py-1">
+                      <ul
+                        role="listbox"
+                        className="max-h-[220px] overflow-y-auto py-1"
+                      >
                         {filteredMealPlans.length > 0 ? (
                           filteredMealPlans.map((plan) => (
                             <li key={plan.id}>
@@ -1168,19 +1270,27 @@ export default function ClientDetailsPage() {
                   id="assigned-meal-date"
                   type="date"
                   value={assignedMealDate}
-                  onChange={(event) =>
-                    setAssignedMealDate(event.target.value)
-                  }
+                  onChange={(event) => setAssignedMealDate(event.target.value)}
                   className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               {assignMealError && (
                 <div
-                  className="rounded-md border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
+                  className="flex items-center justify-between gap-3 rounded-md border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
                   role="alert"
                 >
-                  {assignMealError}
+                  <span>{assignMealError}</span>
+                  {!isLoadingMealPlanOptions &&
+                    availableMealPlans.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => void loadMealPlanOptions()}
+                        className="shrink-0 font-medium underline underline-offset-2 hover:no-underline"
+                      >
+                        Retry
+                      </button>
+                    )}
                 </div>
               )}
             </div>
@@ -1205,6 +1315,7 @@ export default function ClientDetailsPage() {
                 disabled={
                   !selectedMealPlanId ||
                   !assignedMealDate ||
+                  isLoadingMealPlanOptions ||
                   isAssigningMeal
                 }
                 aria-busy={isAssigningMeal}

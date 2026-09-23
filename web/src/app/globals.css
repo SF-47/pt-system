@@ -105,6 +105,7 @@ textarea:focus-visible {
 /* Reusable presentation for the trainer workspace. */
 ::selection { background: var(--primary-soft); color: var(--text); }
 button:not(:disabled), select, a { -webkit-tap-highlight-color: transparent; }
+button:not(:disabled), select, a[href], [role="button"]:not([aria-disabled="true"]) { cursor: pointer; }
 input, select, textarea { min-height: 48px; }
 input, textarea { box-shadow: inset 0 1px 2px color-mix(in srgb, var(--text) 3%, transparent); }
 input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1; }

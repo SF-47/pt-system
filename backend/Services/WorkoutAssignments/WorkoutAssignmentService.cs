@@ -68,6 +68,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
                 ClientId = assignment.ClientId,
                 WorkoutPlanId = assignment.WorkoutPlanId,
                 WorkoutPlanName = assignment.WorkoutPlan.Name,
+                ExerciseCount = assignment.WorkoutPlan.Exercises.Count,
                 AssignedDate = assignment.AssignedDate,
                 Status = assignment.Status,
                 CompletedAt = assignment.CompletedAt,
@@ -115,9 +116,9 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
 
         await _context.SaveChangesAsync();
 
-        var workoutPlanName = await _context
+        var workoutPlanInfo = await _context
             .WorkoutPlans.Where(plan => plan.Id == assignment.WorkoutPlanId)
-            .Select(plan => plan.Name)
+            .Select(plan => new { plan.Name, ExerciseCount = plan.Exercises.Count })
             .FirstAsync();
 
         return ServiceResult<WorkoutAssignmentResponse>.Ok(
@@ -126,7 +127,8 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
                 Id = assignment.Id,
                 ClientId = assignment.ClientId,
                 WorkoutPlanId = assignment.WorkoutPlanId,
-                WorkoutPlanName = workoutPlanName,
+                WorkoutPlanName = workoutPlanInfo.Name,
+                ExerciseCount = workoutPlanInfo.ExerciseCount,
                 AssignedDate = assignment.AssignedDate,
                 Status = assignment.Status,
                 CompletedAt = assignment.CompletedAt,
@@ -165,9 +167,9 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
 
         await _context.SaveChangesAsync();
 
-        var workoutPlanName = await _context
+        var workoutPlanInfo = await _context
             .WorkoutPlans.Where(plan => plan.Id == assignment.WorkoutPlanId)
-            .Select(plan => plan.Name)
+            .Select(plan => new { plan.Name, ExerciseCount = plan.Exercises.Count })
             .FirstAsync();
 
         return ServiceResult<WorkoutAssignmentResponse>.Ok(
@@ -176,7 +178,8 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
                 Id = assignment.Id,
                 ClientId = assignment.ClientId,
                 WorkoutPlanId = assignment.WorkoutPlanId,
-                WorkoutPlanName = workoutPlanName,
+                WorkoutPlanName = workoutPlanInfo.Name,
+                ExerciseCount = workoutPlanInfo.ExerciseCount,
                 AssignedDate = assignment.AssignedDate,
                 Status = assignment.Status,
                 CompletedAt = assignment.CompletedAt,
@@ -214,12 +217,18 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
 
         await _context.SaveChangesAsync();
 
+        var exerciseCount = await _context
+            .WorkoutPlans.Where(plan => plan.Id == assignment.WorkoutPlanId)
+            .Select(plan => plan.Exercises.Count)
+            .FirstOrDefaultAsync();
+
         return new WorkoutAssignmentResponse
         {
             Id = assignment.Id,
             ClientId = assignment.ClientId,
             WorkoutPlanId = assignment.WorkoutPlanId,
             WorkoutPlanName = assignment.WorkoutPlan.Name,
+            ExerciseCount = exerciseCount,
             AssignedDate = assignment.AssignedDate,
             Status = assignment.Status,
             CompletedAt = assignment.CompletedAt,

@@ -3,7 +3,9 @@
 import Icon, { type IconName } from "@/components/Icon";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const collapsedStorageKey = "pt-system-sidebar-collapsed";
 
 const items: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
@@ -17,6 +19,38 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Read the saved desktop collapse preference after mount (avoids an
+  // SSR/hydration mismatch, since localStorage isn't available server-side).
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsCollapsed(localStorage.getItem(collapsedStorageKey) === "true");
+    } catch {}
+  }, []);
+
+  // The grid track width lives in the parent layout; expose the desktop
+  // sidebar width as a CSS variable so collapsing actually reclaims space
+  // instead of just shrinking content inside a fixed-width column.
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--sidebar-width",
+      isCollapsed ? "80px" : "270px",
+    );
+  }, [isCollapsed]);
+
+  function toggleCollapsed() {
+    setIsCollapsed((current) => {
+      const next = !current;
+
+      try {
+        localStorage.setItem(collapsedStorageKey, String(next));
+      } catch {}
+
+      return next;
+    });
+  }
 
   function handleLogout() {
     localStorage.removeItem("token");
@@ -26,16 +60,22 @@ export default function Sidebar() {
 
   return (
     <aside className="relative flex h-auto flex-col overflow-y-auto border-b border-border bg-sidebar dark:border-border dark:bg-sidebar min-[761px]:sticky min-[761px]:top-0 min-[761px]:h-dvh min-[761px]:border-r min-[761px]:border-b-0">
-      <div className="flex items-center justify-between px-5 py-4 min-[761px]:pt-7 min-[761px]:pb-8">
+      <div
+        className={`flex items-center px-5 py-4 min-[761px]:pt-7 min-[761px]:pb-8 ${
+          isCollapsed
+            ? "min-[761px]:flex-col min-[761px]:gap-3 min-[761px]:px-2"
+            : "justify-between"
+        }`}
+      >
         <Link
           href="/dashboard"
           className="flex items-center gap-3 text-[22px] font-bold tracking-tight"
           onClick={() => setOpen(false)}
         >
-          <span className="grid size-10 place-items-center rounded-xl bg-primary text-white">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-white">
             <Icon name="workout" className="size-7" />
           </span>
-          <span>
+          <span className={isCollapsed ? "min-[761px]:hidden" : ""}>
             PT System
             <small className="mt-1 block text-sm font-normal text-muted">
               Personal training
@@ -50,13 +90,27 @@ export default function Sidebar() {
         >
           {open ? "Close menu" : "Menu"}
         </button>
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="hidden min-h-9 min-w-9 shrink-0 items-center justify-center rounded-md border border-border text-muted transition-colors hover:bg-hover hover:text-foreground min-[761px]:inline-flex"
+        >
+          <Icon
+            name="arrow"
+            className={`size-4 transition-transform ${isCollapsed ? "" : "rotate-180"}`}
+          />
+        </button>
       </div>
       <div
         id="trainer-navigation"
         className={`${open ? "flex" : "hidden"} flex-1 flex-col min-[761px]:flex`}
       >
         <nav
-          className="px-4 pt-2 min-[761px]:pt-0"
+          className={`px-4 pt-2 min-[761px]:pt-0 ${
+            isCollapsed ? "min-[761px]:px-2" : ""
+          }`}
           aria-label="Trainer navigation"
         >
           {items.map(({ href, label, icon }) => {
@@ -65,8 +119,11 @@ export default function Sidebar() {
               <Link
                 key={href}
                 href={href}
+                title={label}
                 aria-current={active ? "page" : undefined}
                 className={`mb-2 flex min-h-13 items-center gap-3.5 rounded-lg border px-3 py-3 text-[17px] transition-colors ${
+                  isCollapsed ? "min-[761px]:justify-center" : ""
+                } ${
                   active
                     ? "border-transparent bg-primary font-semibold text-white dark:border-transparent dark:bg-primary dark:text-white"
                     : "border-transparent text-foreground hover:bg-hover hover:text-foreground dark:text-foreground dark:hover:bg-hover dark:hover:text-foreground"
@@ -74,19 +131,30 @@ export default function Sidebar() {
                 onClick={() => setOpen(false)}
               >
                 <Icon name={icon} />
-                {label}
+                <span className={isCollapsed ? "min-[761px]:hidden" : ""}>
+                  {label}
+                </span>
               </Link>
             );
           })}
         </nav>
-        <div className="mt-4 px-4 py-4 min-[761px]:mt-auto min-[761px]:p-4">
+        <div
+          className={`mt-4 px-4 py-4 min-[761px]:mt-auto min-[761px]:p-4 ${
+            isCollapsed ? "min-[761px]:px-2" : ""
+          }`}
+        >
           <button
             type="button"
             onClick={handleLogout}
-            className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-muted transition-colors hover:bg-hover hover:text-foreground"
+            title="Logout"
+            className={`flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-muted transition-colors hover:bg-hover hover:text-foreground ${
+              isCollapsed ? "min-[761px]:justify-center" : ""
+            }`}
           >
             <Icon name="logout" />
-            Logout
+            <span className={isCollapsed ? "min-[761px]:hidden" : ""}>
+              Logout
+            </span>
           </button>
         </div>
       </div>
