@@ -21,13 +21,26 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         int clientId,
         int trainerId,
         int page,
-        int pageSize
+        int pageSize,
+        DateTime? startDate = null,
+        DateTime? endDate = null
     )
     {
         var query = _context
             .ClientWorkoutAssignments.Where(assignment =>
                 assignment.ClientId == clientId && assignment.Client.TrainerId == trainerId
             );
+
+        if (startDate is not null)
+        {
+            query = query.Where(assignment => assignment.AssignedDate >= startDate.Value);
+        }
+
+        if (endDate is not null)
+        {
+            query = query.Where(assignment => assignment.AssignedDate <= endDate.Value);
+        }
+
         var totalCount = await query.CountAsync();
         var response = new PagedResponse<WorkoutAssignmentResponse>
         {

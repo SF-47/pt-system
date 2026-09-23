@@ -10,7 +10,9 @@ public interface IMealAssignmentService
         int clientId,
         int trainerId,
         int page,
-        int pageSize
+        int pageSize,
+        DateTime? startDate = null,
+        DateTime? endDate = null
     );
 
     Task<ServiceResult<MealAssignmentResponse>> AssignAsync(

@@ -51,8 +51,16 @@ export const Endpoints = {
   clientWorkoutPlansBase: (clientId: number) =>
     `/api/clients/${clientId}/workout-plans`,
 
-  clientWorkoutPlans: (clientId: number, page: number, pageSize: number) =>
-    `/api/clients/${clientId}/workout-plans?page=${page}&pageSize=${pageSize}`,
+  clientWorkoutPlans: (
+    clientId: number,
+    page: number,
+    pageSize: number,
+    startDate?: string,
+    endDate?: string,
+  ) =>
+    `/api/clients/${clientId}/workout-plans?page=${page}&pageSize=${pageSize}${
+      startDate ? `&startDate=${startDate}` : ""
+    }${endDate ? `&endDate=${endDate}` : ""}`,
 
   clientWorkoutPlanById: (id: number) => `/api/client-workout-plans/${id}`,
 
@@ -63,8 +71,16 @@ export const Endpoints = {
   clientMealPlansBase: (clientId: number) =>
     `/api/clients/${clientId}/meal-plans`,
 
-  clientMealPlans: (clientId: number, page: number, pageSize: number) =>
-    `/api/clients/${clientId}/meal-plans?page=${page}&pageSize=${pageSize}`,
+  clientMealPlans: (
+    clientId: number,
+    page: number,
+    pageSize: number,
+    startDate?: string,
+    endDate?: string,
+  ) =>
+    `/api/clients/${clientId}/meal-plans?page=${page}&pageSize=${pageSize}${
+      startDate ? `&startDate=${startDate}` : ""
+    }${endDate ? `&endDate=${endDate}` : ""}`,
 
   clientMealPlanById: (id: number) => `/api/client-meal-plans/${id}`,
 

@@ -24,7 +24,9 @@ public class WorkoutAssignmentsController : ControllerBase
     public async Task<ActionResult<PagedResponse<WorkoutAssignmentResponse>>> GetByClientId(
         int clientId,
         int page = 1,
-        int pageSize = 10
+        int pageSize = 10,
+        DateTime? startDate = null,
+        DateTime? endDate = null
     )
     {
         var trainerId = GetTrainerId();
@@ -41,11 +43,19 @@ public class WorkoutAssignmentsController : ControllerBase
         {
             return BadRequest(new { message = "Page size must be between 1 and 50." });
         }
+
+        if (startDate is not null && endDate is not null && startDate > endDate)
+        {
+            return BadRequest(new { message = "Start date cannot be after end date." });
+        }
+
         var assignments = await _workoutAssignmentService.GetByClientIdAsync(
             clientId,
             trainerId.Value,
             page,
-            pageSize
+            pageSize,
+            startDate,
+            endDate
         );
 
         return Ok(assignments);

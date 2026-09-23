@@ -21,13 +21,26 @@ public class MealAssignmentService : IMealAssignmentService
         int clientId,
         int trainerId,
         int page,
-        int pageSize
+        int pageSize,
+        DateTime? startDate = null,
+        DateTime? endDate = null
     )
     {
         var query = _db
             .ClientMealPlans.Where(assignment =>
                 assignment.ClientId == clientId && assignment.Client.TrainerId == trainerId
             );
+
+        if (startDate is not null)
+        {
+            query = query.Where(assignment => assignment.AssignedDate >= startDate.Value);
+        }
+
+        if (endDate is not null)
+        {
+            query = query.Where(assignment => assignment.AssignedDate <= endDate.Value);
+        }
+
         var totalCount = await query.CountAsync();
         var response = new PagedResponse<MealAssignmentResponse>
         {
