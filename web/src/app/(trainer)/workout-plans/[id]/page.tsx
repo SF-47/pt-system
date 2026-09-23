@@ -209,7 +209,7 @@ export default function WorkoutPlanPage() {
 
         {plan.exercises.length > 0 ? (
           <div
-            className="w-full overflow-x-auto rounded-xl border border-border bg-surface"
+            className="w-full max-h-[560px] overflow-x-auto overflow-y-auto rounded-xl border border-border bg-surface"
             role="region"
             aria-label="Exercises in this workout plan"
             tabIndex={0}
@@ -232,7 +232,7 @@ export default function WorkoutPlanPage() {
                     <th
                       key={heading}
                       scope="col"
-                      className={`bg-background px-4 py-2.5 align-middle text-xs font-semibold uppercase tracking-wide text-muted ${alignment}`}
+                      className={`sticky top-0 z-10 bg-background px-4 py-2.5 align-middle text-xs font-semibold uppercase tracking-wide text-muted ${alignment}`}
                     >
                       {heading}
                     </th>

@@ -415,12 +415,12 @@ export default function EditWorkoutPlanPage() {
         description="Update the plan details and exercises."
       />
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(320px,0.75fr)_minmax(0,1.25fr)]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(320px,0.75fr)_minmax(0,1.25fr)]">
         <form
           onSubmit={handleSubmit}
-          className="overflow-hidden rounded-xl border border-border bg-surface"
+          className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface"
         >
-        <div className="border-b border-border px-5 py-4 sm:px-6">
+        <div className="shrink-0 border-b border-border px-5 py-4 sm:px-6">
           <h2 className="flex items-center gap-2 text-base font-semibold">
             <Icon name="workout" className="size-4 text-muted" />
             Plan details
@@ -430,7 +430,7 @@ export default function EditWorkoutPlanPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 p-5 sm:p-6">
+        <div className="grid flex-1 gap-4 p-5 sm:p-6">
           <div>
             <label htmlFor="name" className="mb-2 block text-sm font-medium">
               Plan Name
@@ -501,8 +501,8 @@ export default function EditWorkoutPlanPage() {
         </div>
         </form>
 
-        <section className="overflow-hidden rounded-xl border border-border bg-surface">
-        <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-4 sm:px-6">
+        <section className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="shrink-0 flex flex-wrap items-start justify-between gap-3 px-5 py-4 sm:px-6">
           <div>
             <h2 className="flex items-center gap-2 text-base font-semibold">
               <Icon name="workout" className="size-4 text-muted" />
@@ -530,13 +530,13 @@ export default function EditWorkoutPlanPage() {
         </div>
 
         {addExerciseMessage && (
-          <p role="status" className="px-5 pb-3 text-sm text-primary-hover sm:px-6">
+          <p role="status" className="shrink-0 px-5 pb-3 text-sm text-primary-hover sm:px-6">
             {addExerciseMessage}
           </p>
         )}
 
         {deleteExerciseMessage && (
-          <p role="status" className="px-5 pb-3 text-sm text-primary-hover sm:px-6">
+          <p role="status" className="shrink-0 px-5 pb-3 text-sm text-primary-hover sm:px-6">
             {deleteExerciseMessage}
           </p>
         )}
@@ -544,7 +544,7 @@ export default function EditWorkoutPlanPage() {
         {isAddingExercise && (
           <form
             onSubmit={(event) => void handleAddExercise(event)}
-            className="border-t border-border bg-background px-5 py-4 sm:px-6"
+            className="shrink-0 border-t border-border bg-background px-5 py-4 sm:px-6"
           >
             <div className="mb-3 flex items-center gap-2">
               <Icon name="plus" className="size-4 text-primary" />
@@ -694,6 +694,7 @@ export default function EditWorkoutPlanPage() {
           </form>
         )}
 
+        <div className="max-h-[360px] overflow-y-auto">
         {exercises.length > 0 ? (
           exercises.map((exercise, index) => {
             const isUpdating = updatingExerciseId === exercise.id;
@@ -928,6 +929,7 @@ export default function EditWorkoutPlanPage() {
             This workout plan does not have any exercises yet.
           </p>
         ) : null}
+        </div>
         </section>
       </div>
 
