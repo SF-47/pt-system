@@ -107,6 +107,25 @@ public class WorkoutAssignmentsController : ControllerBase
         return Ok(result.Data);
     }
 
+    [HttpDelete("api/client-workout-plans/{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+
+        var deleted = await _workoutAssignmentService.DeleteAsync(id, trainerId.Value);
+
+        if (!deleted)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
+
     [HttpPut("api/client-workout-plans/{id}/status")]
     public async Task<ActionResult<WorkoutAssignmentResponse>> UpdateStatus(
         int id,

@@ -331,4 +331,24 @@ public class MealAssignmentService : IMealAssignmentService
             })
             .FirstOrDefaultAsync();
     }
+
+    public async Task<bool> DeleteAsync(int assignmentId, int trainerId)
+    {
+        var assignment = await _db.ClientMealPlans.FirstOrDefaultAsync(assignment =>
+            assignment.Id == assignmentId && assignment.Client.TrainerId == trainerId
+        );
+
+        if (assignment is null)
+        {
+            return false;
+        }
+
+        // ClientMealStatuses cascade-delete at the DB level (see
+        // FK_ClientMealStatuses_ClientMealPlans_ClientMealPlanId), so no
+        // manual cleanup is needed here.
+        _db.ClientMealPlans.Remove(assignment);
+        await _db.SaveChangesAsync();
+
+        return true;
+    }
 }

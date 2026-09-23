@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { X } from "lucide-react";
 
 import BackLink from "@/components/BackLink";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
@@ -226,6 +227,27 @@ export default function ClientDetailsPage() {
   const [isAssigningMeal, setIsAssigningMeal] = useState(false);
 
   const [assignMealError, setAssignMealError] = useState("");
+
+  const [workoutAssignmentToDelete, setWorkoutAssignmentToDelete] = useState<{
+    id: number;
+    name: string;
+    dateLabel: string;
+  } | null>(null);
+  const [deletingWorkoutAssignmentId, setDeletingWorkoutAssignmentId] =
+    useState<number | null>(null);
+  const [deleteWorkoutAssignmentError, setDeleteWorkoutAssignmentError] =
+    useState("");
+
+  const [mealAssignmentToDelete, setMealAssignmentToDelete] = useState<{
+    id: number;
+    name: string;
+    dateLabel: string;
+  } | null>(null);
+  const [deletingMealAssignmentId, setDeletingMealAssignmentId] = useState<
+    number | null
+  >(null);
+  const [deleteMealAssignmentError, setDeleteMealAssignmentError] =
+    useState("");
 
   useEffect(() => {
     let ignore = false;
@@ -477,6 +499,58 @@ export default function ClientDetailsPage() {
       );
     } finally {
       setIsAssigningMeal(false);
+    }
+  }
+
+  async function handleDeleteWorkoutAssignment() {
+    if (!workoutAssignmentToDelete) {
+      return;
+    }
+
+    const assignmentId = workoutAssignmentToDelete.id;
+
+    try {
+      setDeletingWorkoutAssignmentId(assignmentId);
+      setDeleteWorkoutAssignmentError("");
+
+      await api.delete(Endpoints.clientWorkoutPlanById(assignmentId));
+
+      // Refresh only the weekly schedule, not the whole page.
+      setWeekRefreshKey((current) => current + 1);
+      setWorkoutAssignmentToDelete(null);
+    } catch (error) {
+      console.error("Failed to remove workout assignment:", error);
+      setDeleteWorkoutAssignmentError(
+        getErrorMessage(error, "Workout could not be removed. Please try again."),
+      );
+    } finally {
+      setDeletingWorkoutAssignmentId(null);
+    }
+  }
+
+  async function handleDeleteMealAssignment() {
+    if (!mealAssignmentToDelete) {
+      return;
+    }
+
+    const assignmentId = mealAssignmentToDelete.id;
+
+    try {
+      setDeletingMealAssignmentId(assignmentId);
+      setDeleteMealAssignmentError("");
+
+      await api.delete(Endpoints.clientMealPlanById(assignmentId));
+
+      // Refresh only the weekly schedule, not the whole page.
+      setWeekRefreshKey((current) => current + 1);
+      setMealAssignmentToDelete(null);
+    } catch (error) {
+      console.error("Failed to remove meal assignment:", error);
+      setDeleteMealAssignmentError(
+        getErrorMessage(error, "Meal plan could not be removed. Please try again."),
+      );
+    } finally {
+      setDeletingMealAssignmentId(null);
     }
   }
 
@@ -764,124 +838,168 @@ export default function ClientDetailsPage() {
               </p>
             )}
 
+            {/*
+              CSS Grid, not a <table>: percentage/h-full heights inside
+              flex children of a <td> don't reliably resolve against the
+              table's computed row height (the row-height algorithm and
+              the flex layout algorithm fight each other), which let each
+              day's workout/meal split drift independently instead of
+              matching every other column. Grid resolves row sizing and
+              item stretching in one pass, so this actually works.
+            */}
             <div className="overflow-x-auto rounded-lg border border-border">
-              <table className="w-full min-w-[1050px] table-fixed border-collapse">
-                <colgroup>
-                  {weekDates.map((date) => (
-                    <col key={toDateKey(date)} className="w-[14.2857%]" />
-                  ))}
-                </colgroup>
-                <thead>
-                  <tr className="divide-x divide-border border-b border-border">
-                    {weekDates.map((date) => {
-                      const dateKey = toDateKey(date);
-                      const isToday = dateKey === toDateKey(new Date());
+              <div className="min-w-[1050px]">
+                <div className="grid grid-cols-7 divide-x divide-border border-b border-border">
+                  {weekDates.map((date) => {
+                    const dateKey = toDateKey(date);
+                    const isToday = dateKey === toDateKey(new Date());
 
-                      return (
-                        <th
-                          key={dateKey}
-                          scope="col"
-                          className={`px-3 py-2.5 text-left align-middle ${
-                            isToday ? "bg-primary-soft/25" : "bg-background"
+                    return (
+                      <div
+                        key={dateKey}
+                        className={`px-3 py-2.5 ${
+                          isToday ? "bg-primary-soft/25" : "bg-background"
+                        }`}
+                      >
+                        <p
+                          className={`text-sm font-semibold ${
+                            isToday
+                              ? "text-primary-hover dark:text-foreground"
+                              : "text-foreground"
                           }`}
                         >
-                          <p
-                            className={`text-sm font-semibold ${
-                              isToday
-                                ? "text-primary-hover dark:text-foreground"
-                                : "text-foreground"
-                            }`}
-                          >
-                            {weekdayFormatter.format(date)}
-                          </p>
-                          <p className="mt-0.5 text-xs font-normal text-muted tabular-nums">
-                            {shortDateFormatter.format(date)}
-                          </p>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="divide-x divide-border">
-                    {weekDates.map((date) => {
-                      const dateKey = toDateKey(date);
-                      const isToday = dateKey === toDateKey(new Date());
+                          {weekdayFormatter.format(date)}
+                        </p>
+                        <p className="mt-0.5 text-xs font-normal text-muted tabular-nums">
+                          {shortDateFormatter.format(date)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
 
-                      // At most one workout plan and one meal plan per day.
-                      const dayWorkout = weeklyWorkoutAssignments.find(
-                        (assignment) =>
-                          assignedDateKey(assignment.assignedDate) === dateKey,
-                      );
-                      const dayMeal = weeklyMealAssignments.find(
-                        (assignment) =>
-                          assignedDateKey(assignment.assignedDate) === dateKey,
-                      );
+                <div className="grid grid-cols-7 items-stretch divide-x divide-border">
+                  {weekDates.map((date) => {
+                    const dateKey = toDateKey(date);
+                    const isToday = dateKey === toDateKey(new Date());
 
-                      return (
-                        <td
-                          key={dateKey}
-                          className={`min-w-0 p-2.5 align-top ${
-                            isToday ? "bg-primary-soft/10" : "bg-surface"
-                          }`}
-                        >
-                          <div className="flex h-full flex-col gap-2">
-                            {dayWorkout ? (
+                    // At most one workout plan and one meal plan per day.
+                    const dayWorkout = weeklyWorkoutAssignments.find(
+                      (assignment) =>
+                        assignedDateKey(assignment.assignedDate) === dateKey,
+                    );
+                    const dayMeal = weeklyMealAssignments.find(
+                      (assignment) =>
+                        assignedDateKey(assignment.assignedDate) === dateKey,
+                    );
+
+                    return (
+                      <div
+                        key={dateKey}
+                        className={`grid min-w-0 grid-rows-2 divide-y divide-border ${
+                          isToday ? "bg-primary-soft/10" : "bg-surface"
+                        }`}
+                      >
+                        <div className="min-h-0 p-2">
+                          {dayWorkout ? (
+                            <div className="group relative h-full">
                               <Link
                                 href={`/workout-plans/${dayWorkout.workoutPlanId}?fromClient=${clientId}`}
                                 aria-label={`${dayWorkout.workoutPlanName} — ${getWorkoutStatus(dayWorkout.status)}`}
                                 title={getWorkoutStatus(dayWorkout.status)}
-                                className={`block rounded-md border px-3 py-2.5 transition-colors ${getWorkoutCardTone(dayWorkout.status)}`}
+                                className={`flex h-full w-full flex-col overflow-hidden rounded-md border px-3 py-2 pr-6 transition-colors ${getWorkoutCardTone(dayWorkout.status)}`}
                               >
                                 <p className="flex items-start gap-1.5 text-sm font-medium text-foreground">
                                   <Icon
                                     name="workout"
                                     className="mt-0.5 size-4 shrink-0"
                                   />
-                                  <span className="wrap-anywhere">
+                                  <span className="line-clamp-2 wrap-anywhere">
                                     {dayWorkout.workoutPlanName}
                                   </span>
                                 </p>
-                                <p className="mt-1 pl-[22px] text-xs text-muted">
+                                <p className="mt-auto pt-1 pl-[22px] text-xs text-muted">
                                   {dayWorkout.exerciseCount}{" "}
                                   {dayWorkout.exerciseCount === 1
                                     ? "exercise"
                                     : "exercises"}
                                 </p>
                               </Link>
-                            ) : (
-                              <p className="px-1 py-1 text-sm text-muted">—</p>
-                            )}
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  setDeleteWorkoutAssignmentError("");
+                                  setWorkoutAssignmentToDelete({
+                                    id: dayWorkout.id,
+                                    name: dayWorkout.workoutPlanName,
+                                    dateLabel: shortDateFormatter.format(date),
+                                  });
+                                }}
+                                aria-label={`Remove ${dayWorkout.workoutPlanName} from ${shortDateFormatter.format(date)}`}
+                                className="absolute top-1 right-1 z-10 rounded p-0.5 text-muted opacity-50 transition-opacity hover:bg-danger-soft hover:text-danger hover:opacity-100 focus-visible:bg-danger-soft focus-visible:text-danger focus-visible:opacity-100"
+                              >
+                                <X className="size-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              <span className="text-sm text-muted">—</span>
+                            </div>
+                          )}
+                        </div>
 
-                            {dayMeal ? (
+                        <div className="min-h-0 p-2">
+                          {dayMeal ? (
+                            <div className="group relative h-full">
                               <Link
                                 href={`/meal-plans/${dayMeal.mealPlanId}?fromClient=${clientId}`}
-                                className="block rounded-md border border-border bg-background px-3 py-2.5 transition-colors hover:bg-hover"
+                                className="flex h-full w-full flex-col overflow-hidden rounded-md border border-border bg-background px-3 py-2 pr-6 transition-colors hover:bg-hover"
                               >
                                 <p className="flex items-start gap-1.5 text-sm font-medium text-foreground">
                                   <Icon
                                     name="meal"
                                     className="mt-0.5 size-4 shrink-0"
                                   />
-                                  <span className="wrap-anywhere">
+                                  <span className="line-clamp-2 wrap-anywhere">
                                     {dayMeal.mealPlanName}
                                   </span>
                                 </p>
-                                <p className="mt-1 pl-[22px] text-xs text-muted">
+                                <p className="mt-auto pt-1 pl-[22px] text-xs text-muted">
                                   {dayMeal.mealCount}{" "}
                                   {dayMeal.mealCount === 1 ? "meal" : "meals"}
                                 </p>
                               </Link>
-                            ) : (
-                              <p className="px-1 py-1 text-sm text-muted">—</p>
-                            )}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                </tbody>
-              </table>
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  setDeleteMealAssignmentError("");
+                                  setMealAssignmentToDelete({
+                                    id: dayMeal.id,
+                                    name: dayMeal.mealPlanName,
+                                    dateLabel: shortDateFormatter.format(date),
+                                  });
+                                }}
+                                aria-label={`Remove ${dayMeal.mealPlanName} from ${shortDateFormatter.format(date)}`}
+                                className="absolute top-1 right-1 z-10 rounded p-0.5 text-muted opacity-50 transition-opacity hover:bg-danger-soft hover:text-danger hover:opacity-100 focus-visible:bg-danger-soft focus-visible:text-danger focus-visible:opacity-100"
+                              >
+                                <X className="size-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              <span className="text-sm text-muted">—</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {isWeekLoading && (
@@ -1351,6 +1469,42 @@ export default function ClientDetailsPage() {
         }}
         onConfirm={() => {
           void handleDeleteClient();
+        }}
+      />
+
+      <DeleteConfirmDialog
+        open={workoutAssignmentToDelete !== null}
+        title={`Remove this workout from ${workoutAssignmentToDelete?.dateLabel ?? "this day"}?`}
+        description="This removes the workout plan from the client's weekly schedule."
+        itemName={workoutAssignmentToDelete?.name}
+        isDeleting={deletingWorkoutAssignmentId !== null}
+        error={deleteWorkoutAssignmentError}
+        onCancel={() => {
+          if (deletingWorkoutAssignmentId === null) {
+            setWorkoutAssignmentToDelete(null);
+            setDeleteWorkoutAssignmentError("");
+          }
+        }}
+        onConfirm={() => {
+          void handleDeleteWorkoutAssignment();
+        }}
+      />
+
+      <DeleteConfirmDialog
+        open={mealAssignmentToDelete !== null}
+        title={`Remove this meal plan from ${mealAssignmentToDelete?.dateLabel ?? "this day"}?`}
+        description="This removes the meal plan from the client's weekly schedule."
+        itemName={mealAssignmentToDelete?.name}
+        isDeleting={deletingMealAssignmentId !== null}
+        error={deleteMealAssignmentError}
+        onCancel={() => {
+          if (deletingMealAssignmentId === null) {
+            setMealAssignmentToDelete(null);
+            setDeleteMealAssignmentError("");
+          }
+        }}
+        onConfirm={() => {
+          void handleDeleteMealAssignment();
         }}
       />
     </div>

@@ -32,4 +32,6 @@ public interface IWorkoutAssignmentService
         UpdateWorkoutStatusRequest request,
         int trainerId
     );
+
+    Task<bool> DeleteAsync(int assignmentId, int trainerId);
 }

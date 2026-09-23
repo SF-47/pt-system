@@ -54,7 +54,8 @@ export default function MealPlansPage() {
         setTotalCount(response.data.totalCount);
         setTotalPages(response.data.totalPages);
       } catch {
-        if (!ignore) setListError("Meal plans could not be loaded. Please try again.");
+        if (!ignore)
+          setListError("Meal plans could not be loaded. Please try again.");
       } finally {
         if (!ignore) {
           setIsFetching(false);
@@ -64,7 +65,9 @@ export default function MealPlansPage() {
     }
 
     void getMealPlans();
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, [page, searchTerm]);
 
   useEffect(() => {
@@ -75,31 +78,50 @@ export default function MealPlansPage() {
         const response = await api.get<MealStats>(Endpoints.mealPlansStats);
         if (!ignore) setStats(response.data);
       } catch {
-        if (!ignore) setStatsError("Meal plan totals are currently unavailable.");
+        if (!ignore)
+          setStatsError("Meal plan totals are currently unavailable.");
       }
     }
 
     void getMealStats();
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   if (isInitialLoading) return <MealPlansLoading />;
 
   return (
     <div>
-      <PageHeader title="Meal Plans" description="Reusable meal plans with clear instructions for daily nutrition.">
-        <Link href="/meal-plans/new" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover">
+      <PageHeader
+        title="Meal Plans"
+        description="Reusable meal plans with clear instructions for daily nutrition."
+      >
+        <Link
+          href="/meal-plans/new"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover"
+        >
           <Icon name="plus" />
           Create Meal Plan
         </Link>
       </PageHeader>
 
-      <section aria-label="Meal plan summary" className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <section
+        aria-label="Meal plan summary"
+        className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2"
+      >
         <SummaryMetric label="Meal plans" value={stats?.totalPlans ?? "—"} />
-        <SummaryMetric label="Total assigned plans" value={stats?.totalAssignments ?? "—"} />
+        <SummaryMetric
+          label="Total assigned plans"
+          value={stats?.totalAssignments ?? "—"}
+        />
       </section>
 
-      {statsError && <p className="mb-4 text-sm text-warning" role="status">{statsError}</p>}
+      {statsError && (
+        <p className="mb-4 text-sm text-warning" role="status">
+          {statsError}
+        </p>
+      )}
 
       <section
         className="mb-5 flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-end sm:justify-between"
@@ -135,26 +157,59 @@ export default function MealPlansPage() {
         </p>
       </section>
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
-        <h2 className="text-sm font-semibold">Meal plan library</h2>
-        <p className="text-sm text-muted">{totalCount} meal plans</p>
-      </div>
+      
 
       {listError ? (
-        <div className="rounded-lg border border-danger/30 bg-danger-soft p-4 text-sm text-danger" role="alert">{listError}</div>
+        <div
+          className="rounded-lg border border-danger/30 bg-danger-soft p-4 text-sm text-danger"
+          role="alert"
+        >
+          {listError}
+        </div>
       ) : isFetching ? (
-        <div className="grid grid-cols-1 gap-4 min-[640px]:grid-cols-2 min-[1200px]:grid-cols-3" aria-label="Loading meal plans" aria-busy="true">
-          {Array.from({ length: 6 }).map((_, index) => <PlanCardSkeleton key={index} kind="meal" />)}
+        <div
+          className="grid grid-cols-1 gap-4 min-[640px]:grid-cols-2 min-[1200px]:grid-cols-3"
+          aria-label="Loading meal plans"
+          aria-busy="true"
+        >
+          {Array.from({ length: 6 }).map((_, index) => (
+            <PlanCardSkeleton key={index} kind="meal" />
+          ))}
         </div>
       ) : mealPlans.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 min-[640px]:grid-cols-2 min-[1200px]:grid-cols-3">
-          {mealPlans.map((plan) => <PlanCard key={plan.id} id={plan.id} name={plan.name} description={plan.description} count={plan.meals.length} kind="meal" />)}
+          {mealPlans.map((plan) => (
+            <PlanCard
+              key={plan.id}
+              id={plan.id}
+              name={plan.name}
+              description={plan.description}
+              count={plan.meals.length}
+              kind="meal"
+            />
+          ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-surface"><EmptyState icon="meal" title="No meal plans found" description={searchTerm.trim() ? "No meal plans match your search." : "Create a meal plan to start your library."} /></div>
+        <div className="rounded-xl border border-border bg-surface">
+          <EmptyState
+            icon="meal"
+            title="No meal plans found"
+            description={
+              searchTerm.trim()
+                ? "No meal plans match your search."
+                : "Create a meal plan to start your library."
+            }
+          />
+        </div>
       )}
 
-      <Pagination page={page} totalPages={totalPages} isLoading={isFetching} onPrevious={() => setPage((current) => Math.max(1, current - 1))} onNext={() => setPage((current) => Math.min(totalPages, current + 1))} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        isLoading={isFetching}
+        onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+        onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
+      />
     </div>
   );
 }
