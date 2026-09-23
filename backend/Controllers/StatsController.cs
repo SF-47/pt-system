@@ -50,6 +50,21 @@ public class StatsController : ControllerBase
         return Ok(stats);
     }
 
+    [HttpGet("client-growth")]
+    public async Task<ActionResult<List<ClientGrowthPoint>>> GetClientGrowth()
+    {
+        var trainerId = GetTrainerId();
+
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+
+        var growth = await _statsService.GetClientGrowthAsync(trainerId.Value);
+
+        return Ok(growth);
+    }
+
     [HttpGet("workouts")]
     public async Task<ActionResult<WorkoutStatsResponse>> GetWorkoutStats()
     {

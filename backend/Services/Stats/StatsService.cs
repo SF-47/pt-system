@@ -32,6 +32,34 @@ public class StatsService : IStatsService
         };
     }
 
+    public async Task<List<ClientGrowthPoint>> GetClientGrowthAsync(int trainerId)
+    {
+        var dailyCounts = await _context
+            .Clients.Where(client => client.TrainerId == trainerId)
+            .GroupBy(client => client.CreatedAt.Date)
+            .Select(group => new { Period = group.Key, DailyCount = group.Count() })
+            .OrderBy(point => point.Period)
+            .ToListAsync();
+
+        var cumulativeCount = 0;
+        var growth = new List<ClientGrowthPoint>();
+
+        foreach (var dailyCount in dailyCounts)
+        {
+            cumulativeCount += dailyCount.DailyCount;
+
+            growth.Add(
+                new ClientGrowthPoint
+                {
+                    Period = DateOnly.FromDateTime(dailyCount.Period),
+                    Count = cumulativeCount,
+                }
+            );
+        }
+
+        return growth;
+    }
+
     public async Task<WorkoutStatsResponse> GetWorkoutStatsAsync(int trainerId)
     {
         var workoutPlans = _context.WorkoutPlans.Where(plan => plan.TrainerId == trainerId);

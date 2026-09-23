@@ -8,6 +8,8 @@ public interface IStatsService
 
     Task<ClientStatsResponse> GetClientStatsAsync(int trainerId);
 
+    Task<List<ClientGrowthPoint>> GetClientGrowthAsync(int trainerId);
+
     Task<WorkoutStatsResponse> GetWorkoutStatsAsync(int trainerId);
 
     Task<MealStatsResponse> GetMealStatsAsync(int trainerId);
