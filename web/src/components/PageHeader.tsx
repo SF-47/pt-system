@@ -5,7 +5,6 @@ type PageHeaderProps = {
   eyebrow?: string;
   description?: string;
   children?: ReactNode;
-  compact?: boolean;
   metadata?: ReactNode;
 };
 
@@ -14,22 +13,19 @@ export default function PageHeader({
   eyebrow,
   description,
   children,
-  compact = false,
   metadata,
 }: PageHeaderProps) {
   return (
-    <header
-      className={`flex flex-col items-start justify-between gap-4 ${compact ? "mb-6" : "mb-6"} sm:flex-row sm:items-center`}
-    >
+    <header className="mb-5 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
       <div className="min-w-0">
         {eyebrow && (
           <p className="mb-2 text-sm font-medium text-muted">{eyebrow}</p>
         )}
-        <h1 className="text-3xl sm:text-[34px] leading-tight font-semibold tracking-tight wrap-anywhere">
+        <h1 className="text-2xl leading-tight font-semibold tracking-tight wrap-anywhere sm:text-[28px]">
           {title}
         </h1>
         {description && (
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-muted">
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
             {description}
           </p>
         )}

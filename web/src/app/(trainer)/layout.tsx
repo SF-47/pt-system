@@ -31,7 +31,7 @@ export default function TrainerLayout({
             className="w-full min-w-0 px-4 pt-6 pb-10 min-[761px]:p-6 min-[1001px]:px-14 min-[1001px]:pt-8 min-[1001px]:pb-10"
             tabIndex={-1}
           >
-            {children}
+            <div className="mx-auto w-full max-w-[1440px]">{children}</div>
           </main>
         </div>
       </div>

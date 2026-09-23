@@ -45,7 +45,7 @@ function getPaymentStatus(status: number): PaymentStatus {
 function PaymentsTableSkeleton() {
   return (
     <div
-      className="overflow-hidden rounded-lg border border-border bg-surface"
+      className="overflow-hidden rounded-xl border border-border bg-surface"
       aria-label="Loading payment records"
       aria-busy="true"
     >
@@ -186,7 +186,7 @@ export default function PaymentsPage() {
   if (isInitialLoading) return <PaymentsLoading />;
 
   return (
-    <div className="[&>header_h1]:text-[28px] [&>header_p]:text-sm [&>header_p]:leading-relaxed">
+    <div>
       <PageHeader
         title="Payments"
         description="Review client payments, due dates, and paid or pending balances."
@@ -197,12 +197,10 @@ export default function PaymentsPage() {
         aria-label="Payment summary"
       >
         <SummaryMetric
-          compact
           label="Paid amount"
           value={stats ? currencyFormatter.format(stats.totalPaidAmount) : "—"}
         />
         <SummaryMetric
-          compact
           label="Pending amount"
           value={
             stats ? currencyFormatter.format(stats.totalPendingAmount) : "—"
@@ -217,7 +215,7 @@ export default function PaymentsPage() {
       )}
 
       <section
-        className="mb-4 flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 sm:flex-row sm:items-end sm:justify-between"
+        className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-end sm:justify-between"
         aria-label="Payment tools"
       >
         <div className="min-w-0 sm:w-96">
@@ -286,12 +284,12 @@ export default function PaymentsPage() {
         <PaymentsTableSkeleton />
       ) : (
         <div
-          className="w-full overflow-x-auto rounded-lg border border-border bg-surface"
+          className="w-full overflow-x-auto rounded-xl border border-border bg-surface"
           role="region"
           aria-label="Payments table"
           tabIndex={0}
         >
-          <table className="w-full min-w-180 table-fixed border-collapse text-sm">
+          <table className="workspace-table w-full min-w-180 table-fixed border-collapse text-sm">
             <colgroup>
               <col className="w-[35%]" />
               <col className="w-[14%]" />

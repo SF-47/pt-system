@@ -5,7 +5,7 @@ export default function Loading() {
       aria-busy="true"
       className="animate-pulse"
     >
-      <div className="mb-6">
+      <div className="mb-5">
         <div className="h-9 w-40 rounded-md bg-border" />
         <div className="mt-3 h-4 w-full max-w-lg rounded bg-border" />
       </div>
@@ -13,18 +13,18 @@ export default function Loading() {
         {[0, 1].map((card) => (
           <div
             key={card}
-            className="min-h-24 rounded-lg border border-border bg-surface p-5"
+            className="min-h-28 rounded-xl border border-border bg-surface p-5"
           >
             <div className="h-4 w-28 rounded bg-border" />
             <div className="mt-4 h-7 w-24 rounded bg-border" />
           </div>
         ))}
       </div>
-      <div className="mb-4 flex gap-4 rounded-lg border border-border bg-surface p-4">
+      <div className="mb-4 flex gap-4 rounded-xl border border-border bg-surface p-4">
         <div className="h-11 w-full max-w-sm rounded-md bg-border" />
         <div className="ml-auto h-11 w-40 rounded-md bg-border" />
       </div>
-      <div className="overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="grid min-w-190 grid-cols-5 gap-4 bg-background px-5 py-4">
           {[0, 1, 2, 3, 4].map((cell) => (
             <div key={cell} className="h-4 w-16 rounded bg-border" />

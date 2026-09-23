@@ -2,7 +2,6 @@ type StatCardProps = {
   title: string;
   value: number;
   supportingText?: string;
-  variant?: "primary" | "secondary";
   className?: string;
 };
 
@@ -10,28 +9,17 @@ export default function StatCard({
   title,
   value,
   supportingText,
-  variant = "secondary",
   className = "",
 }: StatCardProps) {
-  const isPrimary = variant === "primary";
-
   return (
     <div
-      className={`flex min-h-28 flex-col rounded-lg border border-border bg-surface p-5 ${className}`}
+      className={`flex min-h-28 flex-col rounded-xl border border-border bg-surface px-5 py-4 ${className}`}
     >
-      <p
-        className="text-sm font-medium text-muted"
-      >
+      <p className="text-xs font-semibold tracking-wide text-muted uppercase">
         {title}
       </p>
-      <div className="mt-auto pt-4">
-        <p
-          className={`leading-none font-bold tracking-[-0.04em] tabular-nums ${
-            isPrimary
-              ? "text-[40px]"
-              : "text-[32px]"
-          }`}
-        >
+      <div className="mt-auto pt-3">
+        <p className="text-[32px] leading-none font-semibold tracking-tight text-primary-hover tabular-nums sm:text-[34px] dark:text-foreground">
           {value}
         </p>
         {supportingText && (
