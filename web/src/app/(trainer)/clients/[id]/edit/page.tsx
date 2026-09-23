@@ -154,7 +154,7 @@ export default function EditClientPage() {
 
   if (Number.isNaN(clientId)) {
     return (
-      <div className="max-w-5xl">
+      <div className="w-full">
         <BackLink href="/clients">Back to Clients</BackLink>
 
         <p
@@ -173,7 +173,7 @@ export default function EditClientPage() {
 
   if (loadError) {
     return (
-      <div className="max-w-5xl">
+      <div className="w-full">
         <BackLink href="/clients">Back to Clients</BackLink>
 
         <p
@@ -339,7 +339,7 @@ export default function EditClientPage() {
           <div className="flex flex-wrap justify-end gap-3 border-t border-border px-5 py-4 sm:px-6">
             <Link
               href={`/clients/${clientId}`}
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
+              className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
             >
               Cancel
             </Link>
@@ -347,7 +347,7 @@ export default function EditClientPage() {
             <button
               type="submit"
               disabled={isSavingPersonalInfo}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Icon name="check" className="size-4" />
 
@@ -493,7 +493,7 @@ export default function EditClientPage() {
           <div className="flex flex-wrap justify-end gap-3 border-t border-border px-5 py-4 sm:px-6">
             <Link
               href={`/clients/${clientId}`}
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
+              className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
             >
               Cancel
             </Link>
@@ -501,7 +501,7 @@ export default function EditClientPage() {
             <button
               type="submit"
               disabled={isSavingCredentials}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Icon name="check" className="size-4" />
 

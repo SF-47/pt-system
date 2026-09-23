@@ -7,7 +7,7 @@ export default function Loading() {
     >
       <div className="mb-5 h-5 w-32 rounded bg-border" />
       <div className="mb-3 h-9 w-44 rounded bg-border" />
-      <div className="mb-6 h-4 w-full max-w-md rounded bg-border" />
+      <div className="mb-5 h-4 w-full max-w-md rounded bg-border" />
 
       <div className="grid gap-5 xl:grid-cols-2">
         {[3, 2].map((fieldCount) => (

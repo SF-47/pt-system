@@ -6,7 +6,7 @@ export default function ClientNotFound() {
     <div>
       <BackLink href="/clients">Back to Clients</BackLink>
       <PageHeader title="Client Not Found" />
-      <div className="rounded-lg border border-border bg-surface"><EmptyState icon="clients" title="Client unavailable" description="The client you are looking for does not exist. Return to Clients to choose another profile." /></div>
+      <div className="rounded-xl border border-border bg-surface"><EmptyState icon="clients" title="Client unavailable" description="The client you are looking for does not exist. Return to Clients to choose another profile." /></div>
     </div>
   );
 }

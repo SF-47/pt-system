@@ -239,7 +239,7 @@ export default function AddClientPage() {
 
         <div className="mt-5 flex flex-wrap justify-end gap-3 border-t border-border pt-5">
           <Link
-            className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
+            className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
             href="/clients"
           >
             Cancel
@@ -248,7 +248,7 @@ export default function AddClientPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Icon name="check" className="size-4" />
             {isSubmitting ? "Saving..." : "Save Client"}

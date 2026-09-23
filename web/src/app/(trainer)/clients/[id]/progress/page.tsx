@@ -11,7 +11,7 @@ export default async function ClientProgressPage({
 }: ProgressPageProps) {
   const { id } = await params;
   return (
-    <div className="max-w-5xl">
+    <div className="w-full">
       <BackLink href={`/clients/${id}`}>Back to Client Details</BackLink>
       <PageHeader
         title="Client Progress"
@@ -26,7 +26,7 @@ export default async function ClientProgressPage({
         </Link>
       </PageHeader>
       <section className="">
-        <div className="rounded-lg border border-border bg-surface p-5 sm:p-6">
+        <div className="rounded-xl border border-border bg-surface p-5 sm:p-6">
           <h2 className="text-lg font-semibold">Workout completion</h2>
           <div className="mt-5 flex items-baseline gap-3">
             <strong className="text-4xl font-semibold tracking-tight tabular-nums">
@@ -59,12 +59,12 @@ export default async function ClientProgressPage({
               text: "Assignments marked as skipped",
             },
           ].map((item) => (
-            <div key={item.status} className="flex min-h-32 flex-col justify-between gap-3 rounded-lg border border-border bg-surface p-5">
+            <div key={item.status} className="flex min-h-32 flex-col justify-between gap-3 rounded-xl border border-border bg-surface p-5">
               <div className="min-w-0 flex-1">
                 <StatusBadge status={item.status} />
                 <p className="mt-2 text-sm text-muted">{item.text}</p>
               </div>
-              <strong className="text-2xl font-semibold tabular-nums">
+              <strong className="text-[32px] leading-none font-semibold tracking-tight text-primary-hover tabular-nums sm:text-[34px] dark:text-foreground">
                 {item.value}
               </strong>
             </div>

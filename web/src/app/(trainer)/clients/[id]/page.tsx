@@ -49,6 +49,8 @@ type Payment = {
   paidAt: string | null;
 };
 
+type ActiveTab = "overview" | "progress" | "activity";
+
 function formatDate(value: string) {
   const date = new Date(value);
 
@@ -96,8 +98,12 @@ export default function ClientDetailsPage() {
   const [client, setClient] = useState<Client | null>(null);
 
   const [workoutPlans, setWorkoutPlans] = useState<AssignedWorkoutPlan[]>([]);
+  const [workoutPlanCount, setWorkoutPlanCount] = useState(0);
 
+  const [mealPlanCount, setMealPlanCount] = useState(0);
   const [mealPlans, setMealPlans] = useState<AssignedMealPlan[]>([]);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
+  const [activityDate, setActivityDate] = useState("");
 
   const [payment, setPayment] = useState<Payment | null>(null);
 
@@ -107,7 +113,7 @@ export default function ClientDetailsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  const pageSize = 5;
+  const pageSize = 10;
 
   useEffect(() => {
     let ignore = false;
@@ -150,7 +156,9 @@ export default function ClientDetailsPage() {
 
         setClient(clientResponse.data);
         setWorkoutPlans(workoutPlansResponse.data.items);
+        setWorkoutPlanCount(workoutPlansResponse.data.totalCount);
         setMealPlans(mealPlansResponse.data.items);
+        setMealPlanCount(mealPlansResponse.data.totalCount);
         setPayment(paymentResponse.data.items[0] ?? null);
       } catch (error) {
         console.error("Failed to load client details:", error);
@@ -211,7 +219,7 @@ export default function ClientDetailsPage() {
       <BackLink href="/clients">Back to Clients</BackLink>
 
       {/* Client Header */}
-      <div className="mb-6 flex items-start gap-4 rounded-xl border border-border bg-surface p-5 sm:gap-5 sm:p-6 [&>span]:size-14 [&>span]:text-lg sm:[&>span]:size-16 [&_header]:mb-0">
+      <div className="mb-5 flex items-start gap-4 rounded-xl border border-border bg-surface p-5 sm:gap-5 sm:p-6 [&>span]:size-14 [&>span]:text-lg sm:[&>span]:size-16 [&_header]:mb-0">
         <Avatar name={client.fullName} />
 
         <div className="min-w-0 flex-1">
@@ -244,188 +252,265 @@ export default function ClientDetailsPage() {
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav aria-label="Client views" className="mb-7 flex flex-wrap gap-2">
-        <Link
-          href={`/clients/${client.id}`}
-          aria-current="page"
-          className="inline-flex min-h-11 items-center rounded-md border border-primary bg-primary-soft px-4 font-medium text-primary-hover dark:text-foreground"
+      {/* Client workspace tabs */}
+      <nav
+        aria-label="Client views"
+        className="mb-5 flex flex-wrap gap-2"
+        role="tablist"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "overview"}
+          aria-controls="client-workspace-panel"
+          onClick={() => setActiveTab("overview")}
+          className={`inline-flex min-h-11 items-center rounded-md px-4 font-medium transition-colors ${
+            activeTab === "overview"
+              ? "border border-primary bg-primary-soft text-primary-hover dark:text-foreground"
+              : "text-muted hover:bg-hover"
+          }`}
         >
           Overview
-        </Link>
+        </button>
 
-        <Link
-          href={`/clients/${client.id}/progress`}
-          className="inline-flex min-h-11 items-center gap-2 rounded-md px-4 text-muted transition-colors hover:bg-hover"
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "progress"}
+          aria-controls="client-workspace-panel"
+          onClick={() => setActiveTab("progress")}
+          className={`inline-flex min-h-11 items-center gap-2 rounded-md px-4 font-medium transition-colors ${
+            activeTab === "progress"
+              ? "border border-primary bg-primary-soft text-primary-hover dark:text-foreground"
+              : "text-muted hover:bg-hover"
+          }`}
         >
           <Icon name="dashboard" className="size-4" />
           View Progress
-        </Link>
+        </button>
 
-        <Link
-          href={`/clients/${client.id}/daily-activity`}
-          className="inline-flex min-h-11 items-center gap-2 rounded-md px-4 text-muted transition-colors hover:bg-hover"
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "activity"}
+          aria-controls="client-workspace-panel"
+          onClick={() => setActiveTab("activity")}
+          className={`inline-flex min-h-11 items-center gap-2 rounded-md px-4 font-medium transition-colors ${
+            activeTab === "activity"
+              ? "border border-primary bg-primary-soft text-primary-hover dark:text-foreground"
+              : "text-muted hover:bg-hover"
+          }`}
         >
           <Icon name="calendar" className="size-4" />
           Daily Activity
-        </Link>
+        </button>
       </nav>
 
-      <div className="grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_18rem]">
-        {/* Main Column */}
-        <div className="space-y-7">
-          {/* Workout Plans */}
-          <section className="rounded-xl border border-border bg-surface p-5 sm:p-6">
-            <div className="mb-5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                  <Icon name="workout" className="size-5" />
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
+        <div
+          id="client-workspace-panel"
+          role="tabpanel"
+          className="min-w-0"
+        >
+          {activeTab === "overview" && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <section className="min-w-0 rounded-xl border border-border bg-surface p-4">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <Icon name="workout" className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="font-semibold">Assigned Workout Plans</h2>
+                      <p className="text-xs text-muted">Current workout plans</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-background px-2.5 py-1 text-xs font-medium text-muted tabular-nums">
+                      {workoutPlanCount}
+                    </span>
+                    {/* TODO: Connect when workout assignment creation UI is implemented. */}
+                    <button
+                      type="button"
+                      disabled
+                      title="Workout assignment is not available yet"
+                      className="inline-flex min-h-9 items-center rounded-md border border-border bg-background px-3 text-xs font-medium text-muted disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      + Assign Workout
+                    </button>
+                  </div>
                 </div>
 
-                <div>
-                  <h2 className="text-lg font-semibold">
-                    Assigned Workout Plans
-                  </h2>
-
-                  <p className="mt-1 text-sm text-muted">
-                    Current workout plans for this client
-                  </p>
-                </div>
-              </div>
-
-              <span className="rounded-full bg-background px-3 py-1 text-xs font-medium text-muted">
-                {workoutPlans.length}
-              </span>
-            </div>
-
-            {workoutPlans.length > 0 ? (
-              <div className="grid gap-3">
-                {workoutPlans.map((plan) => (
-                  <div
-                    key={plan.id}
-                    className="group rounded-xl border border-border bg-background p-4 transition-all hover:border-primary/40 hover:bg-hover"
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex min-w-0 items-start gap-3">
-                        <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-surface text-primary">
-                          <Icon name="workout" className="size-5" />
-                        </div>
-
-                        <div className="min-w-0">
-                          <h3 className="font-semibold text-foreground">
-                            {plan.workoutPlanName}
-                          </h3>
-
-                          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-                            <span className="flex items-center gap-1.5">
-                              <Icon name="calendar" className="size-4" />
+                {workoutPlans.length > 0 ? (
+                  <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+                    {workoutPlans.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className="rounded-lg border border-border bg-background p-3 transition-colors hover:bg-hover"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-foreground wrap-anywhere">
+                              {plan.workoutPlanName}
+                            </h3>
+                            <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
+                              <Icon name="calendar" className="size-3.5" />
                               Assigned {formatDate(plan.assignedDate)}
-                            </span>
-
+                            </p>
                             {plan.completedAt && (
-                              <span>
+                              <p className="mt-1 text-xs text-muted">
                                 Completed {formatDate(plan.completedAt)}
-                              </span>
+                              </p>
                             )}
+                          </div>
+                          <StatusBadge status={getWorkoutStatus(plan.status)} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border p-5 text-center">
+                    <p className="text-sm text-muted">
+                      No workout plans assigned yet.
+                    </p>
+                  </div>
+                )}
+              </section>
+
+              <section className="min-w-0 rounded-xl border border-border bg-surface p-4">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                      <Icon name="meal" className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="font-semibold">Assigned Meal Plans</h2>
+                      <p className="text-xs text-muted">Current nutrition plans</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-background px-2.5 py-1 text-xs font-medium text-muted tabular-nums">
+                      {mealPlanCount}
+                    </span>
+                    {/* TODO: Connect when meal assignment creation UI is implemented. */}
+                    <button
+                      type="button"
+                      disabled
+                      title="Meal assignment is not available yet"
+                      className="inline-flex min-h-9 items-center rounded-md border border-border bg-background px-3 text-xs font-medium text-muted disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      + Assign Meal
+                    </button>
+                  </div>
+                </div>
+
+                {mealPlans.length > 0 ? (
+                  <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+                    {mealPlans.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className="rounded-lg border border-border bg-background p-3 transition-colors hover:bg-hover"
+                      >
+                        <div className="flex min-w-0 items-start gap-3">
+                          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface text-primary">
+                            <Icon name="meal" className="size-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-foreground wrap-anywhere">
+                              {plan.mealPlanName}
+                            </h3>
+                            <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
+                              <Icon name="calendar" className="size-3.5" />
+                              Assigned {formatDate(plan.assignedDate)}
+                            </p>
                           </div>
                         </div>
                       </div>
-
-                      <div className="shrink-0">
-                        <StatusBadge status={getWorkoutStatus(plan.status)} />
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed border-border p-6 text-center">
-                <p className="text-sm text-muted">
-                  No workout plans assigned yet.
-                </p>
-              </div>
-            )}
-          </section>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border p-5 text-center">
+                    <p className="text-sm text-muted">
+                      No meal plans assigned yet.
+                    </p>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
 
-          {/* Meal Plans */}
-          <section className="rounded-xl border border-border bg-surface p-5 sm:p-6">
-            <div className="mb-5 flex items-center justify-between gap-4">
+          {activeTab === "progress" && (
+            <section className="rounded-xl border border-border bg-surface p-5">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                  <Icon name="meal" className="size-5" />
+                  <Icon name="dashboard" className="size-5" />
                 </div>
-
                 <div>
-                  <h2 className="text-lg font-semibold">Assigned Meal Plans</h2>
-
-                  <p className="mt-1 text-sm text-muted">
-                    Nutrition plans assigned to this client
+                  <h2 className="text-lg font-semibold">Client Progress</h2>
+                  <p className="text-sm text-muted">
+                    Workout and meal completion summary
                   </p>
                 </div>
               </div>
-
-              <span className="rounded-full bg-background px-3 py-1 text-xs font-medium text-muted">
-                {mealPlans.length}
-              </span>
-            </div>
-
-            {mealPlans.length > 0 ? (
-              <div className="grid gap-3">
-                {mealPlans.map((plan) => (
-                  <div
-                    key={plan.id}
-                    className="group rounded-xl border border-border bg-background p-4 transition-all hover:border-primary/40 hover:bg-hover"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-surface text-primary">
-                        <Icon name="meal" className="size-5" />
-                      </div>
-
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-foreground">
-                          {plan.mealPlanName}
-                        </h3>
-
-                        <p className="mt-2 flex items-center gap-1.5 text-sm text-muted">
-                          <Icon name="calendar" className="size-4" />
-                          Assigned {formatDate(plan.assignedDate)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed border-border p-6 text-center">
+              <div className="mt-5 rounded-lg border border-dashed border-border p-8 text-center">
                 <p className="text-sm text-muted">
-                  No meal plans assigned yet.
+                  Progress data is not available yet.
                 </p>
               </div>
-            )}
-          </section>
+            </section>
+          )}
 
-          {/* Progress */}
-          <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface p-5 sm:p-6">
-            <div>
-              <h2 className="text-base font-medium">Progress & activity</h2>
+          {activeTab === "activity" && (
+            <div className="space-y-4">
+              <section className="rounded-xl border border-border bg-surface p-4">
+                <label
+                  htmlFor="activity-date"
+                  className="mb-2 block text-sm font-medium"
+                >
+                  Activity date
+                </label>
+                <input
+                  id="activity-date"
+                  type="date"
+                  value={activityDate}
+                  onChange={(event) => setActivityDate(event.target.value)}
+                  className="block min-h-11 w-full max-w-60 rounded-md border border-input-border bg-background px-3 py-2 text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </section>
 
-              <p className="mt-1 text-sm text-muted">
-                Review completion and daily adherence.
-              </p>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <section className="rounded-xl border border-border bg-surface p-4">
+                  <div className="flex items-center gap-2">
+                    <Icon name="workout" className="size-5 text-primary" />
+                    <h2 className="font-semibold">Workout Activity</h2>
+                  </div>
+                  <div className="mt-4 rounded-lg border border-dashed border-border p-6 text-center">
+                    <p className="text-sm text-muted">
+                      Workout activity is not available for this date yet.
+                    </p>
+                  </div>
+                </section>
+
+                <section className="rounded-xl border border-border bg-surface p-4">
+                  <div className="flex items-center gap-2">
+                    <Icon name="meal" className="size-5 text-primary" />
+                    <h2 className="font-semibold">Meal Activity</h2>
+                  </div>
+                  <div className="mt-4 rounded-lg border border-dashed border-border p-6 text-center">
+                    <p className="text-sm text-muted">
+                      Meal activity is not available for this date yet.
+                    </p>
+                  </div>
+                </section>
+              </div>
             </div>
-
-            <Link
-              href={`/clients/${client.id}/progress`}
-              className="inline-flex min-h-11 items-center gap-2 rounded-md px-3 font-medium text-primary-hover transition-colors hover:bg-primary-soft dark:text-foreground"
-            >
-              View Progress
-              <Icon name="arrow" className="size-4" />
-            </Link>
-          </section>
+          )}
         </div>
 
         {/* Right Sidebar */}
-        <div className="grid gap-7">
+        <div className="grid gap-5">
           {/* Contact Information */}
           <section>
             <h2 className="pb-1 text-base font-semibold">

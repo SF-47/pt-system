@@ -24,14 +24,14 @@ export default async function DailyActivityPage({
   ];
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full">
       <BackLink href={`/clients/${id}`}>Back to Client Details</BackLink>
       <PageHeader
         title="Daily Activity"
         description="Workout and meal completion for the selected day."
       />
 
-      <div className="mb-6 grid gap-3 rounded-xl border border-border bg-surface p-5 sm:grid-cols-[15rem_minmax(0,1fr)] sm:items-center">
+      <div className="mb-5 grid gap-3 rounded-xl border border-border bg-surface p-5 sm:grid-cols-[15rem_minmax(0,1fr)] sm:items-center">
         <div>
           <label
             htmlFor="activity-date"
@@ -53,7 +53,7 @@ export default async function DailyActivityPage({
         </p>
       </div>
 
-      <section className="mb-7">
+      <section className="mb-5">
         <h2 className="mb-3 text-lg font-semibold">Workouts</h2>
 
         <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">

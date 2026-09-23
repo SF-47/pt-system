@@ -221,7 +221,7 @@ export default function ClientsPage() {
       )}
 
       <section className="mb-5" aria-label="Client tools">
-        <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-4 min-[761px]:flex-row min-[761px]:items-end min-[761px]:justify-between">
+        <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 min-[761px]:flex-row min-[761px]:items-end min-[761px]:justify-between">
           <div className="min-w-0 flex-1">
             <label
               htmlFor="client-search"
@@ -295,7 +295,7 @@ export default function ClientsPage() {
           aria-label="Clients table"
           tabIndex={0}
         >
-          <table className="w-full min-w-190 border-collapse whitespace-nowrap tabular-nums">
+          <table className="workspace-table w-full min-w-190 border-collapse whitespace-nowrap tabular-nums">
             <thead>
               <tr className="border-b border-border bg-background">
                 {["Client", "Phone", "Status", "Created At", "Actions"].map(
@@ -303,7 +303,7 @@ export default function ClientsPage() {
                     <th
                       key={heading}
                       scope="col"
-                      className={`bg-background px-5 py-3 align-middle text-sm font-medium text-muted dark:bg-background ${heading === "Actions" ? "text-right" : "text-left"}`}
+                      className={`px-4 py-3 align-middle text-xs font-semibold tracking-wide text-muted uppercase dark:bg-background ${heading === "Actions" ? "text-right" : "text-left"}`}
                     >
                       {heading}
                     </th>
@@ -320,11 +320,11 @@ export default function ClientsPage() {
                       key={client.id}
                       className="border-b border-border transition-colors last:border-b-0 hover:bg-hover focus-within:bg-hover"
                     >
-                      <td className="px-5 py-4 align-middle">
+                      <td className="px-4 py-4 align-middle">
                         <div className="flex items-center gap-3">
                           <Avatar name={client.fullName} />
                           <div>
-                            <span className="text-lg font-semibold">
+                            <span className="font-semibold">
                               {client.fullName}
                             </span>
                             <span className="mt-1 block text-sm text-muted">
@@ -333,16 +333,16 @@ export default function ClientsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 align-middle text-muted">
+                      <td className="px-4 py-4 align-middle text-muted">
                         {formatPhoneNumber(client.phoneNumber)}
                       </td>
 
-                      <td className="px-5 py-4 align-middle">
+                      <td className="px-4 py-4 align-middle">
                         <StatusBadge
                           status={client.isActive ? "Active" : "Inactive"}
                         />
                       </td>
-                      <td className="px-5 py-4 align-middle">
+                      <td className="px-4 py-4 align-middle">
                         <div className="flex flex-col">
                           <span className="font-medium text-foreground">
                             {createdAt.date}
@@ -353,7 +353,7 @@ export default function ClientsPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-right align-middle">
+                      <td className="px-4 py-4 text-right align-middle">
                         <div className="flex items-center justify-end gap-2">
                           <Link
                             className="inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-hover"
