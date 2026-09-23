@@ -28,13 +28,29 @@ type MealPlan = {
   meals: Meal[];
 };
 
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown date";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
 export default function MealPlanPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const planId = Number(params.id);
+  const hasValidPlanId = Number.isInteger(planId) && planId > 0;
   const [plan, setPlan] = useState<MealPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [isDeletePlanOpen, setIsDeletePlanOpen] = useState(false);
   const [isDeletingPlan, setIsDeletingPlan] = useState(false);
   const [deletePlanError, setDeletePlanError] = useState("");
@@ -47,7 +63,7 @@ export default function MealPlanPage() {
     let ignore = false;
 
     async function loadMealPlan() {
-      if (Number.isNaN(planId)) {
+      if (!hasValidPlanId) {
         setError("Invalid meal plan ID.");
         setIsLoading(false);
         return;
@@ -82,7 +98,7 @@ export default function MealPlanPage() {
     return () => {
       ignore = true;
     };
-  }, [planId]);
+  }, [hasValidPlanId, loadAttempt, planId]);
 
   async function handleDeletePlan() {
     try {
@@ -145,6 +161,15 @@ export default function MealPlanPage() {
         >
           {error || "Meal plan could not be found."}
         </div>
+        {hasValidPlanId && (
+          <button
+            type="button"
+            onClick={() => setLoadAttempt((current) => current + 1)}
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
+          >
+            Try Again
+          </button>
+        )}
       </div>
     );
   }
@@ -152,13 +177,37 @@ export default function MealPlanPage() {
   return (
     <div className="w-full">
       <BackLink href="/meal-plans">Back to Meal Plans</BackLink>
+
       <PageHeader
         title={plan.name}
         description={plan.description || "No description provided."}
+        eyebrow="Meal plan"
+        metadata={
+          <dl className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <div className="flex items-center gap-2">
+              <dt className="flex items-center gap-1.5 text-muted">
+                <Icon name="meal" className="size-4 text-primary" />
+                Total meals
+              </dt>
+              <dd className="font-semibold text-foreground tabular-nums">
+                {plan.meals.length}
+              </dd>
+            </div>
+            <div className="flex items-center gap-2">
+              <dt className="flex items-center gap-1.5 text-muted">
+                <Icon name="calendar" className="size-4 text-primary" />
+                Created
+              </dt>
+              <dd className="font-semibold text-foreground">
+                {formatDate(plan.createdAt)}
+              </dd>
+            </div>
+          </dl>
+        }
       >
         <Link
           href={`/meal-plans/${plan.id}/edit`}
-          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border bg-surface px-4 py-2 font-medium transition-colors hover:bg-hover"
+          className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-hover sm:w-auto"
         >
           <Icon name="edit" className="size-4" />
           Edit Plan
@@ -169,80 +218,114 @@ export default function MealPlanPage() {
             setDeletePlanError("");
             setIsDeletePlanOpen(true);
           }}
-          className="inline-flex min-h-11 items-center rounded-md border border-danger/40 bg-surface px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-soft"
+          className="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-md border border-danger/40 bg-surface px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-soft sm:w-auto"
         >
           Delete Plan
         </button>
       </PageHeader>
 
-      <section
-        aria-label="Plan overview"
-        className="mb-5 border-b border-border pb-4"
-      >
-        <dl className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
+      <section aria-labelledby="meals-heading">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3 border-t border-border pt-4">
           <div>
-            <dt className="text-muted">Plan ID</dt>
-            <dd className="mt-1 font-medium tabular-nums">{plan.id}</dd>
+            <h2 id="meals-heading" className="text-xl font-semibold">
+              Meals
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              Meals and preparation instructions for this plan.
+            </p>
           </div>
-          <div>
-            <dt className="text-muted">Meals</dt>
-            <dd className="mt-1 font-medium tabular-nums">
-              {plan.meals.length}
-            </dd>
+          <span className="rounded-md border border-border bg-surface px-2.5 py-1 text-sm font-medium text-muted tabular-nums">
+            {plan.meals.length}{" "}
+            {plan.meals.length === 1 ? "meal" : "meals"}
+          </span>
+        </div>
+
+        {deleteMealMessage && (
+          <p role="status" className="mb-3 text-sm text-primary-hover">
+            {deleteMealMessage}
+          </p>
+        )}
+
+        {plan.meals.length > 0 ? (
+          <div
+            className="w-full max-h-[560px] overflow-x-auto overflow-y-auto rounded-xl border border-border bg-surface"
+            role="region"
+            aria-label="Meals in this meal plan"
+            tabIndex={0}
+          >
+            <table className="workspace-table w-full min-w-140 table-fixed border-collapse">
+              <colgroup>
+                <col className="w-[30%]" />
+                <col className="w-[55%]" />
+                <col className="w-[15%]" />
+              </colgroup>
+              <thead>
+                <tr>
+                  {[
+                    ["Meal", "text-left"],
+                    ["Instructions", "text-left"],
+                    ["", "text-right"],
+                  ].map(([heading, alignment]) => (
+                    <th
+                      key={heading || "actions"}
+                      scope="col"
+                      className={`sticky top-0 z-10 bg-background px-4 py-2.5 align-middle text-xs font-semibold uppercase tracking-wide text-muted ${alignment}`}
+                    >
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {plan.meals.map((meal, index) => (
+                  <tr
+                    key={meal.id}
+                    className="border-t border-border transition-colors hover:bg-hover"
+                  >
+                    <td className="px-4 py-3 align-middle">
+                      <div className="flex min-w-0 items-start gap-2.5">
+                        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-primary-hover tabular-nums dark:text-foreground">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <p className="min-w-0 font-semibold text-foreground wrap-anywhere">
+                          {meal.name}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 align-middle">
+                      <p className="line-clamp-2 text-sm leading-snug text-muted whitespace-normal">
+                        {meal.instructions}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 text-right align-middle">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteMealError("");
+                          setDeleteMealMessage("");
+                          setMealToDelete(meal);
+                        }}
+                        disabled={deletingMealId === meal.id}
+                        className="inline-flex min-h-9 items-center justify-center rounded-md border border-danger/40 bg-surface px-3 py-1.5 text-sm font-medium text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {deletingMealId === meal.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </dl>
+        ) : (
+          <div className="rounded-xl border border-border bg-surface">
+            <EmptyState
+              icon="meal"
+              title="No meals yet"
+              description="This meal plan does not have any meals."
+            />
+          </div>
+        )}
       </section>
-
-      <h2 className="mb-3 text-lg font-semibold">Meals</h2>
-
-      {deleteMealMessage && (
-        <p role="status" className="mb-3 text-sm text-primary-hover">
-          {deleteMealMessage}
-        </p>
-      )}
-
-      {plan.meals.length > 0 ? (
-        <div className="divide-y divide-border rounded-xl border border-border bg-surface px-5 sm:px-6">
-          {plan.meals.map((meal, index) => (
-            <div
-              key={meal.id}
-              className="grid gap-3 py-5 sm:grid-cols-[14rem_minmax(0,1fr)_auto] sm:items-center sm:py-6"
-            >
-              <h3 className="flex items-center gap-4 text-lg font-medium">
-                <span className="text-sm text-muted tabular-nums">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                {meal.name}
-              </h3>
-
-              <p className="text-sm leading-relaxed text-muted sm:pt-1">
-                {meal.instructions}
-              </p>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setDeleteMealError("");
-                  setDeleteMealMessage("");
-                  setMealToDelete(meal);
-                }}
-                disabled={deletingMealId === meal.id}
-                className="inline-flex min-h-10 w-full items-center justify-center rounded-md border border-danger/40 bg-surface px-3 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-              >
-                {deletingMealId === meal.id ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-xl border border-border bg-surface">
-          <EmptyState
-            icon="meal"
-            title="No meals yet"
-            description="This meal plan does not have any meals."
-          />
-        </div>
-      )}
 
       <DeleteConfirmDialog
         open={isDeletePlanOpen}
