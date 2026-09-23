@@ -228,6 +228,39 @@ export default function ClientDetailsPage() {
     }
   }
 
+  async function handleAssignWorkout() {
+    if (!selectedWorkoutPlanId || !assignedWorkoutDate) {
+      return;
+    }
+
+    try {
+      setIsAssigningWorkout(true);
+      setAssignWorkoutError("");
+
+      const response = await api.post<AssignedWorkoutPlan>(
+        Endpoints.clientWorkoutPlansBase(clientId),
+        {
+          workoutPlanId: Number(selectedWorkoutPlanId),
+          assignedDate: assignedWorkoutDate,
+        },
+      );
+
+      setWorkoutPlans((current) => [response.data, ...current]);
+      setWorkoutPlanCount((current) => current + 1);
+
+      setIsAssignWorkoutOpen(false);
+      setWorkoutPlanSearch("");
+      setIsWorkoutPlanDropdownOpen(false);
+    } catch (error) {
+      console.error("Failed to assign workout plan:", error);
+      setAssignWorkoutError(
+        "Workout plan could not be assigned. Please try again.",
+      );
+    } finally {
+      setIsAssigningWorkout(false);
+    }
+  }
+
   async function handleDeleteClient() {
     try {
       setIsDeleting(true);
@@ -793,14 +826,16 @@ export default function ClientDetailsPage() {
 
               <button
                 type="button"
+                onClick={() => void handleAssignWorkout()}
                 disabled={
                   !selectedWorkoutPlanId ||
                   !assignedWorkoutDate ||
                   isAssigningWorkout
                 }
+                aria-busy={isAssigningWorkout}
                 className="min-h-10 rounded-md bg-primary px-4 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Assign
+                {isAssigningWorkout ? "Assigning..." : "Assign"}
               </button>
             </div>
           </div>
