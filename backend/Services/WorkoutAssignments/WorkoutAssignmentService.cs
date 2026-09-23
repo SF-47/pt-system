@@ -284,4 +284,21 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
             CompletedAt = assignment.CompletedAt,
         };
     }
+
+    public async Task<bool> DeleteAsync(int assignmentId, int trainerId)
+    {
+        var assignment = await _context.ClientWorkoutAssignments.FirstOrDefaultAsync(assignment =>
+            assignment.Id == assignmentId && assignment.Client.TrainerId == trainerId
+        );
+
+        if (assignment is null)
+        {
+            return false;
+        }
+
+        _context.ClientWorkoutAssignments.Remove(assignment);
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
 }

@@ -103,6 +103,25 @@ public class MealAssignmentsController : ControllerBase
         return Ok(result.Data);
     }
 
+    [HttpDelete("api/client-meal-plans/{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+
+        var deleted = await _mealAssignmentService.DeleteAsync(id, trainerId.Value);
+
+        if (!deleted)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
+
     [HttpPut("api/client-meal-statuses/{id}/status")]
     public async Task<ActionResult<MealStatusResponse>> UpdateMealStatus(
         int id,

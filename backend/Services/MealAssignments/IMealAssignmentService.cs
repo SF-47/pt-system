@@ -32,4 +32,6 @@ public interface IMealAssignmentService
         UpdateMealStatusRequest request,
         int trainerId
     );
+
+    Task<bool> DeleteAsync(int assignmentId, int trainerId);
 }
