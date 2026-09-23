@@ -5,6 +5,7 @@ import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -123,7 +124,12 @@ export default function CreateMealPlanPage() {
     } catch (error) {
       console.error("Failed to create meal plan:", error);
 
-      setError("Meal plan could not be created completely. Please try again.");
+      setError(
+        getErrorMessage(
+          error,
+          "Meal plan could not be created completely. Please try again.",
+        ),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -339,6 +345,8 @@ export default function CreateMealPlanPage() {
                   <input
                     id="mealName"
                     required
+                    minLength={2}
+                    maxLength={100}
                     value={mealForm.name}
                     onChange={(event) =>
                       setMealForm((prev) => ({

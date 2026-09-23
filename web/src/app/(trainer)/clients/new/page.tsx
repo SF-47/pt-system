@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 
 type DataFormType = {
   fullName: string;
@@ -44,7 +45,7 @@ export default function AddClientPage() {
       router.push(`/clients/${newClientId}`);
     } catch (error) {
       console.error("Failed to create client:", error);
-      setError("Failed to create client.");
+      setError(getErrorMessage(error, "Client could not be created. Please try again."));
     } finally {
       setIsSubmitting(false);
     }

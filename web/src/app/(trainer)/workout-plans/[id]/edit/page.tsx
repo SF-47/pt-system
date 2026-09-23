@@ -9,6 +9,7 @@ import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 
 type WorkoutPlan = {
   id: number;
@@ -144,7 +145,7 @@ export default function EditWorkoutPlanPage() {
       router.push(`/workout-plans/${planId}`);
     } catch (error) {
       console.error("Failed to update workout plan:", error);
-      setSaveError("Workout plan could not be updated. Please try again.");
+      setSaveError(getErrorMessage(error, "Workout plan could not be updated. Please try again."));
     } finally {
       setIsSaving(false);
     }
@@ -218,7 +219,7 @@ export default function EditWorkoutPlanPage() {
       setAddExerciseMessage("Exercise added successfully.");
     } catch (error) {
       console.error("Failed to add exercise:", error);
-      setAddExerciseError("Exercise could not be added. Please try again.");
+      setAddExerciseError(getErrorMessage(error, "Exercise could not be added. Please try again."));
     } finally {
       setIsSavingNewExercise(false);
     }
@@ -323,7 +324,7 @@ export default function EditWorkoutPlanPage() {
     } catch (error) {
       console.error("Failed to update exercise:", error);
       setExerciseErrorId(exercise.id);
-      setExerciseError("Exercise could not be updated. Please try again.");
+      setExerciseError(getErrorMessage(error, "Exercise could not be updated. Please try again."));
     } finally {
       setUpdatingExerciseId(null);
     }

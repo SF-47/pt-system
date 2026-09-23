@@ -5,6 +5,7 @@ import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -75,18 +76,18 @@ export default function CreateWorkoutPlanPage() {
       return;
     }
 
-    if (exerciseForm.sets < 1) {
-      setError("Sets must be at least 1.");
+    if (exerciseForm.sets < 1 || exerciseForm.sets > 100) {
+      setError("Sets must be between 1 and 100.");
       return;
     }
 
-    if (exerciseForm.reps < 1) {
-      setError("Reps must be at least 1.");
+    if (exerciseForm.reps < 1 || exerciseForm.reps > 1000) {
+      setError("Reps must be between 1 and 1000.");
       return;
     }
 
-    if (exerciseForm.restSeconds < 0) {
-      setError("Rest time cannot be negative.");
+    if (exerciseForm.restSeconds < 0 || exerciseForm.restSeconds > 3600) {
+      setError("Rest seconds must be between 0 and 3600.");
       return;
     }
 
@@ -145,7 +146,10 @@ export default function CreateWorkoutPlanPage() {
       console.error("Failed to create workout plan:", error);
 
       setError(
-        "Workout plan could not be created completely. Please try again.",
+        getErrorMessage(
+          error,
+          "Workout plan could not be created completely. Please try again.",
+        ),
       );
     } finally {
       setIsSaving(false);
@@ -362,6 +366,8 @@ export default function CreateWorkoutPlanPage() {
                   <input
                     id="exerciseName"
                     required
+                    minLength={2}
+                    maxLength={100}
                     value={exerciseForm.name}
                     onChange={(event) =>
                       setExerciseForm((prev) => ({
@@ -385,6 +391,7 @@ export default function CreateWorkoutPlanPage() {
                   <textarea
                     id="exerciseDescription"
                     rows={2}
+                    maxLength={500}
                     value={exerciseForm.description}
                     onChange={(event) =>
                       setExerciseForm((prev) => ({
@@ -410,6 +417,7 @@ export default function CreateWorkoutPlanPage() {
                       id="sets"
                       type="number"
                       min={1}
+                      max={100}
                       required
                       value={exerciseForm.sets}
                       onChange={(event) =>
@@ -434,6 +442,7 @@ export default function CreateWorkoutPlanPage() {
                       id="reps"
                       type="number"
                       min={1}
+                      max={1000}
                       required
                       value={exerciseForm.reps}
                       onChange={(event) =>
@@ -458,6 +467,7 @@ export default function CreateWorkoutPlanPage() {
                       id="restSeconds"
                       type="number"
                       min={0}
+                      max={3600}
                       required
                       value={exerciseForm.restSeconds}
                       onChange={(event) =>

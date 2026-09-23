@@ -85,22 +85,55 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         int trainerId
     )
     {
-        var clientExists = await _context.Clients.AnyAsync(client =>
+        var client = await _context.Clients.FirstOrDefaultAsync(client =>
             client.Id == clientId && client.TrainerId == trainerId
         );
 
-        if (!clientExists)
+        if (client is null)
         {
             return ServiceResult<WorkoutAssignmentResponse>.NotFound("Client not found.");
         }
 
-        var workoutPlanExists = await _context.WorkoutPlans.AnyAsync(plan =>
-            plan.Id == request.WorkoutPlanId && plan.TrainerId == trainerId
-        );
+        if (!client.IsActive)
+        {
+            return ServiceResult<WorkoutAssignmentResponse>.BadRequest(
+                "This client is inactive and cannot receive new assignments."
+            );
+        }
 
-        if (!workoutPlanExists)
+        var workoutPlanInfo = await _context
+            .WorkoutPlans.Where(plan =>
+                plan.Id == request.WorkoutPlanId && plan.TrainerId == trainerId
+            )
+            .Select(plan => new { plan.Name, ExerciseCount = plan.Exercises.Count })
+            .FirstOrDefaultAsync();
+
+        if (workoutPlanInfo is null)
         {
             return ServiceResult<WorkoutAssignmentResponse>.NotFound("Workout plan not found.");
+        }
+
+        if (workoutPlanInfo.ExerciseCount == 0)
+        {
+            return ServiceResult<WorkoutAssignmentResponse>.BadRequest(
+                "Workout plan must contain at least one exercise before it can be assigned."
+            );
+        }
+
+        var dayStart = request.AssignedDate.Date;
+        var dayEnd = dayStart.AddDays(1);
+
+        var hasConflict = await _context.ClientWorkoutAssignments.AnyAsync(existing =>
+            existing.ClientId == clientId
+            && existing.AssignedDate >= dayStart
+            && existing.AssignedDate < dayEnd
+        );
+
+        if (hasConflict)
+        {
+            return ServiceResult<WorkoutAssignmentResponse>.Conflict(
+                "This client already has a workout scheduled for this day."
+            );
         }
 
         var assignment = new ClientWorkoutAssignment
@@ -115,11 +148,6 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         _context.ClientWorkoutAssignments.Add(assignment);
 
         await _context.SaveChangesAsync();
-
-        var workoutPlanInfo = await _context
-            .WorkoutPlans.Where(plan => plan.Id == assignment.WorkoutPlanId)
-            .Select(plan => new { plan.Name, ExerciseCount = plan.Exercises.Count })
-            .FirstAsync();
 
         return ServiceResult<WorkoutAssignmentResponse>.Ok(
             new WorkoutAssignmentResponse
@@ -153,24 +181,46 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
             );
         }
 
-        var workoutPlanExists = await _context.WorkoutPlans.AnyAsync(plan =>
-            plan.Id == request.WorkoutPlanId && plan.TrainerId == trainerId
-        );
+        var workoutPlanInfo = await _context
+            .WorkoutPlans.Where(plan =>
+                plan.Id == request.WorkoutPlanId && plan.TrainerId == trainerId
+            )
+            .Select(plan => new { plan.Name, ExerciseCount = plan.Exercises.Count })
+            .FirstOrDefaultAsync();
 
-        if (!workoutPlanExists)
+        if (workoutPlanInfo is null)
         {
             return ServiceResult<WorkoutAssignmentResponse>.NotFound("Workout plan not found.");
+        }
+
+        if (workoutPlanInfo.ExerciseCount == 0)
+        {
+            return ServiceResult<WorkoutAssignmentResponse>.BadRequest(
+                "Workout plan must contain at least one exercise before it can be assigned."
+            );
+        }
+
+        var dayStart = request.AssignedDate.Date;
+        var dayEnd = dayStart.AddDays(1);
+
+        var hasConflict = await _context.ClientWorkoutAssignments.AnyAsync(existing =>
+            existing.Id != assignment.Id
+            && existing.ClientId == assignment.ClientId
+            && existing.AssignedDate >= dayStart
+            && existing.AssignedDate < dayEnd
+        );
+
+        if (hasConflict)
+        {
+            return ServiceResult<WorkoutAssignmentResponse>.Conflict(
+                "This client already has a workout scheduled for this day."
+            );
         }
 
         assignment.WorkoutPlanId = request.WorkoutPlanId;
         assignment.AssignedDate = request.AssignedDate;
 
         await _context.SaveChangesAsync();
-
-        var workoutPlanInfo = await _context
-            .WorkoutPlans.Where(plan => plan.Id == assignment.WorkoutPlanId)
-            .Select(plan => new { plan.Name, ExerciseCount = plan.Exercises.Count })
-            .FirstAsync();
 
         return ServiceResult<WorkoutAssignmentResponse>.Ok(
             new WorkoutAssignmentResponse
