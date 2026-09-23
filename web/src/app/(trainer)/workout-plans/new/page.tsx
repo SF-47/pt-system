@@ -162,7 +162,7 @@ export default function CreateWorkoutPlanPage() {
       />
 
       {/* Compact Stepper */}
-      <div className="mb-4 grid grid-cols-3 overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="mb-4 grid grid-cols-3 overflow-hidden rounded-xl border border-border bg-surface">
         <button
           type="button"
           onClick={() => setStep(1)}
@@ -276,7 +276,7 @@ export default function CreateWorkoutPlanPage() {
                     setError("");
                   }}
                   placeholder="Example: Upper Body Strength"
-                  className="min-h-10 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -317,14 +317,14 @@ export default function CreateWorkoutPlanPage() {
           <div className="flex items-center justify-between border-t border-border px-5 py-3">
             <Link
               href="/workout-plans"
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-hover"
+              className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-hover"
             >
               Cancel
             </Link>
 
             <button
               type="submit"
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
             >
               Next
               <Icon name="arrow" className="size-4" />
@@ -370,7 +370,7 @@ export default function CreateWorkoutPlanPage() {
                       }))
                     }
                     placeholder="Example: Bench Press"
-                    className="min-h-10 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
 
@@ -418,7 +418,7 @@ export default function CreateWorkoutPlanPage() {
                           sets: Number(event.target.value),
                         }))
                       }
-                      className="min-h-10 w-full rounded-md border border-input-border bg-background px-3 py-2"
+                      className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2"
                     />
                   </div>
 
@@ -442,7 +442,7 @@ export default function CreateWorkoutPlanPage() {
                           reps: Number(event.target.value),
                         }))
                       }
-                      className="min-h-10 w-full rounded-md border border-input-border bg-background px-3 py-2"
+                      className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2"
                     />
                   </div>
 
@@ -466,7 +466,7 @@ export default function CreateWorkoutPlanPage() {
                           restSeconds: Number(event.target.value),
                         }))
                       }
-                      className="min-h-10 w-full rounded-md border border-input-border bg-background px-3 py-2"
+                      className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2"
                     />
                   </div>
                 </div>
@@ -479,7 +479,7 @@ export default function CreateWorkoutPlanPage() {
 
                 <button
                   type="submit"
-                  className="mt-1 inline-flex min-h-10 w-fit items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
+                  className="mt-1 inline-flex min-h-11 w-fit items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
                 >
                   <Icon name="plus" className="size-4" />
                   Add Exercise
@@ -549,7 +549,7 @@ export default function CreateWorkoutPlanPage() {
                 setError("");
                 setStep(1);
               }}
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium hover:bg-hover"
+              className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium hover:bg-hover"
             >
               Back
             </button>
@@ -557,7 +557,7 @@ export default function CreateWorkoutPlanPage() {
             <button
               type="button"
               onClick={handleGoToReview}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
             >
               Review Plan
               <Icon name="arrow" className="size-4" />
@@ -642,7 +642,7 @@ export default function CreateWorkoutPlanPage() {
                 setError("");
                 setStep(2);
               }}
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium hover:bg-hover disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium hover:bg-hover disabled:opacity-60"
             >
               Back
             </button>
@@ -651,7 +651,7 @@ export default function CreateWorkoutPlanPage() {
               type="button"
               disabled={isSaving}
               onClick={() => void handleFinish()}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Icon name="check" className="size-4" />
 

@@ -2,7 +2,7 @@ export default function Loading() {
   return (
     <div aria-label="Loading workout plan form" aria-busy="true" className="max-w-3xl animate-pulse">
       <div className="mb-5 h-5 w-40 rounded bg-border" />
-      <div className="mb-6 h-9 w-56 rounded bg-border" />
+      <div className="mb-5 h-9 w-56 rounded bg-border" />
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="space-y-6 p-5 sm:p-6">
           <div className="border-b border-border pb-5">

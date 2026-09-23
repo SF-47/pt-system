@@ -1,9 +1,9 @@
 export default function Loading() {
   return (
-    <div aria-label="Loading meal plan" aria-busy="true" className="max-w-5xl animate-pulse">
+    <div aria-label="Loading meal plan" aria-busy="true" className="w-full animate-pulse">
       <div className="mb-5 h-5 w-36 rounded bg-border" />
-      <div className="mb-6 h-9 w-52 rounded bg-border" />
-      <div className="mb-6 flex gap-8 border-b border-border pb-5">
+      <div className="mb-5 h-9 w-52 rounded bg-border" />
+      <div className="mb-5 flex gap-4 border-b border-border pb-5">
         <div className="h-10 w-24 rounded bg-border" />
         <div className="h-10 w-24 rounded bg-border" />
       </div>

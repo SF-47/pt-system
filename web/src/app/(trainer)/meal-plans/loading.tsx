@@ -3,16 +3,16 @@ import { PlanCardSkeleton } from "@/components/PlanCard";
 export default function Loading() {
   return (
     <div aria-label="Loading meal plans" aria-busy="true" className="animate-pulse">
-      <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="mb-5 flex items-center justify-between gap-4">
         <div className="w-full max-w-md">
           <div className="h-9 w-44 rounded-md bg-border" />
           <div className="mt-3 h-4 w-full rounded bg-border" />
         </div>
         <div className="h-11 w-40 rounded-md bg-border" />
       </div>
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {[0, 1].map((card) => (
-          <div key={card} className="min-h-24 rounded-lg border border-border bg-surface px-5 py-4">
+          <div key={card} className="min-h-28 rounded-xl border border-border bg-surface px-5 py-4">
             <div className="h-3 w-28 rounded bg-border" />
             <div className="mt-3 h-7 w-16 rounded bg-border" />
           </div>

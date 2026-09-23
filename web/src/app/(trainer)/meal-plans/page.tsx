@@ -85,7 +85,7 @@ export default function MealPlansPage() {
   if (isInitialLoading) return <MealPlansLoading />;
 
   return (
-    <div className="[&>header_h1]:text-[28px] [&>header_p]:text-sm [&>header_p]:leading-relaxed">
+    <div>
       <PageHeader title="Meal Plans" description="Reusable meal plans with clear instructions for daily nutrition.">
         <Link href="/meal-plans/new" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover">
           <Icon name="plus" />
@@ -94,14 +94,14 @@ export default function MealPlansPage() {
       </PageHeader>
 
       <section aria-label="Meal plan summary" className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <SummaryMetric compact label="Meal plans" value={stats?.totalPlans ?? "—"} />
-        <SummaryMetric compact label="Total assigned plans" value={stats?.totalAssignments ?? "—"} />
+        <SummaryMetric label="Meal plans" value={stats?.totalPlans ?? "—"} />
+        <SummaryMetric label="Total assigned plans" value={stats?.totalAssignments ?? "—"} />
       </section>
 
       {statsError && <p className="mb-4 text-sm text-warning" role="status">{statsError}</p>}
 
       <section
-        className="mb-5 rounded-lg border border-border bg-surface p-4"
+        className="mb-5 rounded-xl border border-border bg-surface p-4"
         aria-label="Meal plan tools"
       >
         <div className="min-w-0 max-w-sm">
@@ -142,7 +142,7 @@ export default function MealPlansPage() {
           {mealPlans.map((plan) => <PlanCard key={plan.id} id={plan.id} name={plan.name} description={plan.description} count={plan.meals.length} kind="meal" />)}
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-surface"><EmptyState icon="meal" title="No meal plans found" description="Create a meal plan to start your library." /></div>
+        <div className="rounded-xl border border-border bg-surface"><EmptyState icon="meal" title="No meal plans found" description="Create a meal plan to start your library." /></div>
       )}
 
       <Pagination page={page} totalPages={totalPages} isLoading={isFetching} onPrevious={() => setPage((current) => Math.max(1, current - 1))} onNext={() => setPage((current) => Math.min(totalPages, current + 1))} />

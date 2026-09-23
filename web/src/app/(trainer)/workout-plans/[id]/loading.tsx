@@ -21,7 +21,7 @@ export default function Loading() {
         </div>
         <div className="h-7 w-24 rounded-md bg-border" />
       </div>
-      <div className="overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="grid grid-cols-[3fr_0.6fr_0.6fr_0.8fr] gap-4 bg-background px-4 py-3">
           {[0, 1, 2, 3].map((cell) => <div key={cell} className="h-4 w-16 rounded bg-border" />)}
         </div>

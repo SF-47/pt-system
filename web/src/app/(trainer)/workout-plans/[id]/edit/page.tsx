@@ -484,7 +484,7 @@ export default function EditWorkoutPlanPage() {
         <div className="flex flex-wrap justify-end gap-3 border-t border-border px-5 py-4 sm:px-6">
           <Link
             href={`/workout-plans/${planId}`}
-            className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
+            className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
           >
             Cancel
           </Link>
@@ -493,7 +493,7 @@ export default function EditWorkoutPlanPage() {
             type="submit"
             disabled={isSaving}
             aria-busy={isSaving}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Icon name="check" className="size-4" />
             {isSaving ? "Saving..." : "Save Changes"}
@@ -521,7 +521,7 @@ export default function EditWorkoutPlanPage() {
               type="button"
               onClick={handleOpenAddExercise}
               disabled={isAddingExercise || isSavingNewExercise}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Icon name="plus" className="size-4" />
               Add Exercise
@@ -677,7 +677,7 @@ export default function EditWorkoutPlanPage() {
                 type="button"
                 onClick={handleCancelAddExercise}
                 disabled={isSavingNewExercise}
-                className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -685,7 +685,7 @@ export default function EditWorkoutPlanPage() {
                 type="submit"
                 disabled={isSavingNewExercise}
                 aria-busy={isSavingNewExercise}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Icon name="check" className="size-4" />
                 {isSavingNewExercise ? "Adding..." : "Add Exercise"}
@@ -751,7 +751,7 @@ export default function EditWorkoutPlanPage() {
                       type="button"
                       onClick={() => handleEditExercise(exercise)}
                       disabled={isUpdating || deletingExerciseId === exercise.id}
-                      className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+                      className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
                     >
                       <Icon name="edit" className="size-4" />
                       Edit
@@ -764,7 +764,7 @@ export default function EditWorkoutPlanPage() {
                         setExerciseToDelete(exercise);
                       }}
                       disabled={isUpdating || deletingExerciseId === exercise.id}
-                      className="inline-flex min-h-10 flex-1 items-center justify-center rounded-md border border-danger/40 bg-background px-3 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-md border border-danger/40 bg-background px-3 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
                     >
                       {deletingExerciseId === exercise.id
                         ? "Deleting..."
@@ -904,7 +904,7 @@ export default function EditWorkoutPlanPage() {
                         type="button"
                         onClick={handleCancelExerciseEdit}
                         disabled={isUpdating}
-                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Cancel
                       </button>
@@ -912,7 +912,7 @@ export default function EditWorkoutPlanPage() {
                         type="submit"
                         disabled={isUpdating}
                         aria-busy={isUpdating}
-                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Icon name="check" className="size-4" />
                         {isUpdating ? "Updating..." : "Update Exercise"}

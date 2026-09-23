@@ -137,7 +137,7 @@ export default function MealPlanPage() {
 
   if (error || !plan) {
     return (
-      <div className="max-w-5xl">
+      <div className="w-full">
         <BackLink href="/meal-plans">Back to Meal Plans</BackLink>
         <div
           role="alert"
@@ -150,7 +150,7 @@ export default function MealPlanPage() {
   }
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full">
       <BackLink href="/meal-plans">Back to Meal Plans</BackLink>
       <PageHeader
         title={plan.name}
@@ -177,7 +177,7 @@ export default function MealPlanPage() {
 
       <section
         aria-label="Plan overview"
-        className="mb-6 border-b border-border pb-4"
+        className="mb-5 border-b border-border pb-4"
       >
         <dl className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
           <div>
@@ -235,7 +235,7 @@ export default function MealPlanPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-surface">
+        <div className="rounded-xl border border-border bg-surface">
           <EmptyState
             icon="meal"
             title="No meals yet"

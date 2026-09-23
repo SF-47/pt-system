@@ -120,7 +120,7 @@ export default function WorkoutPlanPage() {
 
   if (error || !plan) {
     return (
-      <div className="max-w-5xl">
+      <div className="w-full">
         <BackLink href="/workout-plans">Back to Workout Plans</BackLink>
         <div
           role="alert"
@@ -209,7 +209,7 @@ export default function WorkoutPlanPage() {
 
         {plan.exercises.length > 0 ? (
           <div
-            className="w-full overflow-x-auto rounded-lg border border-border bg-surface"
+            className="w-full overflow-x-auto rounded-xl border border-border bg-surface"
             role="region"
             aria-label="Exercises in this workout plan"
             tabIndex={0}
@@ -279,7 +279,7 @@ export default function WorkoutPlanPage() {
             </table>
           </div>
         ) : (
-          <div className="rounded-lg border border-border bg-surface">
+          <div className="rounded-xl border border-border bg-surface">
             <EmptyState
               icon="workout"
               title="No exercises yet"
