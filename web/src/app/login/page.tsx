@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,19 +16,32 @@ export default function LoginPage() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setIsLoading(true);
     setError("");
+
+    if (username.trim().length < 3) {
+      setError("Username must be at least 3 characters.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const response = await api.post(Endpoints.trainerLogin, {
-        username,
+        username: username.trim(),
         password,
       });
 
       localStorage.setItem("token", response.data.token);
       router.push("/dashboard");
-    } catch {
-      setError("The username or password doesn't match.");
+    } catch (error) {
+      setError(
+        getErrorMessage(error, "The username or password doesn't match."),
+      );
       setIsLoading(false);
     }
   }

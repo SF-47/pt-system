@@ -7,9 +7,14 @@
   --background: #EDF3EF;
   --surface: #FFFFFF;
   --sidebar: #F5FAF7;
-  --border: #C7D4CB;
-  --border-strong: #AABCAF;
-  --input-border: #AFC1B4;
+  /* Darkened from the original pale sage tones: the originals sat around
+     1.5-2:1 contrast against white/background, which read as barely-there
+     borders and made cards, inputs, tables, and skeletons blend into the
+     page. These keep the same hue family, just with enough weight to read
+     as an actual line. */
+  --border: #9BB0A2;
+  --border-strong: #7E9686;
+  --input-border: #82998A;
   --primary: #2F855A;
   --primary-hover: #276749;
   --primary-soft: #DFF1E6;
@@ -20,7 +25,10 @@
   --danger: #C72E3D;
   --warning-soft: #FFF1D6;
   --danger-soft: #FDE8EA;
-  --hover: #E7F2EB;
+  /* Slightly deeper than before: hover was the *only* visual cue on
+     interactive rows/buttons (no accompanying border/text change), and at
+     the original tint it was nearly invisible against white. */
+  --hover: #CFE4D6;
 }
 
 html.dark {

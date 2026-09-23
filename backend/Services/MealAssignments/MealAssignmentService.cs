@@ -94,13 +94,20 @@ public class MealAssignmentService : IMealAssignmentService
         int trainerId
     )
     {
-        var clientExists = await _db.Clients.AnyAsync(client =>
+        var client = await _db.Clients.FirstOrDefaultAsync(client =>
             client.Id == clientId && client.TrainerId == trainerId
         );
 
-        if (!clientExists)
+        if (client is null)
         {
             return ServiceResult<MealAssignmentResponse>.NotFound("Client not found.");
+        }
+
+        if (!client.IsActive)
+        {
+            return ServiceResult<MealAssignmentResponse>.BadRequest(
+                "This client is inactive and cannot receive new assignments."
+            );
         }
 
         var mealPlan = await _db
@@ -112,6 +119,29 @@ public class MealAssignmentService : IMealAssignmentService
         if (mealPlan is null)
         {
             return ServiceResult<MealAssignmentResponse>.NotFound("Meal plan not found.");
+        }
+
+        if (mealPlan.Meals.Count == 0)
+        {
+            return ServiceResult<MealAssignmentResponse>.BadRequest(
+                "Meal plan must contain at least one meal before it can be assigned."
+            );
+        }
+
+        var dayStart = request.AssignedDate.Date;
+        var dayEnd = dayStart.AddDays(1);
+
+        var hasConflict = await _db.ClientMealPlans.AnyAsync(existing =>
+            existing.ClientId == clientId
+            && existing.AssignedDate >= dayStart
+            && existing.AssignedDate < dayEnd
+        );
+
+        if (hasConflict)
+        {
+            return ServiceResult<MealAssignmentResponse>.Conflict(
+                "This client already has a meal plan assigned for this day."
+            );
         }
 
         var assignment = new ClientMealPlan
@@ -169,6 +199,30 @@ public class MealAssignmentService : IMealAssignmentService
         if (mealPlan is null)
         {
             return ServiceResult<MealAssignmentResponse>.NotFound("Meal plan not found.");
+        }
+
+        if (mealPlan.Meals.Count == 0)
+        {
+            return ServiceResult<MealAssignmentResponse>.BadRequest(
+                "Meal plan must contain at least one meal before it can be assigned."
+            );
+        }
+
+        var dayStart = request.AssignedDate.Date;
+        var dayEnd = dayStart.AddDays(1);
+
+        var hasConflict = await _db.ClientMealPlans.AnyAsync(existing =>
+            existing.Id != assignment.Id
+            && existing.ClientId == assignment.ClientId
+            && existing.AssignedDate >= dayStart
+            && existing.AssignedDate < dayEnd
+        );
+
+        if (hasConflict)
+        {
+            return ServiceResult<MealAssignmentResponse>.Conflict(
+                "This client already has a meal plan assigned for this day."
+            );
         }
 
         bool mealPlanChanged = assignment.MealPlanId != request.MealPlanId;

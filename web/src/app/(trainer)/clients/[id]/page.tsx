@@ -12,6 +12,7 @@ import StatusBadge from "@/components/StatusBadge";
 
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 import type { PagedResponse } from "@/types/api";
 import ClientDetailsLoading from "./loading";
 
@@ -373,7 +374,7 @@ export default function ClientDetailsPage() {
       );
     } catch (error) {
       console.error("Failed to load workout plans:", error);
-      setAssignWorkoutError("Workout plans could not be loaded.");
+      setAssignWorkoutError(getErrorMessage(error, "Workout plans could not be loaded."));
     } finally {
       setIsLoadingWorkoutPlanOptions(false);
     }
@@ -401,7 +402,10 @@ export default function ClientDetailsPage() {
     } catch (error) {
       console.error("Failed to assign workout plan:", error);
       setAssignWorkoutError(
-        "Workout plan could not be assigned. Please try again.",
+        getErrorMessage(
+          error,
+          "Workout plan could not be assigned. Please try again.",
+        ),
       );
     } finally {
       setIsAssigningWorkout(false);
@@ -438,7 +442,7 @@ export default function ClientDetailsPage() {
       );
     } catch (error) {
       console.error("Failed to load meal plans:", error);
-      setAssignMealError("Meal plans could not be loaded.");
+      setAssignMealError(getErrorMessage(error, "Meal plans could not be loaded."));
     } finally {
       setIsLoadingMealPlanOptions(false);
     }
@@ -465,7 +469,12 @@ export default function ClientDetailsPage() {
       setIsMealPlanDropdownOpen(false);
     } catch (error) {
       console.error("Failed to assign meal plan:", error);
-      setAssignMealError("Meal plan could not be assigned. Please try again.");
+      setAssignMealError(
+        getErrorMessage(
+          error,
+          "Meal plan could not be assigned. Please try again.",
+        ),
+      );
     } finally {
       setIsAssigningMeal(false);
     }

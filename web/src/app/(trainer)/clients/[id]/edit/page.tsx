@@ -5,6 +5,7 @@ import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -64,6 +65,18 @@ export default function EditClientPage() {
   ) {
     event.preventDefault();
 
+    if (personalInfoForm.fullName.trim().length < 2) {
+      setPersonalInfoMessage("");
+      setPersonalInfoError("Full name must be at least 2 characters.");
+      return;
+    }
+
+    if (personalInfoForm.phoneNumber.trim().length < 6) {
+      setPersonalInfoMessage("");
+      setPersonalInfoError("Phone number must be at least 6 characters.");
+      return;
+    }
+
     try {
       setIsSavingPersonalInfo(true);
       setPersonalInfoMessage("");
@@ -71,6 +84,8 @@ export default function EditClientPage() {
 
       await api.put(Endpoints.clientById(clientId), {
         ...personalInfoForm,
+        fullName: personalInfoForm.fullName.trim(),
+        phoneNumber: personalInfoForm.phoneNumber.trim(),
         username: credentialsForm.username,
       });
 
@@ -78,7 +93,12 @@ export default function EditClientPage() {
     } catch (error) {
       console.error(error);
 
-      setPersonalInfoError("Failed to update personal information.");
+      setPersonalInfoError(
+        getErrorMessage(
+          error,
+          "Personal information could not be updated. Please try again.",
+        ),
+      );
     } finally {
       setIsSavingPersonalInfo(false);
     }
@@ -88,6 +108,18 @@ export default function EditClientPage() {
     event: React.FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
+
+    if (credentialsForm.username.trim().length < 3) {
+      setCredentialsMessage("");
+      setCredentialsError("Username must be at least 3 characters.");
+      return;
+    }
+
+    if (credentialsForm.newPassword.length < 8) {
+      setCredentialsMessage("");
+      setCredentialsError("New password must be at least 8 characters.");
+      return;
+    }
 
     if (credentialsForm.newPassword !== credentialsForm.confirmNewPassword) {
       setCredentialsMessage("");
@@ -101,16 +133,29 @@ export default function EditClientPage() {
       setCredentialsMessage("");
       setCredentialsError("");
 
-      await api.put(
-        Endpoints.updateClientCredentials(clientId),
-        credentialsForm,
-      );
+      // The backend only accepts { username, password } — the new
+      // password is what gets saved, "Current Password" is not sent.
+      await api.put(Endpoints.updateClientCredentials(clientId), {
+        username: credentialsForm.username.trim(),
+        password: credentialsForm.newPassword,
+      });
 
       setCredentialsMessage("Client credentials updated successfully.");
+      setCredentialsForm((prev) => ({
+        ...prev,
+        password: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      }));
     } catch (error) {
       console.error(error);
 
-      setCredentialsError("Failed to update client credentials.");
+      setCredentialsError(
+        getErrorMessage(
+          error,
+          "Client credentials could not be updated. Please try again.",
+        ),
+      );
     } finally {
       setIsSavingCredentials(false);
     }
@@ -226,6 +271,8 @@ export default function EditClientPage() {
                 id="fullName"
                 name="fullName"
                 required
+                minLength={2}
+                maxLength={100}
                 value={personalInfoForm.fullName}
                 onChange={(event) =>
                   setPersonalInfoForm((prev) => ({
@@ -308,6 +355,8 @@ export default function EditClientPage() {
                 id="phoneNumber"
                 name="phoneNumber"
                 required
+                minLength={6}
+                maxLength={30}
                 value={personalInfoForm.phoneNumber}
                 onChange={(event) =>
                   setPersonalInfoForm((prev) => ({
@@ -386,6 +435,8 @@ export default function EditClientPage() {
                 name="username"
                 type="text"
                 required
+                minLength={3}
+                maxLength={50}
                 value={credentialsForm.username}
                 onChange={(event) =>
                   setCredentialsForm((prev) => ({
@@ -436,6 +487,8 @@ export default function EditClientPage() {
                 name="newPassword"
                 type="password"
                 required
+                minLength={8}
+                maxLength={100}
                 value={credentialsForm.newPassword}
                 onChange={(event) =>
                   setCredentialsForm((prev) => ({
@@ -461,6 +514,8 @@ export default function EditClientPage() {
                 name="confirmNewPassword"
                 type="password"
                 required
+                minLength={8}
+                maxLength={100}
                 value={credentialsForm.confirmNewPassword}
                 onChange={(event) =>
                   setCredentialsForm((prev) => ({

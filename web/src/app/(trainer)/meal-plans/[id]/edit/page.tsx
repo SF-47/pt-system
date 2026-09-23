@@ -9,6 +9,7 @@ import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 
 type MealPlan = {
   id: number;
@@ -124,7 +125,7 @@ export default function EditMealPlanPage() {
       router.push(`/meal-plans/${planId}`);
     } catch (error) {
       console.error("Failed to update meal plan:", error);
-      setSaveError("Meal plan could not be updated. Please try again.");
+      setSaveError(getErrorMessage(error, "Meal plan could not be updated. Please try again."));
     } finally {
       setIsSaving(false);
     }
@@ -198,7 +199,7 @@ export default function EditMealPlanPage() {
       setAddMealMessage("Meal added successfully.");
     } catch (error) {
       console.error("Failed to add meal:", error);
-      setAddMealError("Meal could not be added. Please try again.");
+      setAddMealError(getErrorMessage(error, "Meal could not be added. Please try again."));
     } finally {
       setIsSavingNewMeal(false);
     }
@@ -299,7 +300,7 @@ export default function EditMealPlanPage() {
     } catch (error) {
       console.error("Failed to update meal:", error);
       setMealErrorId(meal.id);
-      setMealError("Meal could not be updated. Please try again.");
+      setMealError(getErrorMessage(error, "Meal could not be updated. Please try again."));
     } finally {
       setUpdatingMealId(null);
     }
