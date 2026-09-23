@@ -10,6 +10,7 @@ export const Endpoints = {
       search ?? "",
     )}&status=${encodeURIComponent(status ?? "")}`,
   clientsStats: "/api/stats/clients",
+  clientGrowth: "/api/stats/client-growth",
 
   clientById: (id: number) => `/api/clients/${id}`,
 
