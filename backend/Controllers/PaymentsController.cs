@@ -25,7 +25,9 @@ public class PaymentsController : ControllerBase
         int page = 1,
         int pageSize = 10,
         string? search = null,
-        string? status = null
+        string? status = null,
+        int? month = null,
+        int? year = null
     )
     {
         var trainerId = GetTrainerId();
@@ -42,12 +44,19 @@ public class PaymentsController : ControllerBase
         {
             return BadRequest(new { message = "Page size must be between 1 and 50." });
         }
+        if (month is < 1 or > 12)
+        {
+            return BadRequest(new { message = "Month must be between 1 and 12." });
+        }
+
         var payments = await _paymentService.GetAllAsync(
             trainerId.Value,
             page,
             pageSize,
             search,
-            status
+            status,
+            month,
+            year
         );
 
         return Ok(payments);

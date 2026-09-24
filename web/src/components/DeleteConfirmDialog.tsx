@@ -9,6 +9,8 @@ type DeleteConfirmDialogProps = {
   itemName?: string;
   isDeleting?: boolean;
   error?: string;
+  confirmLabel?: string;
+  confirmingLabel?: string;
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -20,6 +22,8 @@ export default function DeleteConfirmDialog({
   itemName,
   isDeleting = false,
   error = "",
+  confirmLabel = "Delete",
+  confirmingLabel = "Deleting...",
   onCancel,
   onConfirm,
 }: DeleteConfirmDialogProps) {
@@ -96,7 +100,7 @@ export default function DeleteConfirmDialog({
             aria-busy={isDeleting}
             className="inline-flex min-h-11 items-center justify-center rounded-md bg-danger px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isDeleting ? "Deleting..." : "Delete"}
+            {isDeleting ? confirmingLabel : confirmLabel}
           </button>
         </div>
       </div>

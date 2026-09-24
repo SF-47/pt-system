@@ -10,7 +10,9 @@ public interface IPaymentService
         int page,
         int pageSize,
         string? search,
-        string? status
+        string? status,
+        int? month,
+        int? year
     );
 
     Task<PagedResponse<PaymentResponse>> GetByClientIdAsync(

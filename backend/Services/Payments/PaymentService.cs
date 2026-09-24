@@ -21,31 +21,14 @@ public class PaymentService : IPaymentService
         int page,
         int pageSize,
         string? search,
-        string? status
+        string? status,
+        int? month,
+        int? year
     )
     {
         var query = _db
-            .Payments.Where(payment => payment.Client.TrainerId == trainerId);
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            search = search.Trim();
-            query = query.Where(payment => payment.Client.FullName.Contains(search));
-        }
-
-        if (!string.IsNullOrWhiteSpace(status))
-        {
-            status = status.Trim().ToLower();
-
-            if (status == "paid")
-            {
-                query = query.Where(payment => payment.Status == PaymentStatus.Paid);
-            }
-            else if (status == "pending")
-            {
-                query = query.Where(payment => payment.Status == PaymentStatus.Pending);
-            }
-        }
+            .Payments.Where(payment => payment.Client.TrainerId == trainerId)
+            .ApplyFilters(search, status, month, year);
 
         var totalCount = await query.CountAsync();
         var response = new PagedResponse<PaymentResponse>

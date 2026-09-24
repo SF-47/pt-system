@@ -1,6 +1,7 @@
 using backend.Data;
 using backend.DTOs.Stats;
 using backend.Enums;
+using backend.Services.Payments;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services.Stats;
@@ -132,9 +133,17 @@ public class StatsService : IStatsService
         };
     }
 
-    public async Task<PaymentStatsResponse> GetPaymentStatsAsync(int trainerId)
+    public async Task<PaymentStatsResponse> GetPaymentStatsAsync(
+        int trainerId,
+        string? search = null,
+        string? status = null,
+        int? month = null,
+        int? year = null
+    )
     {
-        var payments = _db.Payments.Where(payment => payment.Client.TrainerId == trainerId);
+        var payments = _db
+            .Payments.Where(payment => payment.Client.TrainerId == trainerId)
+            .ApplyFilters(search, status, month, year);
 
         var totalPayments = await payments.CountAsync();
 

@@ -1,7 +1,7 @@
 export default function StatusBadge({ status }: { status: string }) {
   const positive = ["Paid", "Completed", "Active"].includes(status);
   const pending = status === "Pending";
-  const negative = ["Inactive", "Missed"].includes(status);
+  const negative = ["Inactive", "Missed", "Overdue"].includes(status);
   const tone = positive
     ? "border-primary/25 bg-primary-soft text-primary-hover dark:text-foreground"
     : pending
