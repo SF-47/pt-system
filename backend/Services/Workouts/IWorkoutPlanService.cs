@@ -14,7 +14,10 @@ public interface IWorkoutPlanService
 
     Task<WorkoutPlanResponse?> GetByIdAsync(int id, int trainerId);
 
-    Task<WorkoutPlanResponse> CreateAsync(CreateWorkoutPlanRequest request, int trainerId);
+    Task<ServiceResult<WorkoutPlanResponse>> CreateAsync(
+        CreateWorkoutPlanRequest request,
+        int trainerId
+    );
 
     Task<WorkoutPlanResponse?> UpdateAsync(int id, UpdateWorkoutPlanRequest request, int trainerId);
 

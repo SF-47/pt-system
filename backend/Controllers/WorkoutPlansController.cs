@@ -73,9 +73,14 @@ public class WorkoutPlansController : ControllerBase
         {
             return Unauthorized();
         }
-        var plan = await _workoutPlanService.CreateAsync(request, trainerId.Value);
+        var result = await _workoutPlanService.CreateAsync(request, trainerId.Value);
 
-        return CreatedAtAction(nameof(GetById), new { id = plan.Id }, plan);
+        if (!result.Success)
+        {
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
+        }
+
+        return CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data);
     }
 
     [HttpPut("{id}")]

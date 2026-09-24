@@ -14,7 +14,7 @@ public interface IMealPlanService
 
     Task<MealPlanResponse?> GetByIdAsync(int id, int trainerId);
 
-    Task<MealPlanResponse> CreateAsync(CreateMealPlanRequest request, int trainerId);
+    Task<ServiceResult<MealPlanResponse>> CreateAsync(CreateMealPlanRequest request, int trainerId);
 
     Task<MealPlanResponse?> UpdateAsync(int id, UpdateMealPlanRequest request, int trainerId);
 

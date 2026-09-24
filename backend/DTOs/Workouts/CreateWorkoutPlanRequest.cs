@@ -10,4 +10,6 @@ public class CreateWorkoutPlanRequest
 
     [StringLength(500)]
     public string? Description { get; set; }
+
+    public List<CreateExerciseRequest> Exercises { get; set; } = new();
 }

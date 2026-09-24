@@ -106,28 +106,65 @@ public class MealPlanService : IMealPlanService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<MealPlanResponse> CreateAsync(CreateMealPlanRequest request, int trainerId)
+    public async Task<ServiceResult<MealPlanResponse>> CreateAsync(
+        CreateMealPlanRequest request,
+        int trainerId
+    )
     {
+        var positions = request
+            .Meals.Select((meal, index) => meal.Position ?? index + 1)
+            .OrderBy(position => position);
+
+        if (!positions.SequenceEqual(Enumerable.Range(1, request.Meals.Count)))
+        {
+            return ServiceResult<MealPlanResponse>.BadRequest(
+                "Meal positions must be exactly 1 to N with no duplicates or gaps."
+            );
+        }
+
         var plan = new MealPlan
         {
             TrainerId = trainerId,
             Name = request.Name,
             Description = request.Description,
+            Meals = request
+                .Meals.Select(
+                    (meal, index) =>
+                        new Meal
+                        {
+                            Name = meal.Name,
+                            Instructions = meal.Instructions,
+                            Position = meal.Position ?? index + 1,
+                        }
+                )
+                .ToList(),
         };
 
         _db.MealPlans.Add(plan);
 
         await _db.SaveChangesAsync();
 
-        return new MealPlanResponse
-        {
-            Id = plan.Id,
-            TrainerId = plan.TrainerId,
-            Name = plan.Name,
-            Description = plan.Description,
-            CreatedAt = plan.CreatedAt,
-            Meals = new List<MealResponse>(),
-        };
+        return ServiceResult<MealPlanResponse>.Ok(
+            new MealPlanResponse
+            {
+                Id = plan.Id,
+                TrainerId = plan.TrainerId,
+                Name = plan.Name,
+                Description = plan.Description,
+                CreatedAt = plan.CreatedAt,
+                Meals = plan
+                    .Meals.OrderBy(meal => meal.Position)
+                    .Select(meal => new MealResponse
+                    {
+                        Id = meal.Id,
+                        MealPlanId = meal.MealPlanId,
+                        Name = meal.Name,
+                        Instructions = meal.Instructions,
+                        Position = meal.Position,
+                    })
+                    .ToList(),
+            }
+        );
     }
 
     public async Task<MealPlanResponse?> UpdateAsync(
