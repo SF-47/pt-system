@@ -15,4 +15,6 @@ public class ExerciseResponse
     public int Reps { get; set; }
 
     public int RestSeconds { get; set; }
+
+    public int Position { get; set; }
 }
