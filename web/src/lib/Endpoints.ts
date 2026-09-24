@@ -30,6 +30,9 @@ export const Endpoints = {
     return `/api/clients/${clientId}/progress${query ? `?${query}` : ""}`;
   },
 
+  clientDailyActivity: (clientId: number, date: string) =>
+    `/api/clients/${clientId}/activity?date=${encodeURIComponent(date)}`,
+
   updateClientCredentials: (id: number) => `/api/clients/${id}/credentials`,
 
   // Workout Plans
