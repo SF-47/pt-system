@@ -21,6 +21,7 @@ type Exercise = {
   sets: number;
   reps: number;
   restSeconds: number;
+  position: number;
 };
 
 type WorkoutPlan = {

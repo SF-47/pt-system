@@ -117,7 +117,12 @@ export default function CreateMealPlanPage() {
       }
 
       await Promise.all(
-        meals.map((meal) => api.post(Endpoints.addMeal(mealPlanId), meal)),
+        meals.map((meal, index) =>
+          api.post(Endpoints.addMeal(mealPlanId), {
+            ...meal,
+            position: index + 1,
+          }),
+        ),
       );
 
       router.push(`/meal-plans/${mealPlanId}`);

@@ -136,8 +136,11 @@ export default function CreateWorkoutPlanPage() {
       }
 
       await Promise.all(
-        exercises.map((exercise) =>
-          api.post(Endpoints.addExercise(workoutPlanId), exercise),
+        exercises.map((exercise, index) =>
+          api.post(Endpoints.addExercise(workoutPlanId), {
+            ...exercise,
+            position: index + 1,
+          }),
         ),
       );
 

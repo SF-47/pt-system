@@ -75,7 +75,8 @@ public class ClientWorkoutService : IClientWorkoutService
                 CompletedAt = a.CompletedAt,
 
                 Exercises = a
-                    .WorkoutPlan.Exercises.Select(exercise => new MobileExerciseResponse
+                    .WorkoutPlan.Exercises.OrderBy(exercise => exercise.Position)
+                    .Select(exercise => new MobileExerciseResponse
                     {
                         Id = exercise.Id,
                         Name = exercise.Name,
@@ -83,6 +84,7 @@ public class ClientWorkoutService : IClientWorkoutService
                         Sets = exercise.Sets,
                         Reps = exercise.Reps,
                         RestSeconds = exercise.RestSeconds,
+                        Position = exercise.Position,
                     })
                     .ToList(),
             })

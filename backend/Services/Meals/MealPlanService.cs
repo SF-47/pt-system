@@ -62,12 +62,14 @@ public class MealPlanService : IMealPlanService
                 Description = plan.Description,
                 CreatedAt = plan.CreatedAt,
                 Meals = plan
-                    .Meals.Select(meal => new MealResponse
+                    .Meals.OrderBy(meal => meal.Position)
+                    .Select(meal => new MealResponse
                     {
                         Id = meal.Id,
                         MealPlanId = meal.MealPlanId,
                         Name = meal.Name,
                         Instructions = meal.Instructions,
+                        Position = meal.Position,
                     })
                     .ToList(),
             })
@@ -90,12 +92,14 @@ public class MealPlanService : IMealPlanService
                 Description = plan.Description,
                 CreatedAt = plan.CreatedAt,
                 Meals = plan
-                    .Meals.Select(meal => new MealResponse
+                    .Meals.OrderBy(meal => meal.Position)
+                    .Select(meal => new MealResponse
                     {
                         Id = meal.Id,
                         MealPlanId = meal.MealPlanId,
                         Name = meal.Name,
                         Instructions = meal.Instructions,
+                        Position = meal.Position,
                     })
                     .ToList(),
             })
@@ -154,12 +158,14 @@ public class MealPlanService : IMealPlanService
             Description = plan.Description,
             CreatedAt = plan.CreatedAt,
             Meals = plan
-                .Meals.Select(meal => new MealResponse
+                .Meals.OrderBy(meal => meal.Position)
+                .Select(meal => new MealResponse
                 {
                     Id = meal.Id,
                     MealPlanId = meal.MealPlanId,
                     Name = meal.Name,
                     Instructions = meal.Instructions,
+                    Position = meal.Position,
                 })
                 .ToList(),
         };
@@ -198,11 +204,21 @@ public class MealPlanService : IMealPlanService
             return null;
         }
 
+        var position =
+            request.Position
+            ?? (
+                await _db
+                    .Meals.Where(meal => meal.MealPlanId == mealPlanId)
+                    .MaxAsync(meal => (int?)meal.Position)
+                ?? 0
+            ) + 1;
+
         var meal = new Meal
         {
             MealPlanId = mealPlanId,
             Name = request.Name,
             Instructions = request.Instructions,
+            Position = position,
         };
 
         _db.Meals.Add(meal);
@@ -215,6 +231,7 @@ public class MealPlanService : IMealPlanService
             MealPlanId = meal.MealPlanId,
             Name = meal.Name,
             Instructions = meal.Instructions,
+            Position = meal.Position,
         };
     }
 
@@ -244,6 +261,7 @@ public class MealPlanService : IMealPlanService
             MealPlanId = meal.MealPlanId,
             Name = meal.Name,
             Instructions = meal.Instructions,
+            Position = meal.Position,
         };
     }
 

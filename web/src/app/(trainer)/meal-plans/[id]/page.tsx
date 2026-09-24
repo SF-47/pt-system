@@ -18,6 +18,7 @@ type Meal = {
   mealPlanId: number;
   name: string;
   instructions: string;
+  position: number;
 };
 
 type MealPlan = {

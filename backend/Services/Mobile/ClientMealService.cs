@@ -53,12 +53,14 @@ public class ClientMealService : IClientMealService
                 AssignedDate = a.AssignedDate,
 
                 Meals = a
-                    .MealStatuses.Select(status => new MobileMealStatusResponse
+                    .MealStatuses.OrderBy(status => status.Meal.Position)
+                    .Select(status => new MobileMealStatusResponse
                     {
                         MealStatusId = status.Id,
                         MealId = status.MealId,
                         MealName = status.Meal.Name,
                         Instructions = status.Meal.Instructions,
+                        Position = status.Meal.Position,
                         Status = status.Status,
                         CompletedAt = status.CompletedAt,
                     })

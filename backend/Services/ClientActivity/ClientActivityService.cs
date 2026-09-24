@@ -57,7 +57,8 @@ public class ClientActivityService : IClientActivityService
                 && status.ClientMealPlan.AssignedDate >= dayStart
                 && status.ClientMealPlan.AssignedDate < dayEnd
             )
-            .OrderBy(status => status.MealId)
+            .OrderBy(status => status.Meal.Position)
+            .ThenBy(status => status.MealId)
             .Select(status => new
             {
                 status.Id,

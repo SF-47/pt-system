@@ -23,6 +23,7 @@ type Meal = {
   mealPlanId: number;
   name: string;
   instructions: string;
+  position: number;
 };
 
 type MealForm = {
@@ -191,6 +192,7 @@ export default function EditMealPlanPage() {
       const response = await api.post<Meal>(Endpoints.addMeal(planId), {
         name: trimmedName,
         instructions: trimmedInstructions,
+        position: Math.max(0, ...meals.map((item) => item.position)) + 1,
       });
 
       setMeals((currentMeals) => [...currentMeals, response.data]);

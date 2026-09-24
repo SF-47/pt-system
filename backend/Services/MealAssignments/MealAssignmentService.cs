@@ -26,10 +26,9 @@ public class MealAssignmentService : IMealAssignmentService
         DateTime? endDate = null
     )
     {
-        var query = _db
-            .ClientMealPlans.Where(assignment =>
-                assignment.ClientId == clientId && assignment.Client.TrainerId == trainerId
-            );
+        var query = _db.ClientMealPlans.Where(assignment =>
+            assignment.ClientId == clientId && assignment.Client.TrainerId == trainerId
+        );
 
         if (startDate is not null)
         {
@@ -72,11 +71,13 @@ public class MealAssignmentService : IMealAssignmentService
                 AssignedDate = assignment.AssignedDate,
 
                 Meals = assignment
-                    .MealStatuses.Select(status => new MealStatusResponse
+                    .MealStatuses.OrderBy(status => status.Meal.Position)
+                    .Select(status => new MealStatusResponse
                     {
                         Id = status.Id,
                         MealId = status.MealId,
                         MealName = status.Meal.Name,
+                        Position = status.Meal.Position,
                         Status = status.Status,
                         CompletedAt = status.CompletedAt,
                     })
@@ -155,7 +156,7 @@ public class MealAssignmentService : IMealAssignmentService
 
         await _db.SaveChangesAsync();
 
-        foreach (var meal in mealPlan.Meals)
+        foreach (var meal in mealPlan.Meals.OrderBy(meal => meal.Position))
         {
             var mealStatus = new ClientMealStatus
             {
@@ -238,7 +239,7 @@ public class MealAssignmentService : IMealAssignmentService
 
             _db.ClientMealStatuses.RemoveRange(oldStatuses);
 
-            foreach (var meal in mealPlan.Meals)
+            foreach (var meal in mealPlan.Meals.OrderBy(meal => meal.Position))
             {
                 var mealStatus = new ClientMealStatus
                 {
@@ -268,8 +269,7 @@ public class MealAssignmentService : IMealAssignmentService
         var mealStatus = await _db
             .ClientMealStatuses.Include(status => status.Meal)
             .FirstOrDefaultAsync(status =>
-                status.Id == mealStatusId
-                && status.ClientMealPlan.Client.TrainerId == trainerId
+                status.Id == mealStatusId && status.ClientMealPlan.Client.TrainerId == trainerId
             );
 
         if (mealStatus is null)
@@ -295,6 +295,7 @@ public class MealAssignmentService : IMealAssignmentService
             Id = mealStatus.Id,
             MealId = mealStatus.MealId,
             MealName = mealStatus.Meal.Name,
+            Position = mealStatus.Meal.Position,
             Status = mealStatus.Status,
             CompletedAt = mealStatus.CompletedAt,
         };
@@ -319,11 +320,13 @@ public class MealAssignmentService : IMealAssignmentService
                 AssignedDate = assignment.AssignedDate,
 
                 Meals = assignment
-                    .MealStatuses.Select(status => new MealStatusResponse
+                    .MealStatuses.OrderBy(status => status.Meal.Position)
+                    .Select(status => new MealStatusResponse
                     {
                         Id = status.Id,
                         MealId = status.MealId,
                         MealName = status.Meal.Name,
+                        Position = status.Meal.Position,
                         Status = status.Status,
                         CompletedAt = status.CompletedAt,
                     })

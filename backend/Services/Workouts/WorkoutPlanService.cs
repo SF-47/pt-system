@@ -63,7 +63,8 @@ public class WorkoutPlanService : IWorkoutPlanService
                 Description = plan.Description,
                 CreatedAt = plan.CreatedAt,
                 Exercises = plan
-                    .Exercises.Select(exercise => new ExerciseResponse
+                    .Exercises.OrderBy(exercise => exercise.Position)
+                    .Select(exercise => new ExerciseResponse
                     {
                         Id = exercise.Id,
                         WorkoutPlanId = exercise.WorkoutPlanId,
@@ -72,6 +73,7 @@ public class WorkoutPlanService : IWorkoutPlanService
                         Sets = exercise.Sets,
                         Reps = exercise.Reps,
                         RestSeconds = exercise.RestSeconds,
+                        Position = exercise.Position,
                     })
                     .ToList(),
             })
@@ -94,7 +96,8 @@ public class WorkoutPlanService : IWorkoutPlanService
                 Description = plan.Description,
                 CreatedAt = plan.CreatedAt,
                 Exercises = plan
-                    .Exercises.Select(exercise => new ExerciseResponse
+                    .Exercises.OrderBy(exercise => exercise.Position)
+                    .Select(exercise => new ExerciseResponse
                     {
                         Id = exercise.Id,
                         WorkoutPlanId = exercise.WorkoutPlanId,
@@ -103,6 +106,7 @@ public class WorkoutPlanService : IWorkoutPlanService
                         Sets = exercise.Sets,
                         Reps = exercise.Reps,
                         RestSeconds = exercise.RestSeconds,
+                        Position = exercise.Position,
                     })
                     .ToList(),
             })
@@ -164,7 +168,8 @@ public class WorkoutPlanService : IWorkoutPlanService
             Description = plan.Description,
             CreatedAt = plan.CreatedAt,
             Exercises = plan
-                .Exercises.Select(exercise => new ExerciseResponse
+                .Exercises.OrderBy(exercise => exercise.Position)
+                .Select(exercise => new ExerciseResponse
                 {
                     Id = exercise.Id,
                     WorkoutPlanId = exercise.WorkoutPlanId,
@@ -173,6 +178,7 @@ public class WorkoutPlanService : IWorkoutPlanService
                     Sets = exercise.Sets,
                     Reps = exercise.Reps,
                     RestSeconds = exercise.RestSeconds,
+                    Position = exercise.Position,
                 })
                 .ToList(),
         };
@@ -211,6 +217,15 @@ public class WorkoutPlanService : IWorkoutPlanService
             return null;
         }
 
+        var position =
+            request.Position
+            ?? (
+                await _db
+                    .Exercises.Where(exercise => exercise.WorkoutPlanId == workoutPlanId)
+                    .MaxAsync(exercise => (int?)exercise.Position)
+                ?? 0
+            ) + 1;
+
         var exercise = new Exercise
         {
             WorkoutPlanId = workoutPlanId,
@@ -219,6 +234,7 @@ public class WorkoutPlanService : IWorkoutPlanService
             Sets = request.Sets,
             Reps = request.Reps,
             RestSeconds = request.RestSeconds,
+            Position = position,
         };
 
         _db.Exercises.Add(exercise);
@@ -234,6 +250,7 @@ public class WorkoutPlanService : IWorkoutPlanService
             Sets = exercise.Sets,
             Reps = exercise.Reps,
             RestSeconds = exercise.RestSeconds,
+            Position = exercise.Position,
         };
     }
 
@@ -271,6 +288,7 @@ public class WorkoutPlanService : IWorkoutPlanService
             Sets = exercise.Sets,
             Reps = exercise.Reps,
             RestSeconds = exercise.RestSeconds,
+            Position = exercise.Position,
         };
     }
 

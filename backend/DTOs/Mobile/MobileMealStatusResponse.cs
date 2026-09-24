@@ -12,6 +12,8 @@ public class MobileMealStatusResponse
 
     public string Instructions { get; set; } = string.Empty;
 
+    public int Position { get; set; }
+
     public CompletionStatus Status { get; set; }
 
     public DateTime? CompletedAt { get; set; }

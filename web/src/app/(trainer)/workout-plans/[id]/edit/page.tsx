@@ -27,6 +27,7 @@ type Exercise = {
   sets: number;
   reps: number;
   restSeconds: number;
+  position: number;
 };
 
 type ExerciseForm = {
@@ -209,6 +210,7 @@ export default function EditWorkoutPlanPage() {
         sets: newExercise.sets,
         reps: newExercise.reps,
         restSeconds: newExercise.restSeconds,
+        position: Math.max(0, ...exercises.map((item) => item.position)) + 1,
       });
 
       setExercises((currentExercises) => [
