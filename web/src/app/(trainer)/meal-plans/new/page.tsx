@@ -144,7 +144,6 @@ export default function CreateMealPlanPage() {
         description="Add plan details, meals, then review."
       />
 
-      {/* Compact Stepper */}
       <div className="mb-4 grid grid-cols-3 overflow-hidden rounded-xl border border-border bg-surface">
         <button
           type="button"
@@ -218,14 +217,12 @@ export default function CreateMealPlanPage() {
         </button>
       </div>
 
-      {/* STEP 1 */}
       {step === 1 && (
         <form
           onSubmit={handlePlanNext}
           className="rounded-xl border border-border bg-surface"
         >
           <div className="grid gap-5 p-5 lg:grid-cols-[0.8fr_1.2fr]">
-            {/* Left */}
             <div>
               <h2 className="text-base font-semibold">Plan Information</h2>
 
@@ -234,7 +231,6 @@ export default function CreateMealPlanPage() {
               </p>
             </div>
 
-            {/* Right fields */}
             <div className="grid gap-4">
               <div>
                 <label
@@ -316,11 +312,9 @@ export default function CreateMealPlanPage() {
         </form>
       )}
 
-      {/* STEP 2 */}
       {step === 2 && (
         <div className="grid gap-4">
           <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-            {/* Add Meal */}
             <form
               onSubmit={handleAddMeal}
               className="rounded-xl border border-border bg-surface p-5"
@@ -401,7 +395,6 @@ export default function CreateMealPlanPage() {
               </div>
             </form>
 
-            {/* Added Meals */}
             <section className="rounded-xl border border-border bg-surface p-5">
               <div className="mb-3 flex items-center justify-between">
                 <div>
@@ -472,11 +465,9 @@ export default function CreateMealPlanPage() {
         </div>
       )}
 
-      {/* STEP 3 */}
       {step === 3 && (
         <div className="grid gap-4">
           <section className="grid gap-5 rounded-xl border border-border bg-surface p-5 lg:grid-cols-[0.75fr_1.25fr]">
-            {/* Plan info */}
             <div>
               <h2 className="text-base font-semibold">Plan Details</h2>
 
@@ -499,7 +490,6 @@ export default function CreateMealPlanPage() {
               </div>
             </div>
 
-            {/* Meals */}
             <div>
               <h2 className="text-base font-semibold">
                 Meals

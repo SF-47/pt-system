@@ -3,7 +3,6 @@ export default function Loading() {
     <div aria-label="Loading client details" aria-busy="true" className="animate-pulse">
       <div className="mb-4 h-5 w-32 rounded bg-border" />
 
-      {/* Client summary card */}
       <div className="mb-5 rounded-xl border border-border bg-surface p-5 sm:p-6">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.1fr)]">
           <div className="flex items-center gap-4">
@@ -35,14 +34,12 @@ export default function Loading() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="mb-5 flex gap-2">
         {[0, 1, 2].map((tab) => (
           <div key={tab} className="h-11 w-32 rounded-md bg-border" />
         ))}
       </div>
 
-      {/* Weekly Schedule */}
       <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

@@ -10,6 +10,7 @@ import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
 import { getErrorMessage } from "@/lib/getErrorMessage";
+import ExerciseFields from "@/components/workout-plans/ExerciseFields";
 
 type WorkoutPlan = {
   id: number;
@@ -554,119 +555,12 @@ export default function EditWorkoutPlanPage() {
               </h3>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="newExerciseName"
-                  className="mb-1 block text-xs font-medium text-muted"
-                >
-                  Exercise Name
-                </label>
-                <input
-                  id="newExerciseName"
-                  name="name"
-                  required
-                  minLength={2}
-                  maxLength={100}
-                  value={newExercise.name}
-                  onChange={(event) =>
-                    updateNewExercise({ name: event.target.value })
-                  }
-                  placeholder="Example: Bench Press"
-                  className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="newExerciseDescription"
-                  className="mb-1 block text-xs font-medium text-muted"
-                >
-                  Description
-                </label>
-                <input
-                  id="newExerciseDescription"
-                  name="description"
-                  maxLength={500}
-                  value={newExercise.description}
-                  onChange={(event) =>
-                    updateNewExercise({ description: event.target.value })
-                  }
-                  placeholder="Optional instructions"
-                  className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 sm:col-span-2">
-                <div>
-                  <label
-                    htmlFor="newExerciseSets"
-                    className="mb-1 block text-xs font-medium text-muted"
-                  >
-                    Sets
-                  </label>
-                  <input
-                    id="newExerciseSets"
-                    name="sets"
-                    type="number"
-                    required
-                    min={1}
-                    max={100}
-                    value={newExercise.sets}
-                    onChange={(event) =>
-                      updateNewExercise({ sets: Number(event.target.value) })
-                    }
-                    className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="newExerciseReps"
-                    className="mb-1 block text-xs font-medium text-muted"
-                  >
-                    Reps
-                  </label>
-                  <input
-                    id="newExerciseReps"
-                    name="reps"
-                    type="number"
-                    required
-                    min={1}
-                    max={1000}
-                    value={newExercise.reps}
-                    onChange={(event) =>
-                      updateNewExercise({ reps: Number(event.target.value) })
-                    }
-                    className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="newExerciseRest"
-                    className="mb-1 block text-xs font-medium text-muted"
-                  >
-                    Rest seconds
-                  </label>
-                  <input
-                    id="newExerciseRest"
-                    name="restSeconds"
-                    type="number"
-                    required
-                    min={0}
-                    max={3600}
-                    value={newExercise.restSeconds}
-                    onChange={(event) =>
-                      updateNewExercise({
-                        restSeconds: Number(event.target.value),
-                      })
-                    }
-                    className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </div>
-              </div>
-            </div>
+            <ExerciseFields
+              idPrefix="newExercise"
+              values={newExercise}
+              onChange={updateNewExercise}
+              showPlaceholders
+            />
 
             <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
               {addExerciseError && (
@@ -780,121 +674,11 @@ export default function EditWorkoutPlanPage() {
                     onSubmit={(event) => void handleUpdateExercise(event)}
                     className="border-t border-border bg-background px-5 py-4 sm:px-6"
                   >
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <label
-                          htmlFor={`exercise-${exercise.id}-name`}
-                          className="mb-1 block text-xs font-medium text-muted"
-                        >
-                          Exercise Name
-                        </label>
-                        <input
-                          id={`exercise-${exercise.id}-name`}
-                          name="name"
-                          required
-                          minLength={2}
-                          maxLength={100}
-                          value={exerciseDraft.name}
-                          onChange={(event) =>
-                            updateExerciseDraft({ name: event.target.value })
-                          }
-                          className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor={`exercise-${exercise.id}-description`}
-                          className="mb-1 block text-xs font-medium text-muted"
-                        >
-                          Description
-                        </label>
-                        <input
-                          id={`exercise-${exercise.id}-description`}
-                          name="description"
-                          maxLength={500}
-                          value={exerciseDraft.description ?? ""}
-                          onChange={(event) =>
-                            updateExerciseDraft({
-                              description: event.target.value,
-                            })
-                          }
-                          className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor={`exercise-${exercise.id}-sets`}
-                          className="mb-1 block text-xs font-medium text-muted"
-                        >
-                          Sets
-                        </label>
-                        <input
-                          id={`exercise-${exercise.id}-sets`}
-                          name="sets"
-                          type="number"
-                          required
-                          min={1}
-                          max={100}
-                          value={exerciseDraft.sets}
-                          onChange={(event) =>
-                            updateExerciseDraft({
-                              sets: Number(event.target.value),
-                            })
-                          }
-                          className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor={`exercise-${exercise.id}-reps`}
-                          className="mb-1 block text-xs font-medium text-muted"
-                        >
-                          Reps
-                        </label>
-                        <input
-                          id={`exercise-${exercise.id}-reps`}
-                          name="reps"
-                          type="number"
-                          required
-                          min={1}
-                          max={1000}
-                          value={exerciseDraft.reps}
-                          onChange={(event) =>
-                            updateExerciseDraft({
-                              reps: Number(event.target.value),
-                            })
-                          }
-                          className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor={`exercise-${exercise.id}-rest`}
-                          className="mb-1 block text-xs font-medium text-muted"
-                        >
-                          Rest seconds
-                        </label>
-                        <input
-                          id={`exercise-${exercise.id}-rest`}
-                          name="restSeconds"
-                          type="number"
-                          required
-                          min={0}
-                          max={3600}
-                          value={exerciseDraft.restSeconds}
-                          onChange={(event) =>
-                            updateExerciseDraft({
-                              restSeconds: Number(event.target.value),
-                            })
-                          }
-                          className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
-                      </div>
-                    </div>
+                    <ExerciseFields
+                      idPrefix={`exercise-${exercise.id}`}
+                      values={exerciseDraft}
+                      onChange={updateExerciseDraft}
+                    />
 
                     <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
                       {exerciseErrorId === exercise.id && exerciseError && (

@@ -165,7 +165,6 @@ export default function CreateWorkoutPlanPage() {
         description="Add plan details, exercises, then review."
       />
 
-      {/* Compact Stepper */}
       <div className="mb-4 grid grid-cols-3 overflow-hidden rounded-xl border border-border bg-surface">
         <button
           type="button"
@@ -239,14 +238,12 @@ export default function CreateWorkoutPlanPage() {
         </button>
       </div>
 
-      {/* STEP 1 */}
       {step === 1 && (
         <form
           onSubmit={handlePlanNext}
           className="rounded-xl border border-border bg-surface"
         >
           <div className="grid gap-5 p-5 lg:grid-cols-[0.8fr_1.2fr]">
-            {/* Left */}
             <div>
               <h2 className="text-base font-semibold">Plan Information</h2>
 
@@ -255,7 +252,6 @@ export default function CreateWorkoutPlanPage() {
               </p>
             </div>
 
-            {/* Right fields */}
             <div className="grid gap-4">
               <div>
                 <label
@@ -337,11 +333,9 @@ export default function CreateWorkoutPlanPage() {
         </form>
       )}
 
-      {/* STEP 2 */}
       {step === 2 && (
         <div className="grid gap-4">
           <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-            {/* Add Exercise */}
             <form
               onSubmit={handleAddExercise}
               className="rounded-xl border border-border bg-surface p-5"
@@ -497,7 +491,6 @@ export default function CreateWorkoutPlanPage() {
               </div>
             </form>
 
-            {/* Added Exercises */}
             <section className="rounded-xl border border-border bg-surface p-5">
               <div className="mb-3 flex items-center justify-between">
                 <div>
@@ -576,11 +569,9 @@ export default function CreateWorkoutPlanPage() {
         </div>
       )}
 
-      {/* STEP 3 */}
       {step === 3 && (
         <div className="grid gap-4">
           <section className="grid gap-5 rounded-xl border border-border bg-surface p-5 lg:grid-cols-[0.75fr_1.25fr]">
-            {/* Plan info */}
             <div>
               <h2 className="text-base font-semibold">Plan Details</h2>
 
@@ -603,7 +594,6 @@ export default function CreateWorkoutPlanPage() {
               </div>
             </div>
 
-            {/* Exercises */}
             <div>
               <h2 className="text-base font-semibold">
                 Exercises

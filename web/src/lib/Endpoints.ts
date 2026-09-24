@@ -1,8 +1,6 @@
 export const Endpoints = {
-  // Auth
   trainerLogin: "/api/trainer/login",
 
-  // Clients
   clientsBase: "/api/clients",
 
   clients: (page: number, pageSize: number, search?: string, status?: string) =>
@@ -35,7 +33,6 @@ export const Endpoints = {
 
   updateClientCredentials: (id: number) => `/api/clients/${id}/credentials`,
 
-  // Workout Plans
   workoutPlansBase: "/api/workout-plans",
 
   workoutPlans: (page: number, pageSize: number, search?: string) =>
@@ -52,7 +49,6 @@ export const Endpoints = {
 
   exerciseById: (id: number) => `/api/exercises/${id}`,
 
-  // Meal Plans
   mealPlansBase: "/api/meal-plans",
 
   mealPlans: (page: number, pageSize: number, search?: string) =>
@@ -68,7 +64,6 @@ export const Endpoints = {
 
   mealById: (id: number) => `/api/meals/${id}`,
 
-  // Workout Assignments
   clientWorkoutPlansBase: (clientId: number) =>
     `/api/clients/${clientId}/workout-plans`,
 
@@ -85,10 +80,6 @@ export const Endpoints = {
 
   clientWorkoutPlanById: (id: number) => `/api/client-workout-plans/${id}`,
 
-  clientWorkoutPlanStatus: (id: number) =>
-    `/api/client-workout-plans/${id}/status`,
-
-  // Meal Assignments
   clientMealPlansBase: (clientId: number) =>
     `/api/clients/${clientId}/meal-plans`,
 
@@ -104,11 +95,6 @@ export const Endpoints = {
     }${endDate ? `&endDate=${endDate}` : ""}`,
 
   clientMealPlanById: (id: number) => `/api/client-meal-plans/${id}`,
-
-  clientMealStatus: (id: number) => `/api/client-meal-statuses/${id}/status`,
-
-  // Payments
-  paymentsBase: "/api/payments",
 
   payments: (
     page: number,
@@ -142,13 +128,10 @@ export const Endpoints = {
   createClientPayment: (clientId: number) =>
     `/api/clients/${clientId}/payments`,
 
-  clientPaymentsBase: (clientId: number) => `/api/clients/${clientId}/payments`,
-
   clientPayments: (clientId: number, page: number, pageSize: number) =>
     `/api/clients/${clientId}/payments?page=${page}&pageSize=${pageSize}`,
 
   paymentStatus: (id: number) => `/api/payments/${id}/status`,
 
-  // Dashboard
   dashboardStats: "/api/stats/dashboard",
 };
