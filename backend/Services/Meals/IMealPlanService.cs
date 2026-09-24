@@ -25,4 +25,10 @@ public interface IMealPlanService
     Task<MealResponse?> UpdateMealAsync(int mealId, UpdateMealRequest request, int trainerId);
 
     Task<bool> DeleteMealAsync(int mealId, int trainerId);
+
+    Task<ServiceResult<bool>> ReorderMealsAsync(
+        int mealPlanId,
+        ReorderRequest request,
+        int trainerId
+    );
 }

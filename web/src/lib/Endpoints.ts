@@ -47,6 +47,9 @@ export const Endpoints = {
   addExercise: (workoutPlanId: number) =>
     `/api/workout-plans/${workoutPlanId}/exercises`,
 
+  reorderExercises: (workoutPlanId: number) =>
+    `/api/workout-plans/${workoutPlanId}/exercises/reorder`,
+
   exerciseById: (id: number) => `/api/exercises/${id}`,
 
   mealPlansBase: "/api/meal-plans",
@@ -61,6 +64,9 @@ export const Endpoints = {
   mealPlanById: (id: number) => `/api/meal-plans/${id}`,
 
   addMeal: (mealPlanId: number) => `/api/meal-plans/${mealPlanId}/meals`,
+
+  reorderMeals: (mealPlanId: number) =>
+    `/api/meal-plans/${mealPlanId}/meals/reorder`,
 
   mealById: (id: number) => `/api/meals/${id}`,
 

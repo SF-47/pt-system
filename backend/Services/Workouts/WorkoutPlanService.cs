@@ -307,8 +307,62 @@ public class WorkoutPlanService : IWorkoutPlanService
 
         _db.Exercises.Remove(exercise);
 
+        var remaining = await _db
+            .Exercises.Where(other =>
+                other.WorkoutPlanId == exercise.WorkoutPlanId && other.Id != exercise.Id
+            )
+            .OrderBy(other => other.Position)
+            .ThenBy(other => other.Id)
+            .ToListAsync();
+
+        for (var index = 0; index < remaining.Count; index++)
+        {
+            remaining[index].Position = index + 1;
+        }
+
         await _db.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task<ServiceResult<bool>> ReorderExercisesAsync(
+        int workoutPlanId,
+        ReorderRequest request,
+        int trainerId
+    )
+    {
+        var planExists = await _db.WorkoutPlans.AnyAsync(plan =>
+            plan.Id == workoutPlanId && plan.TrainerId == trainerId
+        );
+
+        if (!planExists)
+        {
+            return ServiceResult<bool>.NotFound("Workout plan not found.");
+        }
+
+        var exercises = await _db
+            .Exercises.Where(exercise => exercise.WorkoutPlanId == workoutPlanId)
+            .ToListAsync();
+
+        var error = ReorderValidator.Validate(
+            request.Items,
+            exercises.Select(exercise => exercise.Id).ToList()
+        );
+
+        if (error is not null)
+        {
+            return ServiceResult<bool>.BadRequest(error);
+        }
+
+        var positions = request.Items.ToDictionary(item => item.Id, item => item.Position);
+
+        foreach (var exercise in exercises)
+        {
+            exercise.Position = positions[exercise.Id];
+        }
+
+        await _db.SaveChangesAsync();
+
+        return ServiceResult<bool>.Ok(true);
     }
 }
