@@ -14,6 +14,22 @@ export const Endpoints = {
 
   clientById: (id: number) => `/api/clients/${id}`,
 
+  clientProgress: (clientId: number, startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+
+    if (startDate) {
+      params.set("startDate", startDate);
+    }
+
+    if (endDate) {
+      params.set("endDate", endDate);
+    }
+
+    const query = params.toString();
+
+    return `/api/clients/${clientId}/progress${query ? `?${query}` : ""}`;
+  },
+
   updateClientCredentials: (id: number) => `/api/clients/${id}/credentials`,
 
   // Workout Plans

@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using backend.DTOs.Clients;
 using backend.DTOs.Common;
+using backend.DTOs.Progress;
 using backend.Services.Clients;
+using TrainerProgressService = backend.Services.ClientProgress.IClientProgressService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -15,10 +17,15 @@ namespace backend.Controllers;
 public class ClientController : ControllerBase
 {
     private readonly IClientService _clientService;
+    private readonly TrainerProgressService _progressService;
 
-    public ClientController(IClientService clientService)
+    public ClientController(
+        IClientService clientService,
+        TrainerProgressService progressService
+    )
     {
         _clientService = clientService;
+        _progressService = progressService;
     }
 
     [HttpGet]
@@ -144,6 +151,39 @@ public class ClientController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpGet("{clientId}/progress")]
+    public async Task<ActionResult<TrainerClientProgressResponse>> GetProgress(
+        int clientId,
+        DateTime? startDate = null,
+        DateTime? endDate = null
+    )
+    {
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+
+        if (startDate is not null && endDate is not null && startDate > endDate)
+        {
+            return BadRequest(new { message = "Start date cannot be after end date." });
+        }
+
+        var progress = await _progressService.GetByClientIdAsync(
+            clientId,
+            trainerId.Value,
+            startDate,
+            endDate
+        );
+
+        if (progress is null)
+        {
+            return NotFound(new { message = "Client not found." });
+        }
+
+        return Ok(progress);
     }
 
     private int? GetTrainerId()

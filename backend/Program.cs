@@ -40,6 +40,10 @@ builder.Services.AddScoped<IClientProfileService, ClientProfileService>();
 builder.Services.AddScoped<IClientWorkoutService, ClientWorkoutService>();
 builder.Services.AddScoped<IClientMealService, ClientMealService>();
 builder.Services.AddScoped<IClientProgressService, ClientProgressService>();
+builder.Services.AddScoped<
+    backend.Services.ClientProgress.IClientProgressService,
+    backend.Services.ClientProgress.ClientProgressService
+>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 
