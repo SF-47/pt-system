@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import BackLink from "@/components/BackLink";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
@@ -170,6 +171,25 @@ export default function MealPlanPage() {
     );
   }
 
+  // Long plans use two columns on wide screens, filled top to bottom.
+  const useTwoColumns = plan.meals.length > 4;
+  const rowsPerColumn = useTwoColumns
+    ? Math.ceil(plan.meals.length / 2)
+    : plan.meals.length;
+
+  function dividers(index: number) {
+    if (!useTwoColumns) {
+      return "";
+    }
+
+    const startsColumn = index % rowsPerColumn === 0;
+    const inSecondColumn = index >= rowsPerColumn;
+
+    return `${startsColumn ? " min-[900px]:border-t-0" : ""}${
+      inSecondColumn ? " min-[900px]:border-l" : ""
+    }`;
+  }
+
   return (
     <div className="w-full">
       <BackLink href={backHref}>{backLabel}</BackLink>
@@ -243,75 +263,55 @@ export default function MealPlanPage() {
         )}
 
         {plan.meals.length > 0 ? (
-          <div
-            className="w-full max-h-[560px] overflow-x-auto overflow-y-auto rounded-xl border border-border bg-surface"
-            role="region"
+          <ol
             aria-label="Meals in this meal plan"
-            tabIndex={0}
+            style={{ "--rows": rowsPerColumn } as React.CSSProperties}
+            className={`overflow-hidden rounded-xl border border-border bg-surface ${
+              useTwoColumns
+                ? "min-[900px]:grid min-[900px]:grid-flow-col min-[900px]:grid-cols-2 min-[900px]:grid-rows-[repeat(var(--rows),auto)]"
+                : ""
+            }`}
           >
-            <table className="workspace-table w-full min-w-140 table-fixed border-collapse">
-              <colgroup>
-                <col className="w-[30%]" />
-                <col className="w-[55%]" />
-                <col className="w-[15%]" />
-              </colgroup>
-              <thead>
-                <tr>
-                  {[
-                    ["Meal", "text-left"],
-                    ["Instructions", "text-left"],
-                    ["", "text-right"],
-                  ].map(([heading, alignment]) => (
-                    <th
-                      key={heading || "actions"}
-                      scope="col"
-                      className={`sticky top-0 z-10 bg-background px-4 py-2.5 align-middle text-xs font-semibold uppercase tracking-wide text-muted ${alignment}`}
-                    >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {plan.meals.map((meal, index) => (
-                  <tr
-                    key={meal.id}
-                    className="border-t border-border transition-colors hover:bg-hover"
+            {plan.meals.map((meal, index) => (
+              <li
+                key={meal.id}
+                className={`flex items-center gap-3 border-t border-border px-4 py-2.5 transition-colors first:border-t-0 hover:bg-hover${dividers(index)}`}
+              >
+                <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-primary-hover tabular-nums dark:text-foreground">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-foreground">
+                    {meal.name}
+                  </p>
+                  <p
+                    title={meal.instructions}
+                    className="truncate text-sm text-muted"
                   >
-                    <td className="px-4 py-3 align-middle">
-                      <div className="flex min-w-0 items-start gap-2.5">
-                        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-primary-hover tabular-nums dark:text-foreground">
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <p className="min-w-0 font-semibold text-foreground wrap-anywhere">
-                          {meal.name}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 align-middle">
-                      <p className="line-clamp-2 text-sm leading-snug text-muted whitespace-normal">
-                        {meal.instructions}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 text-right align-middle">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDeleteMealError("");
-                          setDeleteMealMessage("");
-                          setMealToDelete(meal);
-                        }}
-                        disabled={deletingMealId === meal.id}
-                        className="inline-flex min-h-9 items-center justify-center rounded-md border border-danger/40 bg-surface px-3 py-1.5 text-sm font-medium text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {deletingMealId === meal.id ? "Deleting..." : "Delete"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    {meal.instructions}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteMealError("");
+                    setDeleteMealMessage("");
+                    setMealToDelete(meal);
+                  }}
+                  disabled={deletingMealId === meal.id}
+                  aria-label={`Delete ${meal.name}`}
+                  title="Delete meal"
+                  className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-danger/40 bg-surface text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Trash2
+                    className={`size-4 ${deletingMealId === meal.id ? "animate-pulse" : ""}`}
+                  />
+                </button>
+              </li>
+            ))}
+          </ol>
         ) : (
           <div className="rounded-xl border border-border bg-surface">
             <EmptyState

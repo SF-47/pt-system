@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import BackLink from "@/components/BackLink";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
@@ -452,10 +453,10 @@ export default function EditWorkoutPlanPage() {
         description="Update the plan details and exercises."
       />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(320px,0.75fr)_minmax(0,1.25fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(320px,0.75fr)_minmax(0,1.25fr)]">
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface"
+          className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface xl:sticky xl:top-24"
         >
         <div className="shrink-0 border-b border-border px-5 py-4 sm:px-6">
           <h2 className="flex items-center gap-2 text-base font-semibold">
@@ -630,7 +631,6 @@ export default function EditWorkoutPlanPage() {
           </form>
         )}
 
-        <div className="max-h-[360px] overflow-y-auto">
         {exercises.length > 0 ? (
           <SortableList
             items={exercises}
@@ -668,20 +668,20 @@ export default function EditWorkoutPlanPage() {
                     </div>
                   </div>
 
-                  <dl className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-1 pl-10 text-sm lg:pl-0">
-                    <div className="flex gap-1.5">
+                  <dl className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 pl-10 text-sm lg:pl-0">
+                    <div className="flex w-16 gap-1.5">
                       <dt className="text-muted">Sets</dt>
                       <dd className="font-medium text-foreground tabular-nums">
                         {exercise.sets}
                       </dd>
                     </div>
-                    <div className="flex gap-1.5">
+                    <div className="flex w-[4.5rem] gap-1.5">
                       <dt className="text-muted">Reps</dt>
                       <dd className="font-medium text-foreground tabular-nums">
                         {exercise.reps}
                       </dd>
                     </div>
-                    <div className="flex gap-1.5">
+                    <div className="flex w-28 gap-1.5">
                       <dt className="text-muted">Rest</dt>
                       <dd className="font-medium text-foreground tabular-nums">
                         {exercise.restSeconds > 0
@@ -696,10 +696,11 @@ export default function EditWorkoutPlanPage() {
                       type="button"
                       onClick={() => handleEditExercise(exercise)}
                       disabled={isUpdating || deletingExerciseId === exercise.id}
-                      className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+                      aria-label={`Edit ${exercise.name}`}
+                      title="Edit exercise"
+                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <Icon name="edit" className="size-4" />
-                      Edit
                     </button>
                     <button
                       type="button"
@@ -709,11 +710,13 @@ export default function EditWorkoutPlanPage() {
                         setExerciseToDelete(exercise);
                       }}
                       disabled={isUpdating || deletingExerciseId === exercise.id}
-                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-md border border-danger/40 bg-background px-3 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+                      aria-label={`Delete ${exercise.name}`}
+                      title="Delete exercise"
+                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-danger/40 bg-background text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {deletingExerciseId === exercise.id
-                        ? "Deleting..."
-                        : "Delete"}
+                      <Trash2
+                        className={`size-4 ${deletingExerciseId === exercise.id ? "animate-pulse" : ""}`}
+                      />
                     </button>
                   </div>
                 </div>
@@ -766,7 +769,6 @@ export default function EditWorkoutPlanPage() {
             This workout plan does not have any exercises yet.
           </p>
         ) : null}
-        </div>
         </section>
       </div>
 

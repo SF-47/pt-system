@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import BackLink from "@/components/BackLink";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
@@ -422,10 +423,10 @@ export default function EditMealPlanPage() {
         description="Update the plan details and meals."
       />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(320px,0.75fr)_minmax(0,1.25fr)]">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(320px,0.75fr)_minmax(0,1.25fr)]">
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface"
+          className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface xl:sticky xl:top-24"
         >
         <div className="shrink-0 border-b border-border px-5 py-4 sm:px-6">
           <h2 className="flex items-center gap-2 text-base font-semibold">
@@ -639,7 +640,6 @@ export default function EditMealPlanPage() {
           </form>
         )}
 
-        <div className="max-h-[360px] overflow-y-auto">
         {meals.length > 0 ? (
           <SortableList
             items={meals}
@@ -681,10 +681,11 @@ export default function EditMealPlanPage() {
                       type="button"
                       onClick={() => handleEditMeal(meal)}
                       disabled={isUpdating || deletingMealId === meal.id}
-                      className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+                      aria-label={`Edit ${meal.name}`}
+                      title="Edit meal"
+                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <Icon name="edit" className="size-4" />
-                      Edit
                     </button>
                     <button
                       type="button"
@@ -694,9 +695,13 @@ export default function EditMealPlanPage() {
                         setMealToDelete(meal);
                       }}
                       disabled={isUpdating || deletingMealId === meal.id}
-                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-md border border-danger/40 bg-background px-3 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
+                      aria-label={`Delete ${meal.name}`}
+                      title="Delete meal"
+                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-danger/40 bg-background text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {deletingMealId === meal.id ? "Deleting..." : "Delete"}
+                      <Trash2
+                        className={`size-4 ${deletingMealId === meal.id ? "animate-pulse" : ""}`}
+                      />
                     </button>
                   </div>
                 </div>
@@ -790,7 +795,6 @@ export default function EditMealPlanPage() {
             This meal plan does not have any meals yet.
           </p>
         ) : null}
-        </div>
         </section>
       </div>
 
