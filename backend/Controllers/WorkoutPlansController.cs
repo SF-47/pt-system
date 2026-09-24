@@ -42,12 +42,7 @@ public class WorkoutPlansController : ControllerBase
         {
             return BadRequest(new { message = "Page size must be between 1 and 50." });
         }
-        var result = await _workoutPlanService.GetAllAsync(
-            trainerId.Value,
-            page,
-            pageSize,
-            search
-        );
+        var result = await _workoutPlanService.GetAllAsync(trainerId.Value, page, pageSize, search);
 
         return Ok(result);
     }
@@ -141,6 +136,24 @@ public class WorkoutPlansController : ControllerBase
         }
 
         return Ok(exercise);
+    }
+
+    [HttpPut("{id}/exercises/reorder")]
+    public async Task<IActionResult> ReorderExercises(int id, ReorderRequest request)
+    {
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var result = await _workoutPlanService.ReorderExercisesAsync(id, request, trainerId.Value);
+
+        if (!result.Success)
+        {
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
+        }
+
+        return NoContent();
     }
 
     [HttpPut("/api/exercises/{id}")]

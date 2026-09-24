@@ -278,8 +278,58 @@ public class MealPlanService : IMealPlanService
 
         _db.Meals.Remove(meal);
 
+        var remaining = await _db
+            .Meals.Where(other => other.MealPlanId == meal.MealPlanId && other.Id != meal.Id)
+            .OrderBy(other => other.Position)
+            .ThenBy(other => other.Id)
+            .ToListAsync();
+
+        for (var index = 0; index < remaining.Count; index++)
+        {
+            remaining[index].Position = index + 1;
+        }
+
         await _db.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task<ServiceResult<bool>> ReorderMealsAsync(
+        int mealPlanId,
+        ReorderRequest request,
+        int trainerId
+    )
+    {
+        var planExists = await _db.MealPlans.AnyAsync(plan =>
+            plan.Id == mealPlanId && plan.TrainerId == trainerId
+        );
+
+        if (!planExists)
+        {
+            return ServiceResult<bool>.NotFound("Meal plan not found.");
+        }
+
+        var meals = await _db.Meals.Where(meal => meal.MealPlanId == mealPlanId).ToListAsync();
+
+        var error = ReorderValidator.Validate(
+            request.Items,
+            meals.Select(meal => meal.Id).ToList()
+        );
+
+        if (error is not null)
+        {
+            return ServiceResult<bool>.BadRequest(error);
+        }
+
+        var positions = request.Items.ToDictionary(item => item.Id, item => item.Position);
+
+        foreach (var meal in meals)
+        {
+            meal.Position = positions[meal.Id];
+        }
+
+        await _db.SaveChangesAsync();
+
+        return ServiceResult<bool>.Ok(true);
     }
 }

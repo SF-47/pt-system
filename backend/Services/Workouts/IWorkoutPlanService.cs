@@ -33,4 +33,10 @@ public interface IWorkoutPlanService
     );
 
     Task<bool> DeleteExerciseAsync(int exerciseId, int trainerId);
+
+    Task<ServiceResult<bool>> ReorderExercisesAsync(
+        int workoutPlanId,
+        ReorderRequest request,
+        int trainerId
+    );
 }

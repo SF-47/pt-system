@@ -10,6 +10,8 @@ import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
 import { getErrorMessage } from "@/lib/getErrorMessage";
+import SortableList from "@/components/SortableList";
+import SortableRow from "@/components/SortableRow";
 import ExerciseFields from "@/components/workout-plans/ExerciseFields";
 
 type WorkoutPlan = {
@@ -83,6 +85,8 @@ export default function EditWorkoutPlanPage() {
   );
   const [deleteExerciseError, setDeleteExerciseError] = useState("");
   const [deleteExerciseMessage, setDeleteExerciseMessage] = useState("");
+  const [isReordering, setIsReordering] = useState(false);
+  const [reorderError, setReorderError] = useState("");
 
   useEffect(() => {
     let ignore = false;
@@ -210,7 +214,7 @@ export default function EditWorkoutPlanPage() {
         sets: newExercise.sets,
         reps: newExercise.reps,
         restSeconds: newExercise.restSeconds,
-        position: Math.max(0, ...exercises.map((item) => item.position)) + 1,
+        position: exercises.length + 1,
       });
 
       setExercises((currentExercises) => [
@@ -225,6 +229,33 @@ export default function EditWorkoutPlanPage() {
       setAddExerciseError(getErrorMessage(error, "Exercise could not be added. Please try again."));
     } finally {
       setIsSavingNewExercise(false);
+    }
+  }
+
+  async function handleReorder(reordered: Exercise[]) {
+    const previous = exercises;
+
+    setExercises(
+      reordered.map((exercise, index) => ({ ...exercise, position: index + 1 })),
+    );
+    setReorderError("");
+    setIsReordering(true);
+
+    try {
+      await api.put(Endpoints.reorderExercises(planId), {
+        items: reordered.map((exercise, index) => ({
+          id: exercise.id,
+          position: index + 1,
+        })),
+      });
+    } catch (error) {
+      console.error("Failed to reorder exercises:", error);
+      setExercises(previous);
+      setReorderError(
+        getErrorMessage(error, "Exercises could not be reordered. Please try again."),
+      );
+    } finally {
+      setIsReordering(false);
     }
   }
 
@@ -243,7 +274,9 @@ export default function EditWorkoutPlanPage() {
       await api.delete(Endpoints.exerciseById(exerciseId));
 
       setExercises((currentExercises) =>
-        currentExercises.filter((exercise) => exercise.id !== exerciseId),
+        currentExercises
+          .filter((exercise) => exercise.id !== exerciseId)
+          .map((exercise, index) => ({ ...exercise, position: index + 1 })),
       );
 
       if (editingExerciseId === exerciseId) {
@@ -539,6 +572,12 @@ export default function EditWorkoutPlanPage() {
           </p>
         )}
 
+        {reorderError && (
+          <p role="alert" className="shrink-0 px-5 pb-3 text-sm text-danger sm:px-6">
+            {reorderError}
+          </p>
+        )}
+
         {deleteExerciseMessage && (
           <p role="status" className="shrink-0 px-5 pb-3 text-sm text-primary-hover sm:px-6">
             {deleteExerciseMessage}
@@ -593,16 +632,24 @@ export default function EditWorkoutPlanPage() {
 
         <div className="max-h-[360px] overflow-y-auto">
         {exercises.length > 0 ? (
-          exercises.map((exercise, index) => {
+          <SortableList
+            items={exercises}
+            disabled={isReordering}
+            onReorder={(reordered) => void handleReorder(reordered)}
+          >
+          {exercises.map((exercise, index) => {
             const isUpdating = updatingExerciseId === exercise.id;
             const isEditing =
               editingExerciseId === exercise.id &&
               exerciseDraft?.id === exercise.id;
 
             return (
-              <article key={exercise.id} className="border-t border-border">
+              <SortableRow key={exercise.id} id={exercise.id} label={exercise.name}>
+                {(dragHandle) => (
+                <>
                 <div className="flex flex-col gap-3 px-5 py-3 sm:px-6 lg:flex-row lg:items-center">
                   <div className="flex min-w-0 flex-1 items-start gap-3">
+                    {dragHandle}
                     <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-primary-hover tabular-nums dark:text-foreground">
                       {String(index + 1).padStart(2, "0")}
                     </span>
@@ -708,9 +755,12 @@ export default function EditWorkoutPlanPage() {
                     </div>
                   </form>
                 )}
-              </article>
+                </>
+                )}
+              </SortableRow>
             );
-          })
+          })}
+          </SortableList>
         ) : !isAddingExercise ? (
           <p className="border-t border-border px-5 py-8 text-center text-sm text-muted sm:px-6">
             This workout plan does not have any exercises yet.

@@ -10,6 +10,8 @@ import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
 import { getErrorMessage } from "@/lib/getErrorMessage";
+import SortableList from "@/components/SortableList";
+import SortableRow from "@/components/SortableRow";
 
 type MealPlan = {
   id: number;
@@ -62,6 +64,8 @@ export default function EditMealPlanPage() {
   const [deletingMealId, setDeletingMealId] = useState<number | null>(null);
   const [deleteMealError, setDeleteMealError] = useState("");
   const [deleteMealMessage, setDeleteMealMessage] = useState("");
+  const [isReordering, setIsReordering] = useState(false);
+  const [reorderError, setReorderError] = useState("");
 
   useEffect(() => {
     let ignore = false;
@@ -192,7 +196,7 @@ export default function EditMealPlanPage() {
       const response = await api.post<Meal>(Endpoints.addMeal(planId), {
         name: trimmedName,
         instructions: trimmedInstructions,
-        position: Math.max(0, ...meals.map((item) => item.position)) + 1,
+        position: meals.length + 1,
       });
 
       setMeals((currentMeals) => [...currentMeals, response.data]);
@@ -204,6 +208,31 @@ export default function EditMealPlanPage() {
       setAddMealError(getErrorMessage(error, "Meal could not be added. Please try again."));
     } finally {
       setIsSavingNewMeal(false);
+    }
+  }
+
+  async function handleReorder(reordered: Meal[]) {
+    const previous = meals;
+
+    setMeals(reordered.map((meal, index) => ({ ...meal, position: index + 1 })));
+    setReorderError("");
+    setIsReordering(true);
+
+    try {
+      await api.put(Endpoints.reorderMeals(planId), {
+        items: reordered.map((meal, index) => ({
+          id: meal.id,
+          position: index + 1,
+        })),
+      });
+    } catch (error) {
+      console.error("Failed to reorder meals:", error);
+      setMeals(previous);
+      setReorderError(
+        getErrorMessage(error, "Meals could not be reordered. Please try again."),
+      );
+    } finally {
+      setIsReordering(false);
     }
   }
 
@@ -222,7 +251,9 @@ export default function EditMealPlanPage() {
       await api.delete(Endpoints.mealById(mealId));
 
       setMeals((currentMeals) =>
-        currentMeals.filter((meal) => meal.id !== mealId),
+        currentMeals
+          .filter((meal) => meal.id !== mealId)
+          .map((meal, index) => ({ ...meal, position: index + 1 })),
       );
 
       if (editingMealId === mealId) {
@@ -510,6 +541,12 @@ export default function EditMealPlanPage() {
           </p>
         )}
 
+        {reorderError && (
+          <p role="alert" className="shrink-0 px-5 pb-3 text-sm text-danger sm:px-6">
+            {reorderError}
+          </p>
+        )}
+
         {deleteMealMessage && (
           <p role="status" className="shrink-0 px-5 pb-3 text-sm text-primary-hover sm:px-6">
             {deleteMealMessage}
@@ -604,15 +641,23 @@ export default function EditMealPlanPage() {
 
         <div className="max-h-[360px] overflow-y-auto">
         {meals.length > 0 ? (
-          meals.map((meal, index) => {
+          <SortableList
+            items={meals}
+            disabled={isReordering}
+            onReorder={(reordered) => void handleReorder(reordered)}
+          >
+          {meals.map((meal, index) => {
             const isUpdating = updatingMealId === meal.id;
             const isEditing =
               editingMealId === meal.id && mealDraft?.id === meal.id;
 
             return (
-              <article key={meal.id} className="border-t border-border">
+              <SortableRow key={meal.id} id={meal.id} label={meal.name}>
+                {(dragHandle) => (
+                <>
                 <div className="flex flex-col gap-3 px-5 py-3 sm:px-6 lg:flex-row lg:items-center">
                   <div className="flex min-w-0 flex-1 items-start gap-3">
+                    {dragHandle}
                     <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-primary-hover tabular-nums dark:text-foreground">
                       {String(index + 1).padStart(2, "0")}
                     </span>
@@ -734,9 +779,12 @@ export default function EditMealPlanPage() {
                     </div>
                   </form>
                 )}
-              </article>
+                </>
+                )}
+              </SortableRow>
             );
-          })
+          })}
+          </SortableList>
         ) : !isAddingMeal ? (
           <p className="border-t border-border px-5 py-8 text-center text-sm text-muted sm:px-6">
             This meal plan does not have any meals yet.

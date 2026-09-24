@@ -135,6 +135,24 @@ public class MealPlansController : ControllerBase
         return Ok(meal);
     }
 
+    [HttpPut("{id}/meals/reorder")]
+    public async Task<IActionResult> ReorderMeals(int id, ReorderRequest request)
+    {
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var result = await _mealPlanService.ReorderMealsAsync(id, request, trainerId.Value);
+
+        if (!result.Success)
+        {
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
+        }
+
+        return NoContent();
+    }
+
     [HttpPut("/api/meals/{id}")]
     public async Task<ActionResult<MealResponse>> UpdateMeal(int id, UpdateMealRequest request)
     {
