@@ -7,11 +7,11 @@ namespace backend.Services.ClientProgress;
 
 public class ClientProgressService : IClientProgressService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly ApplicationDbContext _db;
 
-    public ClientProgressService(ApplicationDbContext context)
+    public ClientProgressService(ApplicationDbContext db)
     {
-        _context = context;
+        _db = db;
     }
 
     public async Task<TrainerClientProgressResponse?> GetByClientIdAsync(
@@ -21,7 +21,7 @@ public class ClientProgressService : IClientProgressService
         DateTime? endDate
     )
     {
-        var clientExists = await _context.Clients.AnyAsync(client =>
+        var clientExists = await _db.Clients.AnyAsync(client =>
             client.Id == clientId && client.TrainerId == trainerId
         );
 
@@ -34,7 +34,7 @@ public class ClientProgressService : IClientProgressService
         var startDay = startDate?.Date;
         var endExclusive = endDate?.Date.AddDays(1);
 
-        var workoutQuery = _context.ClientWorkoutAssignments.Where(assignment =>
+        var workoutQuery = _db.ClientWorkoutAssignments.Where(assignment =>
             assignment.ClientId == clientId && assignment.Client.TrainerId == trainerId
         );
 
@@ -70,7 +70,7 @@ public class ClientProgressService : IClientProgressService
             assignment.Status == CompletionStatus.Pending && assignment.AssignedDate >= today
         );
 
-        var mealQuery = _context.ClientMealStatuses.Where(status =>
+        var mealQuery = _db.ClientMealStatuses.Where(status =>
             status.ClientMealPlan.ClientId == clientId
             && status.ClientMealPlan.Client.TrainerId == trainerId
         );

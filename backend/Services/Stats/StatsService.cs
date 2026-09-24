@@ -7,16 +7,16 @@ namespace backend.Services.Stats;
 
 public class StatsService : IStatsService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly ApplicationDbContext _db;
 
-    public StatsService(ApplicationDbContext context)
+    public StatsService(ApplicationDbContext db)
     {
-        _context = context;
+        _db = db;
     }
 
     public async Task<ClientStatsResponse> GetClientStatsAsync(int trainerId)
     {
-        var clients = _context.Clients.Where(client => client.TrainerId == trainerId);
+        var clients = _db.Clients.Where(client => client.TrainerId == trainerId);
 
         var totalClients = await clients.CountAsync();
 
@@ -34,7 +34,7 @@ public class StatsService : IStatsService
 
     public async Task<List<ClientGrowthPoint>> GetClientGrowthAsync(int trainerId)
     {
-        var dailyCounts = await _context
+        var dailyCounts = await _db
             .Clients.Where(client => client.TrainerId == trainerId)
             .GroupBy(client => client.CreatedAt.Date)
             .Select(group => new { Period = group.Key, DailyCount = group.Count() })
@@ -62,9 +62,9 @@ public class StatsService : IStatsService
 
     public async Task<WorkoutStatsResponse> GetWorkoutStatsAsync(int trainerId)
     {
-        var workoutPlans = _context.WorkoutPlans.Where(plan => plan.TrainerId == trainerId);
+        var workoutPlans = _db.WorkoutPlans.Where(plan => plan.TrainerId == trainerId);
 
-        var assignments = _context.ClientWorkoutAssignments.Where(assignment =>
+        var assignments = _db.ClientWorkoutAssignments.Where(assignment =>
             assignment.Client.TrainerId == trainerId
         );
 
@@ -96,13 +96,13 @@ public class StatsService : IStatsService
 
     public async Task<MealStatsResponse> GetMealStatsAsync(int trainerId)
     {
-        var mealPlans = _context.MealPlans.Where(plan => plan.TrainerId == trainerId);
+        var mealPlans = _db.MealPlans.Where(plan => plan.TrainerId == trainerId);
 
-        var assignments = _context.ClientMealPlans.Where(assignment =>
+        var assignments = _db.ClientMealPlans.Where(assignment =>
             assignment.Client.TrainerId == trainerId
         );
 
-        var mealStatuses = _context.ClientMealStatuses.Where(status =>
+        var mealStatuses = _db.ClientMealStatuses.Where(status =>
             status.ClientMealPlan.Client.TrainerId == trainerId
         );
 
@@ -134,7 +134,7 @@ public class StatsService : IStatsService
 
     public async Task<PaymentStatsResponse> GetPaymentStatsAsync(int trainerId)
     {
-        var payments = _context.Payments.Where(payment => payment.Client.TrainerId == trainerId);
+        var payments = _db.Payments.Where(payment => payment.Client.TrainerId == trainerId);
 
         var totalPayments = await payments.CountAsync();
 
@@ -172,21 +172,21 @@ public class StatsService : IStatsService
 
     public async Task<DashboardStatsResponse> GetDashboardStatsAsync(int trainerId)
     {
-        var clients = _context.Clients.Where(client => client.TrainerId == trainerId);
+        var clients = _db.Clients.Where(client => client.TrainerId == trainerId);
 
-        var workoutPlans = _context.WorkoutPlans.Where(plan => plan.TrainerId == trainerId);
+        var workoutPlans = _db.WorkoutPlans.Where(plan => plan.TrainerId == trainerId);
 
-        var mealPlans = _context.MealPlans.Where(plan => plan.TrainerId == trainerId);
+        var mealPlans = _db.MealPlans.Where(plan => plan.TrainerId == trainerId);
 
-        var workoutAssignments = _context.ClientWorkoutAssignments.Where(assignment =>
+        var workoutAssignments = _db.ClientWorkoutAssignments.Where(assignment =>
             assignment.Client.TrainerId == trainerId
         );
 
-        var mealStatuses = _context.ClientMealStatuses.Where(status =>
+        var mealStatuses = _db.ClientMealStatuses.Where(status =>
             status.ClientMealPlan.Client.TrainerId == trainerId
         );
 
-        var payments = _context.Payments.Where(payment => payment.Client.TrainerId == trainerId);
+        var payments = _db.Payments.Where(payment => payment.Client.TrainerId == trainerId);
 
         var totalClients = await clients.CountAsync();
 

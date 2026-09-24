@@ -10,11 +10,11 @@ namespace backend.Services.WorkoutAssignments;
 
 public class WorkoutAssignmentService : IWorkoutAssignmentService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly ApplicationDbContext _db;
 
-    public WorkoutAssignmentService(ApplicationDbContext context)
+    public WorkoutAssignmentService(ApplicationDbContext db)
     {
-        _context = context;
+        _db = db;
     }
 
     public async Task<PagedResponse<WorkoutAssignmentResponse>> GetByClientIdAsync(
@@ -26,7 +26,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         DateTime? endDate = null
     )
     {
-        var query = _context
+        var query = _db
             .ClientWorkoutAssignments.Where(assignment =>
                 assignment.ClientId == clientId && assignment.Client.TrainerId == trainerId
             );
@@ -85,7 +85,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         int trainerId
     )
     {
-        var client = await _context.Clients.FirstOrDefaultAsync(client =>
+        var client = await _db.Clients.FirstOrDefaultAsync(client =>
             client.Id == clientId && client.TrainerId == trainerId
         );
 
@@ -101,7 +101,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
             );
         }
 
-        var workoutPlanInfo = await _context
+        var workoutPlanInfo = await _db
             .WorkoutPlans.Where(plan =>
                 plan.Id == request.WorkoutPlanId && plan.TrainerId == trainerId
             )
@@ -123,7 +123,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         var dayStart = request.AssignedDate.Date;
         var dayEnd = dayStart.AddDays(1);
 
-        var hasConflict = await _context.ClientWorkoutAssignments.AnyAsync(existing =>
+        var hasConflict = await _db.ClientWorkoutAssignments.AnyAsync(existing =>
             existing.ClientId == clientId
             && existing.AssignedDate >= dayStart
             && existing.AssignedDate < dayEnd
@@ -145,9 +145,9 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
             CompletedAt = null,
         };
 
-        _context.ClientWorkoutAssignments.Add(assignment);
+        _db.ClientWorkoutAssignments.Add(assignment);
 
-        await _context.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return ServiceResult<WorkoutAssignmentResponse>.Ok(
             new WorkoutAssignmentResponse
@@ -170,7 +170,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         int trainerId
     )
     {
-        var assignment = await _context.ClientWorkoutAssignments.FirstOrDefaultAsync(assignment =>
+        var assignment = await _db.ClientWorkoutAssignments.FirstOrDefaultAsync(assignment =>
             assignment.Id == assignmentId && assignment.Client.TrainerId == trainerId
         );
 
@@ -181,7 +181,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
             );
         }
 
-        var workoutPlanInfo = await _context
+        var workoutPlanInfo = await _db
             .WorkoutPlans.Where(plan =>
                 plan.Id == request.WorkoutPlanId && plan.TrainerId == trainerId
             )
@@ -203,7 +203,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         var dayStart = request.AssignedDate.Date;
         var dayEnd = dayStart.AddDays(1);
 
-        var hasConflict = await _context.ClientWorkoutAssignments.AnyAsync(existing =>
+        var hasConflict = await _db.ClientWorkoutAssignments.AnyAsync(existing =>
             existing.Id != assignment.Id
             && existing.ClientId == assignment.ClientId
             && existing.AssignedDate >= dayStart
@@ -220,7 +220,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         assignment.WorkoutPlanId = request.WorkoutPlanId;
         assignment.AssignedDate = request.AssignedDate;
 
-        await _context.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return ServiceResult<WorkoutAssignmentResponse>.Ok(
             new WorkoutAssignmentResponse
@@ -243,7 +243,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
         int trainerId
     )
     {
-        var assignment = await _context
+        var assignment = await _db
             .ClientWorkoutAssignments.Include(assignment => assignment.WorkoutPlan)
             .FirstOrDefaultAsync(assignment =>
                 assignment.Id == assignmentId && assignment.Client.TrainerId == trainerId
@@ -265,9 +265,9 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
             assignment.CompletedAt = null;
         }
 
-        await _context.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
-        var exerciseCount = await _context
+        var exerciseCount = await _db
             .WorkoutPlans.Where(plan => plan.Id == assignment.WorkoutPlanId)
             .Select(plan => plan.Exercises.Count)
             .FirstOrDefaultAsync();
@@ -287,7 +287,7 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
 
     public async Task<bool> DeleteAsync(int assignmentId, int trainerId)
     {
-        var assignment = await _context.ClientWorkoutAssignments.FirstOrDefaultAsync(assignment =>
+        var assignment = await _db.ClientWorkoutAssignments.FirstOrDefaultAsync(assignment =>
             assignment.Id == assignmentId && assignment.Client.TrainerId == trainerId
         );
 
@@ -296,8 +296,8 @@ public class WorkoutAssignmentService : IWorkoutAssignmentService
             return false;
         }
 
-        _context.ClientWorkoutAssignments.Remove(assignment);
-        await _context.SaveChangesAsync();
+        _db.ClientWorkoutAssignments.Remove(assignment);
+        await _db.SaveChangesAsync();
 
         return true;
     }

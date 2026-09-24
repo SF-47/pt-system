@@ -9,11 +9,11 @@ namespace backend.Services.Payments;
 
 public class PaymentService : IPaymentService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly ApplicationDbContext _db;
 
-    public PaymentService(ApplicationDbContext context)
+    public PaymentService(ApplicationDbContext db)
     {
-        _context = context;
+        _db = db;
     }
 
     public async Task<PagedResponse<PaymentResponse>> GetAllAsync(
@@ -24,7 +24,7 @@ public class PaymentService : IPaymentService
         string? status
     )
     {
-        var query = _context
+        var query = _db
             .Payments.Where(payment => payment.Client.TrainerId == trainerId);
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -91,7 +91,7 @@ public class PaymentService : IPaymentService
         int pageSize
     )
     {
-        var query = _context
+        var query = _db
             .Payments.Where(payment =>
                 payment.ClientId == clientId && payment.Client.TrainerId == trainerId
             );
@@ -138,7 +138,7 @@ public class PaymentService : IPaymentService
         int trainerId
     )
     {
-        var client = await _context.Clients.FirstOrDefaultAsync(client =>
+        var client = await _db.Clients.FirstOrDefaultAsync(client =>
             client.Id == clientId && client.TrainerId == trainerId
         );
 
@@ -156,9 +156,9 @@ public class PaymentService : IPaymentService
             PaidAt = null,
         };
 
-        _context.Payments.Add(payment);
+        _db.Payments.Add(payment);
 
-        await _context.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return new PaymentResponse
         {
@@ -178,7 +178,7 @@ public class PaymentService : IPaymentService
         int trainerId
     )
     {
-        var payment = await _context
+        var payment = await _db
             .Payments.Include(payment => payment.Client)
             .FirstOrDefaultAsync(payment =>
                 payment.Id == paymentId && payment.Client.TrainerId == trainerId
@@ -200,7 +200,7 @@ public class PaymentService : IPaymentService
             payment.PaidAt = null;
         }
 
-        await _context.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return new PaymentResponse
         {
