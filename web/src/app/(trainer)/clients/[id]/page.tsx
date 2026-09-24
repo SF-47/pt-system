@@ -66,6 +66,50 @@ type MealPlanOption = {
 
 type ActiveTab = "overview" | "progress" | "activity";
 
+type ClientProgress = {
+  totalWorkouts: number;
+  completedWorkouts: number;
+  pendingWorkouts: number;
+  skippedWorkouts: number;
+  missedWorkouts: number;
+  workoutCompletionRate: number;
+  totalMeals: number;
+  completedMeals: number;
+  pendingMeals: number;
+  skippedMeals: number;
+  missedMeals: number;
+  mealCompletionRate: number;
+};
+
+type ProgressPeriod = "7d" | "30d" | "all";
+
+const progressPeriodOptions: { value: ProgressPeriod; label: string }[] = [
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "all", label: "All time" },
+];
+
+// Ranges are inclusive of today, so "last 7 days" starts 6 days back.
+function getProgressRange(period: ProgressPeriod) {
+  if (period === "all") {
+    return {};
+  }
+
+  const days = period === "7d" ? 7 : 30;
+  const today = new Date();
+  const start = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() - (days - 1),
+  );
+
+  return { startDate: toDateKey(start), endDate: toDateKey(today) };
+}
+
+const progressRateFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 2,
+});
+
 function formatDate(value: string) {
   const date = new Date(value);
 
@@ -160,6 +204,89 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
+function ProgressCard({
+  title,
+  rate,
+  total,
+  totalLabel,
+  completed,
+  pending,
+  skipped,
+  missed,
+}: {
+  title: string;
+  rate: number;
+  total: number;
+  totalLabel: string;
+  completed: number;
+  pending: number;
+  skipped: number;
+  missed: number;
+}) {
+  const stats = [
+    { label: "Completed", value: completed, tone: "text-primary-hover dark:text-primary" },
+    { label: "Pending", value: pending, tone: "text-warning" },
+    { label: "Skipped", value: skipped, tone: "text-muted" },
+    { label: "Missed", value: missed, tone: "text-danger" },
+  ];
+
+  return (
+    <div className="rounded-lg border border-border bg-background p-4">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <p className="mt-2 text-3xl leading-none font-semibold tracking-tight tabular-nums">
+        {progressRateFormatter.format(rate)}%
+      </p>
+      <p className="mt-1 text-xs text-muted">Completion rate</p>
+
+      <div
+        className="mt-3 h-1.5 overflow-hidden rounded-full bg-hover"
+        role="progressbar"
+        aria-label={`${title} completion rate`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(rate)}
+      >
+        <div
+          className="h-full rounded-full bg-primary"
+          style={{ width: `${Math.min(Math.max(rate, 0), 100)}%` }}
+        />
+      </div>
+
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-5">
+        <div>
+          <dd className="text-lg font-semibold tabular-nums">{total}</dd>
+          <dt className="text-xs text-muted">{totalLabel}</dt>
+        </div>
+        {stats.map((stat) => (
+          <div key={stat.label}>
+            <dd className={`text-lg font-semibold tabular-nums ${stat.tone}`}>
+              {stat.value}
+            </dd>
+            <dt className="text-xs text-muted">{stat.label}</dt>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+function ProgressSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-label="Loading progress"
+      className="grid gap-4 lg:grid-cols-2"
+    >
+      {[0, 1].map((index) => (
+        <div
+          key={index}
+          className="h-44 animate-pulse rounded-lg border border-border bg-background"
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function ClientDetailsPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -180,6 +307,12 @@ export default function ClientDetailsPage() {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
   const [activityDate, setActivityDate] = useState("");
+
+  const [progress, setProgress] = useState<ClientProgress | null>(null);
+  const [progressPeriod, setProgressPeriod] = useState<ProgressPeriod>("30d");
+  const [isProgressLoading, setIsProgressLoading] = useState(false);
+  const [progressError, setProgressError] = useState("");
+  const [progressRefreshKey, setProgressRefreshKey] = useState(0);
 
   const [payment, setPayment] = useState<Payment | null>(null);
 
@@ -365,6 +498,51 @@ export default function ClientDetailsPage() {
       ignore = true;
     };
   }, [clientId, weekStartKey, weekEndKey, weekRefreshKey]);
+
+  // Own request/state so the period filter only refetches progress, not
+  // the whole client profile. Loads when the Progress tab is opened.
+  useEffect(() => {
+    if (activeTab !== "progress" || Number.isNaN(clientId)) {
+      return;
+    }
+
+    let ignore = false;
+
+    async function loadProgress() {
+      try {
+        setIsProgressLoading(true);
+        setProgressError("");
+        setProgress(null);
+
+        const { startDate, endDate } = getProgressRange(progressPeriod);
+        const response = await api.get<ClientProgress>(
+          Endpoints.clientProgress(clientId, startDate, endDate),
+        );
+
+        if (!ignore) {
+          setProgress(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to load client progress:", error);
+
+        if (!ignore) {
+          setProgressError(
+            getErrorMessage(error, "Progress could not be loaded."),
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setIsProgressLoading(false);
+        }
+      }
+    }
+
+    void loadProgress();
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab, clientId, progressPeriod, progressRefreshKey]);
 
   function openAssignWorkoutModal() {
     // Open immediately with the modal's own loading state; don't make the
@@ -938,7 +1116,7 @@ export default function ClientDetailsPage() {
                                   });
                                 }}
                                 aria-label={`Remove ${dayWorkout.workoutPlanName} from ${shortDateFormatter.format(date)}`}
-                                className="absolute top-1 right-1 z-10 rounded p-0.5 text-muted opacity-50 transition-opacity hover:bg-danger-soft hover:text-danger hover:opacity-100 focus-visible:bg-danger-soft focus-visible:text-danger focus-visible:opacity-100"
+                                className="absolute top-1 right-1 z-10 rounded p-0.5 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:bg-danger-soft hover:text-danger focus-visible:bg-danger-soft focus-visible:text-danger focus-visible:opacity-100"
                               >
                                 <X className="size-3.5" />
                               </button>
@@ -984,7 +1162,7 @@ export default function ClientDetailsPage() {
                                   });
                                 }}
                                 aria-label={`Remove ${dayMeal.mealPlanName} from ${shortDateFormatter.format(date)}`}
-                                className="absolute top-1 right-1 z-10 rounded p-0.5 text-muted opacity-50 transition-opacity hover:bg-danger-soft hover:text-danger hover:opacity-100 focus-visible:bg-danger-soft focus-visible:text-danger focus-visible:opacity-100"
+                                className="absolute top-1 right-1 z-10 rounded p-0.5 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:bg-danger-soft hover:text-danger focus-visible:bg-danger-soft focus-visible:text-danger focus-visible:opacity-100"
                               >
                                 <X className="size-3.5" />
                               </button>
@@ -1022,11 +1200,69 @@ export default function ClientDetailsPage() {
                   Workout and meal completion summary
                 </p>
               </div>
+              <div className="ml-auto">
+                <label htmlFor="progress-period" className="sr-only">
+                  Progress period
+                </label>
+                <select
+                  id="progress-period"
+                  value={progressPeriod}
+                  onChange={(event) =>
+                    setProgressPeriod(event.target.value as ProgressPeriod)
+                  }
+                  className="min-h-11 rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+                >
+                  {progressPeriodOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="mt-5 rounded-lg border border-dashed border-border p-8 text-center">
-              <p className="text-sm text-muted">
-                Progress data is not available yet.
-              </p>
+            <div className="mt-4">
+              {isProgressLoading && <ProgressSkeleton />}
+
+              {!isProgressLoading && progressError && (
+                <div
+                  role="alert"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-danger/40 bg-danger-soft px-4 py-3 text-sm text-danger"
+                >
+                  <span>{progressError}</span>
+                  <button
+                    type="button"
+                    onClick={() => setProgressRefreshKey((key) => key + 1)}
+                    className="min-h-9 rounded-md border border-danger/40 px-3 font-medium hover:bg-danger/10"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+
+              {!isProgressLoading && !progressError && progress && (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <ProgressCard
+                    title="Workout Progress"
+                    rate={progress.workoutCompletionRate}
+                    total={progress.totalWorkouts}
+                    totalLabel="Total workouts"
+                    completed={progress.completedWorkouts}
+                    pending={progress.pendingWorkouts}
+                    skipped={progress.skippedWorkouts}
+                    missed={progress.missedWorkouts}
+                  />
+                  <ProgressCard
+                    title="Meal Progress"
+                    rate={progress.mealCompletionRate}
+                    total={progress.totalMeals}
+                    totalLabel="Total meals"
+                    completed={progress.completedMeals}
+                    pending={progress.pendingMeals}
+                    skipped={progress.skippedMeals}
+                    missed={progress.missedMeals}
+                  />
+                </div>
+              )}
             </div>
           </section>
         )}
