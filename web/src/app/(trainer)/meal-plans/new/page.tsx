@@ -108,6 +108,10 @@ export default function CreateMealPlanPage() {
       const planResponse = await api.post(Endpoints.mealPlansBase, {
         name: planForm.name,
         description: planForm.description,
+        meals: meals.map((meal, index) => ({
+          ...meal,
+          position: index + 1,
+        })),
       });
 
       const mealPlanId = planResponse.data?.id;
@@ -116,15 +120,6 @@ export default function CreateMealPlanPage() {
         throw new Error("Created meal plan did not return an ID.");
       }
 
-      await Promise.all(
-        meals.map((meal, index) =>
-          api.post(Endpoints.addMeal(mealPlanId), {
-            ...meal,
-            position: index + 1,
-          }),
-        ),
-      );
-
       router.push(`/meal-plans/${mealPlanId}`);
     } catch (error) {
       console.error("Failed to create meal plan:", error);
@@ -132,7 +127,7 @@ export default function CreateMealPlanPage() {
       setError(
         getErrorMessage(
           error,
-          "Meal plan could not be created completely. Please try again.",
+          "Meal plan could not be created. Please try again.",
         ),
       );
     } finally {

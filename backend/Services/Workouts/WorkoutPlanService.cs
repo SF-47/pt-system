@@ -113,31 +113,71 @@ public class WorkoutPlanService : IWorkoutPlanService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<WorkoutPlanResponse> CreateAsync(
+    public async Task<ServiceResult<WorkoutPlanResponse>> CreateAsync(
         CreateWorkoutPlanRequest request,
         int trainerId
     )
     {
+        var positions = request
+            .Exercises.Select((exercise, index) => exercise.Position ?? index + 1)
+            .OrderBy(position => position);
+
+        if (!positions.SequenceEqual(Enumerable.Range(1, request.Exercises.Count)))
+        {
+            return ServiceResult<WorkoutPlanResponse>.BadRequest(
+                "Exercise positions must be exactly 1 to N with no duplicates or gaps."
+            );
+        }
+
         var plan = new WorkoutPlan
         {
             TrainerId = trainerId,
             Name = request.Name,
             Description = request.Description,
+            Exercises = request
+                .Exercises.Select(
+                    (exercise, index) =>
+                        new Exercise
+                        {
+                            Name = exercise.Name,
+                            Description = exercise.Description,
+                            Sets = exercise.Sets,
+                            Reps = exercise.Reps,
+                            RestSeconds = exercise.RestSeconds,
+                            Position = exercise.Position ?? index + 1,
+                        }
+                )
+                .ToList(),
         };
 
         _db.WorkoutPlans.Add(plan);
 
         await _db.SaveChangesAsync();
 
-        return new WorkoutPlanResponse
-        {
-            Id = plan.Id,
-            TrainerId = plan.TrainerId,
-            Name = plan.Name,
-            Description = plan.Description,
-            CreatedAt = plan.CreatedAt,
-            Exercises = new List<ExerciseResponse>(),
-        };
+        return ServiceResult<WorkoutPlanResponse>.Ok(
+            new WorkoutPlanResponse
+            {
+                Id = plan.Id,
+                TrainerId = plan.TrainerId,
+                Name = plan.Name,
+                Description = plan.Description,
+                CreatedAt = plan.CreatedAt,
+                Exercises = plan
+                    .Exercises.OrderBy(exercise => exercise.Position)
+                    .Select(exercise => new ExerciseResponse
+                    {
+                        Id = exercise.Id,
+                        WorkoutPlanId = exercise.WorkoutPlanId,
+                        Name = exercise.Name,
+                        Description = exercise.Description,
+                        Sets = exercise.Sets,
+                        Reps = exercise.Reps,
+                        RestSeconds = exercise.RestSeconds,
+                        Position = exercise.Position,
+                    })
+                    .ToList(),
+            }
+        );
     }
 
     public async Task<WorkoutPlanResponse?> UpdateAsync(

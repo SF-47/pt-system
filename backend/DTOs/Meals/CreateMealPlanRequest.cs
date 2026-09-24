@@ -10,4 +10,6 @@ public class CreateMealPlanRequest
 
     [StringLength(500)]
     public string? Description { get; set; }
+
+    public List<CreateMealRequest> Meals { get; set; } = new();
 }

@@ -127,6 +127,10 @@ export default function CreateWorkoutPlanPage() {
       const planResponse = await api.post(Endpoints.workoutPlansBase, {
         name: planForm.name,
         description: planForm.description,
+        exercises: exercises.map((exercise, index) => ({
+          ...exercise,
+          position: index + 1,
+        })),
       });
 
       const workoutPlanId = planResponse.data?.id;
@@ -135,15 +139,6 @@ export default function CreateWorkoutPlanPage() {
         throw new Error("Created workout plan did not return an ID.");
       }
 
-      await Promise.all(
-        exercises.map((exercise, index) =>
-          api.post(Endpoints.addExercise(workoutPlanId), {
-            ...exercise,
-            position: index + 1,
-          }),
-        ),
-      );
-
       router.push(`/workout-plans/${workoutPlanId}`);
     } catch (error) {
       console.error("Failed to create workout plan:", error);
@@ -151,7 +146,7 @@ export default function CreateWorkoutPlanPage() {
       setError(
         getErrorMessage(
           error,
-          "Workout plan could not be created completely. Please try again.",
+          "Workout plan could not be created. Please try again.",
         ),
       );
     } finally {
