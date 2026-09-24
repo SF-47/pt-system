@@ -115,12 +115,32 @@ export const Endpoints = {
     pageSize: number,
     search?: string,
     status?: string,
+    month?: number,
+    year?: number,
   ) =>
     `/api/payments?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(
       search ?? "",
-    )}&status=${encodeURIComponent(status ?? "")}`,
+    )}&status=${encodeURIComponent(status ?? "")}${
+      month ? `&month=${month}` : ""
+    }${year ? `&year=${year}` : ""}`,
 
   paymentsStats: "/api/stats/payments",
+
+  // Same filters as the payments list, so totals match the table.
+  paymentsStatsFiltered: (
+    search?: string,
+    status?: string,
+    month?: number,
+    year?: number,
+  ) =>
+    `/api/stats/payments?search=${encodeURIComponent(
+      search ?? "",
+    )}&status=${encodeURIComponent(status ?? "")}${
+      month ? `&month=${month}` : ""
+    }${year ? `&year=${year}` : ""}`,
+
+  createClientPayment: (clientId: number) =>
+    `/api/clients/${clientId}/payments`,
 
   clientPaymentsBase: (clientId: number) => `/api/clients/${clientId}/payments`,
 

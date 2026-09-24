@@ -96,7 +96,12 @@ public class StatsController : ControllerBase
     }
 
     [HttpGet("payments")]
-    public async Task<ActionResult<PaymentStatsResponse>> GetPaymentStats()
+    public async Task<ActionResult<PaymentStatsResponse>> GetPaymentStats(
+        string? search = null,
+        string? status = null,
+        int? month = null,
+        int? year = null
+    )
     {
         var trainerId = GetTrainerId();
 
@@ -105,7 +110,18 @@ public class StatsController : ControllerBase
             return Unauthorized();
         }
 
-        var stats = await _statsService.GetPaymentStatsAsync(trainerId.Value);
+        if (month is < 1 or > 12)
+        {
+            return BadRequest(new { message = "Month must be between 1 and 12." });
+        }
+
+        var stats = await _statsService.GetPaymentStatsAsync(
+            trainerId.Value,
+            search,
+            status,
+            month,
+            year
+        );
 
         return Ok(stats);
     }

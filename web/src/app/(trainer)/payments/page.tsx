@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Avatar from "@/components/Avatar";
+import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import EmptyState from "@/components/EmptyState";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
@@ -10,11 +11,12 @@ import StatusBadge from "@/components/StatusBadge";
 import SummaryMetric from "@/components/SummaryMetric";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 import type { PagedResponse } from "@/types/api";
 import PaymentsLoading from "./loading";
 
 type StatusFilter = "All" | "Paid" | "Pending";
-type PaymentStatus = "Paid" | "Pending" | "Unknown";
+type PaymentStatus = "Paid" | "Pending" | "Overdue" | "Unknown";
 type Payment = {
   id: number;
   clientName: string;
@@ -22,6 +24,10 @@ type Payment = {
   status: number;
   dueDate: string;
   paidAt: string | null;
+};
+type ClientOption = {
+  id: number;
+  fullName: string;
 };
 type PaymentStats = {
   totalPayments: number;
@@ -36,11 +42,58 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-function getPaymentStatus(status: number): PaymentStatus {
-  if (status === 0) return "Pending";
-  if (status === 1) return "Paid";
+const MAX_AMOUNT = 99999999.99;
+
+const monthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+// Local calendar day; avoids toISOString(), which converts to UTC.
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Overdue is display-only: the stored status stays Pending.
+function getPaymentStatus(payment: Payment): PaymentStatus {
+  if (payment.status === 1) return "Paid";
+  if (payment.status === 0) {
+    return payment.dueDate.slice(0, 10) < toDateKey(new Date())
+      ? "Overdue"
+      : "Pending";
+  }
   return "Unknown";
 }
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+// PaidAt is stored as UTC but serialized without an offset; treat it as UTC
+// so it converts to the trainer's local date.
+function formatPaidAt(value: string) {
+  return formatDate(/[zZ]|[+-]\d\d:\d\d$/.test(value) ? value : `${value}Z`);
+}
+
+const inputClass =
+  "min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary";
 
 function PaymentsTableSkeleton() {
   return (
@@ -49,8 +102,8 @@ function PaymentsTableSkeleton() {
       aria-label="Loading payment records"
       aria-busy="true"
     >
-      <div className="grid min-w-190 grid-cols-5 gap-4 bg-background px-5 py-4">
-        {[0, 1, 2, 3, 4].map((cell) => (
+      <div className="grid min-w-190 grid-cols-6 gap-4 bg-background px-5 py-4">
+        {[0, 1, 2, 3, 4, 5].map((cell) => (
           <div
             key={cell}
             className="h-4 w-16 animate-pulse rounded bg-border"
@@ -60,9 +113,9 @@ function PaymentsTableSkeleton() {
       {[0, 1, 2, 3, 4].map((row) => (
         <div
           key={row}
-          className="grid min-w-190 grid-cols-5 gap-4 border-t border-border px-5 py-5"
+          className="grid min-w-190 grid-cols-6 gap-4 border-t border-border px-5 py-5"
         >
-          {[0, 1, 2, 3, 4].map((cell) => (
+          {[0, 1, 2, 3, 4, 5].map((cell) => (
             <div
               key={cell}
               className="h-5 w-4/5 animate-pulse rounded bg-border"
@@ -77,6 +130,8 @@ function PaymentsTableSkeleton() {
 export default function PaymentsPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+  const [month, setMonth] = useState(0);
+  const [year, setYear] = useState(0);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [stats, setStats] = useState<PaymentStats | null>(null);
   const [page, setPage] = useState(1);
@@ -91,6 +146,23 @@ export default function PaymentsPage() {
     null,
   );
   const [updateError, setUpdateError] = useState("");
+  const [paymentToRevert, setPaymentToRevert] = useState<Payment | null>(null);
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientOptions, setClientOptions] = useState<ClientOption[]>([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
+  const [clientsError, setClientsError] = useState("");
+  const [selectedClient, setSelectedClient] = useState<ClientOption | null>(
+    null,
+  );
+  const [amount, setAmount] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear + 1 - i);
 
   useEffect(() => {
     let ignore = false;
@@ -100,7 +172,7 @@ export default function PaymentsPage() {
       setListError("");
       try {
         const response = await api.get<PagedResponse<Payment>>(
-          Endpoints.payments(page, pageSize, query, statusFilter),
+          Endpoints.payments(page, pageSize, query, statusFilter, month, year),
         );
         if (ignore) return;
         const resolvedPage = Math.min(
@@ -127,14 +199,17 @@ export default function PaymentsPage() {
     return () => {
       ignore = true;
     };
-  }, [page, pageSize, query, statusFilter]);
+  }, [page, pageSize, query, statusFilter, month, year]);
 
   useEffect(() => {
     let ignore = false;
 
     async function getPaymentStats() {
+      setStatsError("");
       try {
-        const response = await api.get<PaymentStats>(Endpoints.paymentsStats);
+        const response = await api.get<PaymentStats>(
+          Endpoints.paymentsStatsFiltered(query, statusFilter, month, year),
+        );
         if (!ignore) setStats(response.data);
       } catch {
         if (!ignore) setStatsError("Payment totals are currently unavailable.");
@@ -145,7 +220,123 @@ export default function PaymentsPage() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [query, statusFilter, month, year]);
+
+  // Refetch the current page and totals without a skeleton flash or reload.
+  async function refreshData() {
+    const [paymentsResponse, statsResponse] = await Promise.all([
+      api.get<PagedResponse<Payment>>(
+        Endpoints.payments(page, pageSize, query, statusFilter, month, year),
+      ),
+      api.get<PaymentStats>(
+        Endpoints.paymentsStatsFiltered(query, statusFilter, month, year),
+      ),
+    ]);
+
+    const resolvedPage = Math.min(
+      paymentsResponse.data.page,
+      Math.max(paymentsResponse.data.totalPages, 1),
+    );
+    setPayments(paymentsResponse.data.items);
+    setPage(resolvedPage);
+    setPageSize(paymentsResponse.data.pageSize);
+    setTotalPages(paymentsResponse.data.totalPages);
+    setTotalCount(paymentsResponse.data.totalCount);
+    setStats(statsResponse.data);
+    setListError("");
+    setStatsError("");
+  }
+
+  // Client picker: server-side search so it scales past one page of clients.
+  useEffect(() => {
+    if (!isAddOpen || selectedClient) return;
+
+    let ignore = false;
+    const timer = window.setTimeout(async () => {
+      setIsLoadingClients(true);
+      setClientsError("");
+      try {
+        const response = await api.get<PagedResponse<ClientOption>>(
+          Endpoints.clients(1, 8, clientSearch.trim(), ""),
+        );
+        if (!ignore) setClientOptions(response.data.items);
+      } catch (error) {
+        console.error("Failed to load clients:", error);
+        if (!ignore) {
+          setClientsError(getErrorMessage(error, "Clients could not be loaded."));
+        }
+      } finally {
+        if (!ignore) setIsLoadingClients(false);
+      }
+    }, 250);
+
+    return () => {
+      ignore = true;
+      window.clearTimeout(timer);
+    };
+  }, [isAddOpen, selectedClient, clientSearch]);
+
+  function openAddModal() {
+    setClientSearch("");
+    setClientOptions([]);
+    setClientsError("");
+    setSelectedClient(null);
+    setAmount("");
+    setDueDate(toDateKey(new Date()));
+    setCreateError("");
+    setIsAddOpen(true);
+  }
+
+  function closeAddModal() {
+    if (!isCreating) setIsAddOpen(false);
+  }
+
+  async function createPayment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const parsedAmount = Number(amount);
+
+    if (!selectedClient) {
+      setCreateError("Select a client.");
+      return;
+    }
+    if (!amount.trim() || !Number.isFinite(parsedAmount) || parsedAmount < 0.01) {
+      setCreateError("Amount must be greater than 0.");
+      return;
+    }
+    if (parsedAmount > MAX_AMOUNT) {
+      setCreateError("Amount is too large.");
+      return;
+    }
+    if (!dueDate) {
+      setCreateError("Due date is required.");
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      setCreateError("");
+
+      await api.post(Endpoints.createClientPayment(selectedClient.id), {
+        amount: parsedAmount,
+        dueDate,
+      });
+
+      setIsAddOpen(false);
+      setUpdateError("");
+      try {
+        await refreshData();
+      } catch (error) {
+        console.error("Failed to refresh payments:", error);
+        setUpdateError("Payment was added, but the list could not be refreshed.");
+      }
+    } catch (error) {
+      console.error("Failed to create payment:", error);
+      setCreateError(getErrorMessage(error, "Payment could not be created."));
+    } finally {
+      setIsCreating(false);
+    }
+  }
 
   async function updatePaymentStatus(paymentId: number, status: number) {
     try {
@@ -156,31 +347,24 @@ export default function PaymentsPage() {
         status,
       });
 
-      const [paymentsResponse, statsResponse] = await Promise.all([
-        api.get<PagedResponse<Payment>>(
-          Endpoints.payments(page, pageSize, query, statusFilter),
-        ),
-        api.get<PaymentStats>(Endpoints.paymentsStats),
-      ]);
-
-      const resolvedPage = Math.min(
-        paymentsResponse.data.page,
-        Math.max(paymentsResponse.data.totalPages, 1),
-      );
-      setPayments(paymentsResponse.data.items);
-      setPage(resolvedPage);
-      setPageSize(paymentsResponse.data.pageSize);
-      setTotalPages(paymentsResponse.data.totalPages);
-      setTotalCount(paymentsResponse.data.totalCount);
-      setStats(statsResponse.data);
-      setListError("");
-      setStatsError("");
+      await refreshData();
     } catch (error) {
       console.error("Failed to update payment status:", error);
-      setUpdateError("Payment status could not be updated. Please try again.");
+      setUpdateError(
+        getErrorMessage(
+          error,
+          "Payment status could not be updated. Please try again.",
+        ),
+      );
     } finally {
       setUpdatingPaymentId(null);
     }
+  }
+
+  async function confirmRevert() {
+    if (!paymentToRevert) return;
+    await updatePaymentStatus(paymentToRevert.id, 0);
+    setPaymentToRevert(null);
   }
 
   if (isInitialLoading) return <PaymentsLoading />;
@@ -190,7 +374,16 @@ export default function PaymentsPage() {
       <PageHeader
         title="Payments"
         description="Review client payments, due dates, and paid or pending balances."
-      />
+      >
+        <button
+          type="button"
+          onClick={openAddModal}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-primary bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-hover"
+        >
+          <Icon name="plus" />
+          Add Payment
+        </button>
+      </PageHeader>
 
       <section
         className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>div:last-child>p:last-child]:text-warning"
@@ -215,10 +408,10 @@ export default function PaymentsPage() {
       )}
 
       <section
-        className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-end sm:justify-between"
+        className="mb-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[minmax(0,1fr)_8rem_8rem_9rem]"
         aria-label="Payment tools"
       >
-        <div className="min-w-0 sm:w-96">
+        <div className="col-span-2 min-w-0 sm:col-span-1">
           <label
             htmlFor="payment-search"
             className="mb-1 block text-sm font-medium text-foreground"
@@ -234,10 +427,58 @@ export default function PaymentsPage() {
               setPage(1);
             }}
             placeholder="Client name"
-            className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+            className={inputClass}
           />
         </div>
-        <div className="sm:w-44">
+        <div>
+          <label
+            htmlFor="payment-month-filter"
+            className="mb-1 block text-sm font-medium text-foreground"
+          >
+            Month
+          </label>
+          <select
+            id="payment-month-filter"
+            value={month}
+            onChange={(event) => {
+              setMonth(Number(event.target.value));
+              setPage(1);
+            }}
+            className={inputClass}
+          >
+            <option value={0}>All months</option>
+            {monthNames.map((name, index) => (
+              <option key={name} value={index + 1}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="payment-year-filter"
+            className="mb-1 block text-sm font-medium text-foreground"
+          >
+            Year
+          </label>
+          <select
+            id="payment-year-filter"
+            value={year}
+            onChange={(event) => {
+              setYear(Number(event.target.value));
+              setPage(1);
+            }}
+            className={inputClass}
+          >
+            <option value={0}>All years</option>
+            {yearOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="col-span-2 sm:col-span-1">
           <label
             htmlFor="payment-status-filter"
             className="mb-1 block text-sm font-medium text-foreground"
@@ -251,7 +492,7 @@ export default function PaymentsPage() {
               setStatusFilter(event.target.value as StatusFilter);
               setPage(1);
             }}
-            className="min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+            className={inputClass}
           >
             <option value="All">All</option>
             <option value="Paid">Paid</option>
@@ -291,11 +532,12 @@ export default function PaymentsPage() {
         >
           <table className="workspace-table w-full min-w-180 table-fixed border-collapse text-sm">
             <colgroup>
-              <col className="w-[35%]" />
-              <col className="w-[14%]" />
-              <col className="w-[20%]" />
-              <col className="w-[14%]" />
-              <col className="w-[17%]" />
+              <col className="w-[25%]" />
+              <col className="w-[13%]" />
+              <col className="w-[15%]" />
+              <col className="w-[13%]" />
+              <col className="w-[15%]" />
+              <col className="w-[19%]" />
             </colgroup>
             <thead>
               <tr className="border-b border-border bg-background">
@@ -304,6 +546,7 @@ export default function PaymentsPage() {
                   ["Amount", "text-right"],
                   ["Due Date", "text-left"],
                   ["Status", "text-left"],
+                  ["Paid At", "text-left"],
                   ["Action", "text-right"],
                 ].map(([heading, alignment]) => (
                   <th
@@ -318,11 +561,11 @@ export default function PaymentsPage() {
             <tbody>
               {payments.length > 0 ? (
                 payments.map((payment) => {
-                  const status = getPaymentStatus(payment.status);
+                  const status = getPaymentStatus(payment);
                   return (
                     <tr
                       key={payment.id}
-                      className={`border-b border-border last:border-b-0 transition-colors hover:bg-hover ${status === "Pending" ? "bg-warning-soft/20" : ""}`}
+                      className={`border-b border-border last:border-b-0 transition-colors hover:bg-hover ${status === "Pending" ? "bg-warning-soft/20" : status === "Overdue" ? "bg-danger-soft/20" : ""}`}
                     >
                       <td className="px-4 py-4 align-middle">
                         <div className="flex min-w-0 items-center gap-3">
@@ -336,17 +579,16 @@ export default function PaymentsPage() {
                         {currencyFormatter.format(payment.amount)}
                       </td>
                       <td className="px-4 py-4 align-middle text-muted">
-                        {new Date(payment.dueDate).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                        {formatDate(payment.dueDate)}
                       </td>
                       <td className="px-4 py-4 align-middle">
                         <StatusBadge status={status} />
                       </td>
+                      <td className="px-4 py-4 align-middle text-muted">
+                        {payment.paidAt ? formatPaidAt(payment.paidAt) : "—"}
+                      </td>
                       <td className="px-4 py-4 text-right align-middle">
-                        {status === "Pending" ? (
+                        {payment.status === 0 ? (
                           <button
                             type="button"
                             disabled={updatingPaymentId === payment.id}
@@ -368,15 +610,7 @@ export default function PaymentsPage() {
                           <button
                             type="button"
                             disabled={updatingPaymentId === payment.id}
-                            onClick={() => {
-                              const confirmed = window.confirm(
-                                "Are you sure you want to mark this payment as Pending?",
-                              );
-
-                              if (confirmed) {
-                                void updatePaymentStatus(payment.id, 0);
-                              }
-                            }}
+                            onClick={() => setPaymentToRevert(payment)}
                             className="inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-hover hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {updatingPaymentId === payment.id
@@ -390,11 +624,11 @@ export default function PaymentsPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="p-0">
+                  <td colSpan={6} className="p-0">
                     <EmptyState
                       icon="payment"
                       title="No matching payments"
-                      description="Try another client name or payment status."
+                      description="Try another client name, month, year, or payment status."
                     />
                   </td>
                 </tr>
@@ -410,6 +644,184 @@ export default function PaymentsPage() {
         isLoading={isFetching}
         onPrevious={() => setPage((current) => Math.max(1, current - 1))}
         onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
+      />
+
+      {isAddOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+          onClick={closeAddModal}
+        >
+          <form
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-payment-title"
+            noValidate
+            onSubmit={(event) => void createPayment(event)}
+            onClick={(event) => event.stopPropagation()}
+            className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-xl"
+          >
+            <h2 id="add-payment-title" className="text-lg font-semibold">
+              Add Payment
+            </h2>
+            <p className="mt-1 mb-4 text-sm text-muted">
+              New payments start as Pending.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="payment-client-search"
+                  className="mb-1 block text-sm font-medium"
+                >
+                  Client
+                </label>
+                {selectedClient ? (
+                  <div className="flex min-h-11 items-center justify-between gap-2 rounded-md border border-input-border bg-background px-3">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <Avatar name={selectedClient.fullName} />
+                      <span className="truncate font-medium">
+                        {selectedClient.fullName}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedClient(null)}
+                      disabled={isCreating}
+                      className="shrink-0 text-sm font-medium text-primary-hover underline-offset-2 hover:underline disabled:opacity-60 dark:text-primary"
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      id="payment-client-search"
+                      type="search"
+                      value={clientSearch}
+                      onChange={(event) => setClientSearch(event.target.value)}
+                      placeholder="Search clients by name"
+                      autoComplete="off"
+                      className={inputClass}
+                    />
+                    <div className="mt-2 max-h-44 overflow-y-auto rounded-md border border-border bg-background">
+                      {isLoadingClients ? (
+                        <p role="status" className="px-3 py-2 text-sm text-muted">
+                          Loading clients...
+                        </p>
+                      ) : clientsError ? (
+                        <p role="alert" className="px-3 py-2 text-sm text-danger">
+                          {clientsError}
+                        </p>
+                      ) : clientOptions.length === 0 ? (
+                        <p className="px-3 py-2 text-sm text-muted">
+                          No clients found.
+                        </p>
+                      ) : (
+                        <ul>
+                          {clientOptions.map((option) => (
+                            <li key={option.id}>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedClient(option)}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-hover"
+                              >
+                                <Avatar name={option.fullName} />
+                                <span className="truncate">
+                                  {option.fullName}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    htmlFor="payment-amount"
+                    className="mb-1 block text-sm font-medium"
+                  >
+                    Amount
+                  </label>
+                  <input
+                    id="payment-amount"
+                    type="number"
+                    inputMode="decimal"
+                    min="0.01"
+                    max={MAX_AMOUNT}
+                    step="0.01"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                    placeholder="0.00"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="payment-due-date"
+                    className="mb-1 block text-sm font-medium"
+                  >
+                    Due date
+                  </label>
+                  <input
+                    id="payment-due-date"
+                    type="date"
+                    value={dueDate}
+                    onChange={(event) => setDueDate(event.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {createError && (
+              <p role="alert" className="mt-3 text-sm text-danger">
+                {createError}
+              </p>
+            )}
+
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeAddModal}
+                disabled={isCreating}
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isCreating}
+                aria-busy={isCreating}
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-primary bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isCreating ? "Adding..." : "Add Payment"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <DeleteConfirmDialog
+        open={paymentToRevert !== null}
+        title="Mark payment as Pending?"
+        itemName={
+          paymentToRevert
+            ? `${paymentToRevert.clientName} · ${currencyFormatter.format(paymentToRevert.amount)}`
+            : undefined
+        }
+        description="The paid date will be cleared and the payment will count as pending again."
+        confirmLabel="Mark Pending"
+        confirmingLabel="Updating..."
+        isDeleting={
+          paymentToRevert !== null && updatingPaymentId === paymentToRevert.id
+        }
+        onCancel={() => setPaymentToRevert(null)}
+        onConfirm={() => void confirmRevert()}
       />
     </div>
   );

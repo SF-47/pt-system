@@ -14,5 +14,11 @@ public interface IStatsService
 
     Task<MealStatsResponse> GetMealStatsAsync(int trainerId);
 
-    Task<PaymentStatsResponse> GetPaymentStatsAsync(int trainerId);
+    Task<PaymentStatsResponse> GetPaymentStatsAsync(
+        int trainerId,
+        string? search = null,
+        string? status = null,
+        int? month = null,
+        int? year = null
+    );
 }
