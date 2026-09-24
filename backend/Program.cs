@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using backend.Data;
 using backend.Services.Auth;
+using backend.Services.ClientActivity;
 using backend.Services.Clients;
 using backend.Services.MealAssignments;
 using backend.Services.Meals;
@@ -40,6 +41,7 @@ builder.Services.AddScoped<IClientProfileService, ClientProfileService>();
 builder.Services.AddScoped<IClientWorkoutService, ClientWorkoutService>();
 builder.Services.AddScoped<IClientMealService, ClientMealService>();
 builder.Services.AddScoped<IClientProgressService, ClientProgressService>();
+builder.Services.AddScoped<IClientActivityService, ClientActivityService>();
 builder.Services.AddScoped<
     backend.Services.ClientProgress.IClientProgressService,
     backend.Services.ClientProgress.ClientProgressService

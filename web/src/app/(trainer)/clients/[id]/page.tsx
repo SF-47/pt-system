@@ -81,6 +81,30 @@ type ClientProgress = {
   mealCompletionRate: number;
 };
 
+type DailyActivityItem = {
+  status: number;
+  isMissed: boolean;
+  completedAt: string | null;
+};
+
+type DailyActivityWorkout = DailyActivityItem & {
+  assignmentId: number;
+  workoutPlanId: number;
+  workoutPlanName: string;
+};
+
+type DailyActivityMeal = DailyActivityItem & {
+  mealStatusId: number;
+  mealId: number;
+  mealName: string;
+};
+
+type DailyActivity = {
+  date: string;
+  workout: DailyActivityWorkout | null;
+  meals: DailyActivityMeal[];
+};
+
 type ProgressPeriod = "7d" | "30d" | "all";
 
 const progressPeriodOptions: { value: ProgressPeriod; label: string }[] = [
@@ -104,6 +128,29 @@ function getProgressRange(period: ProgressPeriod) {
   );
 
   return { startDate: toDateKey(start), endDate: toDateKey(today) };
+}
+
+function getActivityStatus(item: DailyActivityItem) {
+  return item.isMissed ? "Missed" : getWorkoutStatus(item.status);
+}
+
+const completedTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+function formatCompletedTime(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return `Completed at ${completedTimeFormatter.format(date)}`;
 }
 
 const progressRateFormatter = new Intl.NumberFormat("en-US", {
@@ -306,7 +353,13 @@ export default function ClientDetailsPage() {
   const [weekRefreshKey, setWeekRefreshKey] = useState(0);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
-  const [activityDate, setActivityDate] = useState("");
+  const [activityDate, setActivityDate] = useState(() =>
+    toDateKey(new Date()),
+  );
+  const [activityData, setActivityData] = useState<DailyActivity | null>(null);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState("");
+  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
 
   const [progress, setProgress] = useState<ClientProgress | null>(null);
   const [progressPeriod, setProgressPeriod] = useState<ProgressPeriod>("30d");
@@ -543,6 +596,50 @@ export default function ClientDetailsPage() {
       ignore = true;
     };
   }, [activeTab, clientId, progressPeriod, progressRefreshKey]);
+
+  // Own request/state: changing the date only refetches that day's
+  // activity. Loads when the Daily Activity tab is opened.
+  useEffect(() => {
+    if (activeTab !== "activity" || Number.isNaN(clientId) || !activityDate) {
+      return;
+    }
+
+    let ignore = false;
+
+    async function loadActivity() {
+      try {
+        setActivityLoading(true);
+        setActivityError("");
+        setActivityData(null);
+
+        const response = await api.get<DailyActivity>(
+          Endpoints.clientDailyActivity(clientId, activityDate),
+        );
+
+        if (!ignore) {
+          setActivityData(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to load daily activity:", error);
+
+        if (!ignore) {
+          setActivityError(
+            getErrorMessage(error, "Daily activity could not be loaded."),
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setActivityLoading(false);
+        }
+      }
+    }
+
+    void loadActivity();
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab, clientId, activityDate, activityRefreshKey]);
 
   function openAssignWorkoutModal() {
     // Open immediately with the modal's own loading state; don't make the
@@ -1285,31 +1382,108 @@ export default function ClientDetailsPage() {
               />
             </section>
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              <section className="rounded-xl border border-border bg-surface p-4">
-                <div className="flex items-center gap-2">
-                  <Icon name="workout" className="size-5 text-primary" />
-                  <h2 className="font-semibold">Workout Activity</h2>
-                </div>
-                <div className="mt-4 rounded-lg border border-dashed border-border p-6 text-center">
-                  <p className="text-sm text-muted">
-                    Workout activity is not available for this date yet.
-                  </p>
-                </div>
-              </section>
+            {activityLoading && (
+              <div
+                role="status"
+                aria-label="Loading daily activity"
+                className="grid gap-4 lg:grid-cols-2"
+              >
+                {[0, 1].map((index) => (
+                  <div
+                    key={index}
+                    className="h-32 animate-pulse rounded-xl border border-border bg-surface"
+                  />
+                ))}
+              </div>
+            )}
 
-              <section className="rounded-xl border border-border bg-surface p-4">
-                <div className="flex items-center gap-2">
-                  <Icon name="meal" className="size-5 text-primary" />
-                  <h2 className="font-semibold">Meal Activity</h2>
-                </div>
-                <div className="mt-4 rounded-lg border border-dashed border-border p-6 text-center">
-                  <p className="text-sm text-muted">
-                    Meal activity is not available for this date yet.
-                  </p>
-                </div>
-              </section>
-            </div>
+            {!activityLoading && activityError && (
+              <div
+                role="alert"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-danger/40 bg-danger-soft px-4 py-3 text-sm text-danger"
+              >
+                <span>{activityError}</span>
+                <button
+                  type="button"
+                  onClick={() => setActivityRefreshKey((key) => key + 1)}
+                  className="min-h-9 rounded-md border border-danger/40 px-3 font-medium hover:bg-danger/10"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {!activityLoading && !activityError && activityData && (
+              <div className="grid gap-4 lg:grid-cols-2">
+                <section className="rounded-xl border border-border bg-surface p-4">
+                  <div className="flex items-center gap-2">
+                    <Icon name="workout" className="size-5 text-primary" />
+                    <h2 className="font-semibold">Workout Activity</h2>
+                  </div>
+                  {activityData.workout ? (
+                    <Link
+                      href={`/workout-plans/${activityData.workout.workoutPlanId}?fromClient=${clientId}`}
+                      className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2.5 hover:bg-hover"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">
+                          {activityData.workout.workoutPlanName}
+                        </p>
+                        {formatCompletedTime(
+                          activityData.workout.completedAt,
+                        ) && (
+                          <p className="text-xs text-muted">
+                            {formatCompletedTime(
+                              activityData.workout.completedAt,
+                            )}
+                          </p>
+                        )}
+                      </div>
+                      <StatusBadge
+                        status={getActivityStatus(activityData.workout)}
+                      />
+                    </Link>
+                  ) : (
+                    <p className="mt-3 rounded-lg border border-dashed border-border px-3 py-3 text-sm text-muted">
+                      No workout scheduled for this date.
+                    </p>
+                  )}
+                </section>
+
+                <section className="rounded-xl border border-border bg-surface p-4">
+                  <div className="flex items-center gap-2">
+                    <Icon name="meal" className="size-5 text-primary" />
+                    <h2 className="font-semibold">Meal Activity</h2>
+                  </div>
+                  {activityData.meals.length > 0 ? (
+                    <ul className="mt-3 space-y-2">
+                      {activityData.meals.map((meal) => (
+                        <li
+                          key={meal.mealStatusId}
+                          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2.5"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">
+                              {meal.mealName}
+                            </p>
+                            {formatCompletedTime(meal.completedAt) && (
+                              <p className="text-xs text-muted">
+                                {formatCompletedTime(meal.completedAt)}
+                              </p>
+                            )}
+                          </div>
+                          <StatusBadge status={getActivityStatus(meal)} />
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 rounded-lg border border-dashed border-border px-3 py-3 text-sm text-muted">
+                      No meals scheduled for this date.
+                    </p>
+                  )}
+                </section>
+              </div>
+            )}
           </div>
         )}
       </div>

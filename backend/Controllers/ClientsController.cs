@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using backend.DTOs.Activity;
 using backend.DTOs.Clients;
 using backend.DTOs.Common;
 using backend.DTOs.Progress;
+using backend.Services.ClientActivity;
 using backend.Services.Clients;
 using TrainerProgressService = backend.Services.ClientProgress.IClientProgressService;
 using Microsoft.AspNetCore.Authorization;
@@ -18,14 +20,17 @@ public class ClientController : ControllerBase
 {
     private readonly IClientService _clientService;
     private readonly TrainerProgressService _progressService;
+    private readonly IClientActivityService _activityService;
 
     public ClientController(
         IClientService clientService,
-        TrainerProgressService progressService
+        TrainerProgressService progressService,
+        IClientActivityService activityService
     )
     {
         _clientService = clientService;
         _progressService = progressService;
+        _activityService = activityService;
     }
 
     [HttpGet]
@@ -184,6 +189,37 @@ public class ClientController : ControllerBase
         }
 
         return Ok(progress);
+    }
+
+    [HttpGet("{clientId}/activity")]
+    public async Task<ActionResult<TrainerClientActivityResponse>> GetActivity(
+        int clientId,
+        DateTime? date = null
+    )
+    {
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+
+        if (date is null)
+        {
+            return BadRequest(new { message = "Date is required." });
+        }
+
+        var activity = await _activityService.GetByClientIdAsync(
+            clientId,
+            trainerId.Value,
+            date.Value
+        );
+
+        if (activity is null)
+        {
+            return NotFound(new { message = "Client not found." });
+        }
+
+        return Ok(activity);
     }
 
     private int? GetTrainerId()
