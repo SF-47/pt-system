@@ -137,6 +137,25 @@ export default function WorkoutPlanPage() {
     );
   }
 
+  // Long plans use two columns on wide screens, filled top to bottom.
+  const useTwoColumns = plan.exercises.length > 8;
+  const rowsPerColumn = useTwoColumns
+    ? Math.ceil(plan.exercises.length / 2)
+    : plan.exercises.length;
+
+  function dividers(index: number) {
+    if (!useTwoColumns) {
+      return "";
+    }
+
+    const startsColumn = index % rowsPerColumn === 0;
+    const inSecondColumn = index >= rowsPerColumn;
+
+    return `${startsColumn ? " min-[900px]:border-t-0" : ""}${
+      inSecondColumn ? " min-[900px]:border-l" : ""
+    }`;
+  }
+
   return (
     <div className="w-full">
       <BackLink href={backHref}>{backLabel}</BackLink>
@@ -204,76 +223,50 @@ export default function WorkoutPlanPage() {
         </div>
 
         {plan.exercises.length > 0 ? (
-          <div
-            className="w-full max-h-[560px] overflow-x-auto overflow-y-auto rounded-xl border border-border bg-surface"
-            role="region"
+          <ol
             aria-label="Exercises in this workout plan"
-            tabIndex={0}
+            style={{ "--rows": rowsPerColumn } as React.CSSProperties}
+            className={`overflow-hidden rounded-xl border border-border bg-surface ${
+              useTwoColumns
+                ? "min-[900px]:grid min-[900px]:grid-flow-col min-[900px]:grid-cols-2 min-[900px]:grid-rows-[repeat(var(--rows),auto)]"
+                : ""
+            }`}
           >
-            <table className="workspace-table w-full min-w-180 table-fixed border-collapse tabular-nums">
-              <colgroup>
-                <col className="w-[60%]" />
-                <col className="w-[12%]" />
-                <col className="w-[12%]" />
-                <col className="w-[16%]" />
-              </colgroup>
-              <thead>
-                <tr>
-                  {[
-                    ["Exercise", "text-left"],
-                    ["Sets", "text-center"],
-                    ["Reps", "text-center"],
-                    ["Rest", "text-right"],
-                  ].map(([heading, alignment]) => (
-                    <th
-                      key={heading}
-                      scope="col"
-                      className={`sticky top-0 z-10 bg-background px-4 py-2.5 align-middle text-xs font-semibold uppercase tracking-wide text-muted ${alignment}`}
-                    >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {plan.exercises.map((exercise, index) => (
-                  <tr
-                    key={exercise.id}
-                    className="border-t border-border transition-colors hover:bg-hover"
-                  >
-                    <td className="px-4 py-3 align-middle">
-                      <div className="flex min-w-0 items-start gap-2.5">
-                        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-primary-hover tabular-nums dark:text-foreground">
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="font-semibold text-foreground wrap-anywhere">
-                            {exercise.name}
-                          </p>
-                          {exercise.description && (
-                            <p className="mt-0.5 line-clamp-2 text-sm leading-snug text-muted whitespace-normal">
-                              {exercise.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center align-middle font-medium text-foreground">
-                      {exercise.sets}
-                    </td>
-                    <td className="px-4 py-3 text-center align-middle font-medium text-foreground">
-                      {exercise.reps}
-                    </td>
-                    <td className="px-4 py-3 text-right align-middle text-muted">
-                      {exercise.restSeconds > 0
-                        ? `${exercise.restSeconds} sec`
-                        : "No rest"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            {plan.exercises.map((exercise, index) => (
+              <li
+                key={exercise.id}
+                className={`flex flex-col gap-1.5 border-t border-border px-4 py-2.5 transition-colors first:border-t-0 hover:bg-hover sm:flex-row sm:items-center sm:gap-4${dividers(index)}`}
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-primary-hover tabular-nums dark:text-foreground">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-foreground">
+                      {exercise.name}
+                    </p>
+                    {exercise.description && (
+                      <p
+                        title={exercise.description}
+                        className="truncate text-sm text-muted"
+                      >
+                        {exercise.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <p className="shrink-0 pl-10 text-sm font-medium whitespace-nowrap text-foreground tabular-nums sm:pl-0">
+                  {exercise.sets} sets · {exercise.reps} reps ·{" "}
+                  <span className="text-muted">
+                    {exercise.restSeconds > 0
+                      ? `${exercise.restSeconds}s rest`
+                      : "no rest"}
+                  </span>
+                </p>
+              </li>
+            ))}
+          </ol>
         ) : (
           <div className="rounded-xl border border-border bg-surface">
             <EmptyState
