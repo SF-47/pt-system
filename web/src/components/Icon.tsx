@@ -3,7 +3,6 @@ import {
   ArrowRight, CheckCircle, Clock, XCircle, LogOut, Eye, CalendarDays,
 } from "lucide-react";
 
-// Keep the existing icon prop contract; Lucide now supplies every drawing.
 const icons = {
   dashboard: LayoutDashboard,
   clients: Users,

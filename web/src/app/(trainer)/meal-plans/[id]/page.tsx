@@ -9,6 +9,7 @@ import EmptyState from "@/components/EmptyState";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
+import { formatDate } from "@/lib/format";
 import { Endpoints } from "@/lib/Endpoints";
 import MealPlanLoading from "./loading";
 
@@ -27,20 +28,6 @@ type MealPlan = {
   createdAt: string;
   meals: Meal[];
 };
-
-function formatDate(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Unknown date";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-}
 
 export default function MealPlanPage() {
   const params = useParams<{ id: string }>();

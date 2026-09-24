@@ -240,9 +240,7 @@ export default function EditClientPage() {
         description="Update client information and login credentials."
       />
 
-      {/* Personal info (left) + credentials (right) on wide screens, stacked below. Fields fill every cell: no empty slots. */}
       <div className="grid gap-5 xl:grid-cols-2">
-        {/* Personal Information (left) */}
         <form
           onSubmit={handleSubmitPersonalInfo}
           className="flex flex-col rounded-xl border border-border bg-surface"
@@ -405,7 +403,6 @@ export default function EditClientPage() {
           </div>
         </form>
 
-        {/* Credentials (right) */}
         <form
           onSubmit={handleSubmitCredentials}
           className="flex flex-col rounded-xl border border-border bg-surface"

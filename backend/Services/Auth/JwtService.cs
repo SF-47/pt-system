@@ -16,7 +16,7 @@ public class JwtService : IJwtService
 
     public string GenerateClientToken(int clientId, string username)
     {
-        var jwtKey = _configuration["Jwt:Key"]; //this reads "Jwt": {"key": "..."} from configuration.
+        var jwtKey = _configuration["Jwt:Key"];
 
         if (string.IsNullOrWhiteSpace(jwtKey))
         {
@@ -30,16 +30,16 @@ public class JwtService : IJwtService
             new Claim(ClaimTypes.Role, "Client"),
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)); //This converts the JWT secret string into a cryptographic key.
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); //This signature prevents someone from changing the token.
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var token = new JwtSecurityToken( //This creates the actual JWT object.
-            issuer: _configuration["Jwt:Issuer"], //Issuer means who created this token.
-            audience: _configuration["Jwt:Audience"], //Audience means who is this token intended for.
-            claims: claims, //This puts the info inside.
-            expires: DateTime.UtcNow.AddHours(1), //this makes the token valid for 7 days
-            signingCredentials: credentials //This sign the token using "secret key + HMAC SHA256" which prevents someone from changing it.
+        var token = new JwtSecurityToken(
+            issuer: _configuration["Jwt:Issuer"],
+            audience: _configuration["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: credentials
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
