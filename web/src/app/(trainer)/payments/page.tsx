@@ -45,19 +45,27 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 const MAX_AMOUNT = 99999999.99;
 
 const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
+  "January",
+  "February",
+  "March",
+  "April",
   "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
+
+// Tells the trainer which period the two summary cards cover.
+function getPeriodLabel(month: number, year: number) {
+  if (month && year) return `${monthNames[month - 1]} ${year}`;
+  if (month) return `${monthNames[month - 1]}, all years`;
+  if (year) return String(year);
+  return "All time";
+}
 
 // Local calendar day; avoids toISOString(), which converts to UTC.
 function toDateKey(date: Date) {
@@ -94,6 +102,92 @@ function formatPaidAt(value: string) {
 
 const inputClass =
   "min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary";
+
+// Custom listbox instead of a native <select> so the option list has a
+// fixed max height and scrolls.
+function FilterSelect({
+  id,
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: number;
+  options: { value: number; label: string }[];
+  onChange: (value: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((option) => option.value === value);
+
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="mb-1 block text-sm font-medium text-foreground"
+      >
+        {label}
+      </label>
+      <div
+        className="relative"
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+            setOpen(false);
+          }
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") setOpen(false);
+        }}
+      >
+        <button
+          type="button"
+          id={id}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen((current) => !current)}
+          className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-input-border bg-surface px-3 text-left text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+        >
+          <span className="truncate">{selected?.label}</span>
+          <Icon
+            name="arrow"
+            className={`size-4 shrink-0 text-muted transition-transform ${
+              open ? "-rotate-90" : "rotate-90"
+            }`}
+          />
+        </button>
+        {open && (
+          <ul
+            role="listbox"
+            aria-label={label}
+            className="absolute z-10 mt-1 max-h-56 w-full min-w-36 overflow-y-auto rounded-md border border-border bg-surface py-1 shadow-xl"
+          >
+            {options.map((option) => (
+              <li key={option.value}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={option.value === value}
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  className={`flex min-h-9 w-full items-center px-3 text-left text-sm transition-colors hover:bg-hover ${
+                    option.value === value
+                      ? "bg-primary-soft font-medium text-foreground"
+                      : "text-foreground"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function PaymentsTableSkeleton() {
   return (
@@ -162,7 +256,8 @@ export default function PaymentsPage() {
   const [createError, setCreateError] = useState("");
 
   const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear + 1 - i);
+  // A few future years for payments scheduled ahead, newest first.
+  const yearOptions = Array.from({ length: 9 }, (_, i) => currentYear + 4 - i);
 
   useEffect(() => {
     let ignore = false;
@@ -208,7 +303,7 @@ export default function PaymentsPage() {
       setStatsError("");
       try {
         const response = await api.get<PaymentStats>(
-          Endpoints.paymentsStatsFiltered(query, statusFilter, month, year),
+          Endpoints.paymentsStatsFiltered("", "", month, year),
         );
         if (!ignore) setStats(response.data);
       } catch {
@@ -220,7 +315,7 @@ export default function PaymentsPage() {
     return () => {
       ignore = true;
     };
-  }, [query, statusFilter, month, year]);
+  }, [month, year]);
 
   // Refetch the current page and totals without a skeleton flash or reload.
   async function refreshData() {
@@ -229,7 +324,7 @@ export default function PaymentsPage() {
         Endpoints.payments(page, pageSize, query, statusFilter, month, year),
       ),
       api.get<PaymentStats>(
-        Endpoints.paymentsStatsFiltered(query, statusFilter, month, year),
+        Endpoints.paymentsStatsFiltered("", "", month, year),
       ),
     ]);
 
@@ -385,6 +480,13 @@ export default function PaymentsPage() {
         </button>
       </PageHeader>
 
+      <p className="mb-2 text-sm text-muted" aria-live="polite">
+        Totals for{" "}
+        <span className="font-semibold text-foreground">
+          {getPeriodLabel(month, year)}
+        </span>
+      </p>
+
       <section
         className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 [&>div:last-child>p:last-child]:text-warning"
         aria-label="Payment summary"
@@ -430,54 +532,38 @@ export default function PaymentsPage() {
             className={inputClass}
           />
         </div>
-        <div>
-          <label
-            htmlFor="payment-month-filter"
-            className="mb-1 block text-sm font-medium text-foreground"
-          >
-            Month
-          </label>
-          <select
-            id="payment-month-filter"
-            value={month}
-            onChange={(event) => {
-              setMonth(Number(event.target.value));
-              setPage(1);
-            }}
-            className={inputClass}
-          >
-            <option value={0}>All months</option>
-            {monthNames.map((name, index) => (
-              <option key={name} value={index + 1}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="payment-year-filter"
-            className="mb-1 block text-sm font-medium text-foreground"
-          >
-            Year
-          </label>
-          <select
-            id="payment-year-filter"
-            value={year}
-            onChange={(event) => {
-              setYear(Number(event.target.value));
-              setPage(1);
-            }}
-            className={inputClass}
-          >
-            <option value={0}>All years</option>
-            {yearOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FilterSelect
+          id="payment-month-filter"
+          label="Month"
+          value={month}
+          options={[
+            { value: 0, label: "All months" },
+            ...monthNames.map((name, index) => ({
+              value: index + 1,
+              label: name,
+            })),
+          ]}
+          onChange={(value) => {
+            setMonth(value);
+            setPage(1);
+          }}
+        />
+        <FilterSelect
+          id="payment-year-filter"
+          label="Year"
+          value={year}
+          options={[
+            { value: 0, label: "All years" },
+            ...yearOptions.map((option) => ({
+              value: option,
+              label: String(option),
+            })),
+          ]}
+          onChange={(value) => {
+            setYear(value);
+            setPage(1);
+          }}
+        />
         <div className="col-span-2 sm:col-span-1">
           <label
             htmlFor="payment-status-filter"
@@ -677,11 +763,8 @@ export default function PaymentsPage() {
                 </label>
                 {selectedClient ? (
                   <div className="flex min-h-11 items-center justify-between gap-2 rounded-md border border-input-border bg-background px-3">
-                    <span className="flex min-w-0 items-center gap-2">
-                      <Avatar name={selectedClient.fullName} />
-                      <span className="truncate font-medium">
-                        {selectedClient.fullName}
-                      </span>
+                    <span className="truncate font-medium">
+                      {selectedClient.fullName}
                     </span>
                     <button
                       type="button"
@@ -723,12 +806,9 @@ export default function PaymentsPage() {
                               <button
                                 type="button"
                                 onClick={() => setSelectedClient(option)}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-hover"
+                                className="block w-full truncate px-3 py-2 text-left text-sm hover:bg-hover"
                               >
-                                <Avatar name={option.fullName} />
-                                <span className="truncate">
-                                  {option.fullName}
-                                </span>
+                                {option.fullName}
                               </button>
                             </li>
                           ))}
