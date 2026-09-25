@@ -384,13 +384,6 @@ export default function EditClientPage() {
           )}
 
           <div className="flex flex-wrap justify-end gap-3 border-t border-border px-5 py-4 sm:px-6">
-            <Link
-              href={`/clients/${clientId}`}
-              className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
-            >
-              Cancel
-            </Link>
-
             <button
               type="submit"
               disabled={isSavingPersonalInfo}

@@ -309,7 +309,7 @@ export default function PaymentsPage() {
       )}
 
       <section
-        className="mb-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[minmax(0,1fr)_8rem_8rem_9rem]"
+        className="mb-4 grid grid-cols-2 gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[minmax(0,1fr)_10rem_8rem_9rem]"
         aria-label="Payment tools"
       >
         <div className="col-span-2 min-w-0 sm:col-span-1">
