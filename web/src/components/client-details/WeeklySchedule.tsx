@@ -331,7 +331,12 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
                   }`}
                 >
                   <div className="min-h-0 p-2">
-                    {dayWorkout ? (
+                    {isLoading ? (
+                      <div
+                        className="h-full min-h-[72px] animate-pulse rounded-md border border-border bg-border/40"
+                        aria-hidden="true"
+                      />
+                    ) : dayWorkout ? (
                       <div className="group relative h-full">
                         <Link
                           href={`/workout-plans/${dayWorkout.workoutPlanId}?fromClient=${clientId}`}
@@ -379,7 +384,12 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
                   </div>
 
                   <div className="min-h-0 p-2">
-                    {dayMeal ? (
+                    {isLoading ? (
+                      <div
+                        className="h-full min-h-[72px] animate-pulse rounded-md border border-border bg-border/40"
+                        aria-hidden="true"
+                      />
+                    ) : dayMeal ? (
                       <div className="group relative h-full">
                         <Link
                           href={`/meal-plans/${dayMeal.mealPlanId}?fromClient=${clientId}`}
@@ -429,7 +439,7 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
       </div>
 
       {isLoading && (
-        <p role="status" className="mt-3 text-center text-xs text-muted">
+        <p role="status" className="sr-only">
           Loading weekly schedule…
         </p>
       )}
