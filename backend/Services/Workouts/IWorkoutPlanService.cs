@@ -21,7 +21,7 @@ public interface IWorkoutPlanService
 
     Task<WorkoutPlanResponse?> UpdateAsync(int id, UpdateWorkoutPlanRequest request, int trainerId);
 
-    Task<bool> DeleteAsync(int id, int trainerId);
+    Task<ServiceResult<bool>> DeleteAsync(int id, int trainerId);
 
     Task<ExerciseResponse?> AddExerciseAsync(
         int workoutPlanId,

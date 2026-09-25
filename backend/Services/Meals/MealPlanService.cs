@@ -207,7 +207,7 @@ public class MealPlanService : IMealPlanService
         };
     }
 
-    public async Task<bool> DeleteAsync(int id, int trainerId)
+    public async Task<ServiceResult<bool>> DeleteAsync(int id, int trainerId)
     {
         var plan = await _db.MealPlans.FirstOrDefaultAsync(plan =>
             plan.Id == id && plan.TrainerId == trainerId
@@ -215,14 +215,25 @@ public class MealPlanService : IMealPlanService
 
         if (plan is null)
         {
-            return false;
+            return ServiceResult<bool>.NotFound("Meal plan not found.");
+        }
+
+        var hasAssignmentHistory = await _db.ClientMealPlans.AnyAsync(assignment =>
+            assignment.MealPlanId == plan.Id
+        );
+
+        if (hasAssignmentHistory)
+        {
+            return ServiceResult<bool>.Conflict(
+                "Meal plan cannot be deleted because it has assignment history."
+            );
         }
 
         _db.MealPlans.Remove(plan);
 
         await _db.SaveChangesAsync();
 
-        return true;
+        return ServiceResult<bool>.Ok(true);
     }
 
     public async Task<MealResponse?> AddMealAsync(

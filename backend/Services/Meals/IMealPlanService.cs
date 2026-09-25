@@ -18,7 +18,7 @@ public interface IMealPlanService
 
     Task<MealPlanResponse?> UpdateAsync(int id, UpdateMealPlanRequest request, int trainerId);
 
-    Task<bool> DeleteAsync(int id, int trainerId);
+    Task<ServiceResult<bool>> DeleteAsync(int id, int trainerId);
 
     Task<MealResponse?> AddMealAsync(int mealPlanId, CreateMealRequest request, int trainerId);
 

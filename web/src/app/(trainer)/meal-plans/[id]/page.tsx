@@ -12,6 +12,7 @@ import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 import MealPlanLoading from "./loading";
 
 type Meal = {
@@ -106,7 +107,12 @@ export default function MealPlanPage() {
       router.push("/meal-plans");
     } catch (error) {
       console.error("Failed to delete meal plan:", error);
-      setDeletePlanError("Meal plan could not be deleted. Please try again.");
+      setDeletePlanError(
+        getErrorMessage(
+          error,
+          "Meal plan could not be deleted. Please try again.",
+        ),
+      );
     } finally {
       setIsDeletingPlan(false);
     }

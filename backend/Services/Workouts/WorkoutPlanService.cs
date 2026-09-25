@@ -224,7 +224,7 @@ public class WorkoutPlanService : IWorkoutPlanService
         };
     }
 
-    public async Task<bool> DeleteAsync(int id, int trainerId)
+    public async Task<ServiceResult<bool>> DeleteAsync(int id, int trainerId)
     {
         var plan = await _db.WorkoutPlans.FirstOrDefaultAsync(plan =>
             plan.Id == id && plan.TrainerId == trainerId
@@ -232,14 +232,25 @@ public class WorkoutPlanService : IWorkoutPlanService
 
         if (plan is null)
         {
-            return false;
+            return ServiceResult<bool>.NotFound("Workout plan not found.");
+        }
+
+        var hasAssignmentHistory = await _db.ClientWorkoutAssignments.AnyAsync(assignment =>
+            assignment.WorkoutPlanId == plan.Id
+        );
+
+        if (hasAssignmentHistory)
+        {
+            return ServiceResult<bool>.Conflict(
+                "Workout plan cannot be deleted because it has assignment history."
+            );
         }
 
         _db.WorkoutPlans.Remove(plan);
 
         await _db.SaveChangesAsync();
 
-        return true;
+        return ServiceResult<bool>.Ok(true);
     }
 
     public async Task<ExerciseResponse?> AddExerciseAsync(
