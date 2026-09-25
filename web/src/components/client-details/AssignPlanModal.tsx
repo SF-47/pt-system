@@ -19,6 +19,12 @@ type AssignPlanModalProps = {
   planIdField: "workoutPlanId" | "mealPlanId";
   optionsUrl: string;
   assignUrl: string;
+  currentAssignment?: {
+    planId: number;
+    planName: string;
+    assignedDate: string;
+  };
+  note?: string;
   onClose: () => void;
   onAssigned: () => void;
 };
@@ -29,14 +35,21 @@ export default function AssignPlanModal({
   planIdField,
   optionsUrl,
   assignUrl,
+  currentAssignment,
+  note,
   onClose,
   onAssigned,
 }: AssignPlanModalProps) {
   const lowerLabel = planLabel.toLowerCase();
+  const isEditing = currentAssignment !== undefined;
 
   const [plans, setPlans] = useState<PlanOption[]>([]);
-  const [selectedPlanId, setSelectedPlanId] = useState("");
-  const [assignedDate, setAssignedDate] = useState(() => toDateKey(new Date()));
+  const [selectedPlanId, setSelectedPlanId] = useState(
+    currentAssignment ? String(currentAssignment.planId) : "",
+  );
+  const [assignedDate, setAssignedDate] = useState(
+    () => currentAssignment?.assignedDate ?? toDateKey(new Date()),
+  );
   const [search, setSearch] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
@@ -59,9 +72,12 @@ export default function AssignPlanModal({
         }
 
         setPlans(response.data.items);
-        setSelectedPlanId(
-          response.data.items[0]?.id ? String(response.data.items[0].id) : "",
-        );
+
+        if (!isEditing) {
+          setSelectedPlanId(
+            response.data.items[0]?.id ? String(response.data.items[0].id) : "",
+          );
+        }
       } catch (error) {
         console.error("Failed to load plans:", error);
 
@@ -80,7 +96,7 @@ export default function AssignPlanModal({
     return () => {
       ignore = true;
     };
-  }, [optionsUrl, planLabel, loadKey]);
+  }, [optionsUrl, planLabel, loadKey, isEditing]);
 
   async function handleAssign() {
     if (!selectedPlanId || !assignedDate) {
@@ -91,18 +107,24 @@ export default function AssignPlanModal({
       setIsAssigning(true);
       setError("");
 
-      await api.post(assignUrl, {
+      const payload = {
         [planIdField]: Number(selectedPlanId),
         assignedDate,
-      });
+      };
+
+      if (isEditing) {
+        await api.put(assignUrl, payload);
+      } else {
+        await api.post(assignUrl, payload);
+      }
 
       onAssigned();
     } catch (error) {
-      console.error(`Failed to assign ${lowerLabel}:`, error);
+      console.error(`Failed to save ${lowerLabel} assignment:`, error);
       setError(
         getErrorMessage(
           error,
-          `${planLabel} could not be assigned. Please try again.`,
+          `${planLabel} assignment could not be ${isEditing ? "updated" : "assigned"}. Please try again.`,
         ),
       );
     } finally {
@@ -110,9 +132,11 @@ export default function AssignPlanModal({
     }
   }
 
-  const selectedPlanName = plans.find(
-    (plan) => String(plan.id) === selectedPlanId,
-  )?.name;
+  const selectedPlanName =
+    plans.find((plan) => String(plan.id) === selectedPlanId)?.name ??
+    (String(currentAssignment?.planId) === selectedPlanId
+      ? currentAssignment?.planName
+      : undefined);
 
   const filteredPlans = plans.filter((plan) =>
     plan.name.toLowerCase().includes(search.trim().toLowerCase()),
@@ -124,7 +148,9 @@ export default function AssignPlanModal({
         <div className="mb-4">
           <h2 className="text-lg font-semibold">{title}</h2>
           <p className="mt-1 text-sm text-muted">
-            Choose a {lowerLabel} and assignment date.
+            {isEditing
+              ? `Change the ${lowerLabel} or move it to another date.`
+              : `Choose a ${lowerLabel} and assignment date.`}
           </p>
         </div>
 
@@ -245,6 +271,8 @@ export default function AssignPlanModal({
             />
           </div>
 
+          {note && <p className="text-sm text-muted">{note}</p>}
+
           {error && (
             <div
               className="flex items-center justify-between gap-3 rounded-md border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
@@ -282,7 +310,13 @@ export default function AssignPlanModal({
             aria-busy={isAssigning}
             className="min-h-10 rounded-md bg-primary px-4 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isAssigning ? "Assigning..." : "Assign"}
+            {isAssigning
+              ? isEditing
+                ? "Saving..."
+                : "Assigning..."
+              : isEditing
+                ? "Save Changes"
+                : "Assign"}
           </button>
         </div>
       </div>

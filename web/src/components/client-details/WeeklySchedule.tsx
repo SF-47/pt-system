@@ -31,6 +31,14 @@ type AssignedMealPlan = {
   assignedDate: string;
 };
 
+type AssignmentToEdit = {
+  kind: "workout" | "meal";
+  id: number;
+  planId: number;
+  planName: string;
+  assignedDate: string;
+};
+
 type AssignmentToRemove = {
   kind: "workout" | "meal";
   id: number;
@@ -77,7 +85,10 @@ function getWorkoutCardTone(status: number) {
 }
 
 const removeButtonClass =
-  "absolute top-1 right-1 z-10 rounded p-0.5 text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:bg-danger-soft hover:text-danger focus-visible:bg-danger-soft focus-visible:text-danger focus-visible:opacity-100";
+  "absolute top-1 right-1 z-10 rounded p-0.5 text-muted opacity-0 transition-opacity group-hover:opacity-100 pointer-coarse:opacity-100 hover:bg-danger-soft hover:text-danger focus-visible:bg-danger-soft focus-visible:text-danger focus-visible:opacity-100";
+
+const editButtonClass =
+  "absolute right-1 bottom-1 z-10 rounded p-0.5 text-muted opacity-0 transition-opacity group-hover:opacity-100 pointer-coarse:opacity-100 hover:bg-hover hover:text-foreground focus-visible:bg-hover focus-visible:text-foreground focus-visible:opacity-100";
 
 export default function WeeklySchedule({ clientId }: { clientId: number }) {
   const [currentWeekDate, setCurrentWeekDate] = useState(new Date());
@@ -89,6 +100,9 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
 
   const [isAssignWorkoutOpen, setIsAssignWorkoutOpen] = useState(false);
   const [isAssignMealOpen, setIsAssignMealOpen] = useState(false);
+
+  const [assignmentToEdit, setAssignmentToEdit] =
+    useState<AssignmentToEdit | null>(null);
 
   const [assignmentToRemove, setAssignmentToRemove] =
     useState<AssignmentToRemove | null>(null);
@@ -368,6 +382,25 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
                         >
                           <X className="size-3.5" />
                         </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAssignmentToEdit({
+                              kind: "workout",
+                              id: dayWorkout.id,
+                              planId: dayWorkout.workoutPlanId,
+                              planName: dayWorkout.workoutPlanName,
+                              assignedDate: assignedDateKey(
+                                dayWorkout.assignedDate,
+                              ),
+                            })
+                          }
+                          aria-label={`Change ${dayWorkout.workoutPlanName} on ${dateLabel}`}
+                          title="Change plan or date"
+                          className={editButtonClass}
+                        >
+                          <Icon name="edit" className="size-3.5" />
+                        </button>
                       </div>
                     ) : (
                       <div className="flex h-full items-center justify-center">
@@ -417,6 +450,25 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
                         >
                           <X className="size-3.5" />
                         </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAssignmentToEdit({
+                              kind: "meal",
+                              id: dayMeal.id,
+                              planId: dayMeal.mealPlanId,
+                              planName: dayMeal.mealPlanName,
+                              assignedDate: assignedDateKey(
+                                dayMeal.assignedDate,
+                              ),
+                            })
+                          }
+                          aria-label={`Change ${dayMeal.mealPlanName} on ${dateLabel}`}
+                          title="Change plan or date"
+                          className={editButtonClass}
+                        >
+                          <Icon name="edit" className="size-3.5" />
+                        </button>
                       </div>
                     ) : (
                       <div className="flex h-full items-center justify-center">
@@ -462,6 +514,48 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
           onClose={() => setIsAssignMealOpen(false)}
           onAssigned={() => {
             setIsAssignMealOpen(false);
+            setRefreshKey((key) => key + 1);
+          }}
+        />
+      )}
+
+      {assignmentToEdit && (
+        <AssignPlanModal
+          key={`${assignmentToEdit.kind}-${assignmentToEdit.id}`}
+          title={
+            assignmentToEdit.kind === "workout"
+              ? "Change Workout Assignment"
+              : "Change Meal Assignment"
+          }
+          planLabel={
+            assignmentToEdit.kind === "workout" ? "Workout Plan" : "Meal Plan"
+          }
+          planIdField={
+            assignmentToEdit.kind === "workout" ? "workoutPlanId" : "mealPlanId"
+          }
+          optionsUrl={
+            assignmentToEdit.kind === "workout"
+              ? Endpoints.workoutPlans(1, 50)
+              : Endpoints.mealPlans(1, 50)
+          }
+          assignUrl={
+            assignmentToEdit.kind === "workout"
+              ? Endpoints.clientWorkoutPlanById(assignmentToEdit.id)
+              : Endpoints.clientMealPlanById(assignmentToEdit.id)
+          }
+          currentAssignment={{
+            planId: assignmentToEdit.planId,
+            planName: assignmentToEdit.planName,
+            assignedDate: assignmentToEdit.assignedDate,
+          }}
+          note={
+            assignmentToEdit.kind === "meal"
+              ? "Choosing a different meal plan resets its meal statuses to Pending."
+              : undefined
+          }
+          onClose={() => setAssignmentToEdit(null)}
+          onAssigned={() => {
+            setAssignmentToEdit(null);
             setRefreshKey((key) => key + 1);
           }}
         />
