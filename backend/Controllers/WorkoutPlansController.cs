@@ -112,11 +112,11 @@ public class WorkoutPlansController : ControllerBase
         {
             return Unauthorized();
         }
-        var deleted = await _workoutPlanService.DeleteAsync(id, trainerId.Value);
+        var result = await _workoutPlanService.DeleteAsync(id, trainerId.Value);
 
-        if (!deleted)
+        if (!result.Success)
         {
-            return NotFound();
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
         return NoContent();

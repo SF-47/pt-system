@@ -11,6 +11,7 @@ import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 import WorkoutPlanLoading from "./loading";
 
 type Exercise = {
@@ -104,7 +105,12 @@ export default function WorkoutPlanPage() {
       router.push("/workout-plans");
     } catch (error) {
       console.error("Failed to delete workout plan:", error);
-      setDeleteError("Workout plan could not be deleted. Please try again.");
+      setDeleteError(
+        getErrorMessage(
+          error,
+          "Workout plan could not be deleted. Please try again.",
+        ),
+      );
     } finally {
       setIsDeleting(false);
     }
