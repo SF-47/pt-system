@@ -36,9 +36,10 @@ export default function Loading() {
           </div>
           <div className="size-8 shrink-0 rounded bg-surface" />
         </div>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <div className="h-11 rounded-lg bg-surface" />
-          <div className="h-11 rounded-lg bg-surface" />
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {[0, 1, 2, 3].map((button) => (
+            <div key={button} className="h-11 rounded-lg bg-surface" />
+          ))}
         </div>
       </div>
     </div>
