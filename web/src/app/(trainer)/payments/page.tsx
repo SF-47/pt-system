@@ -369,27 +369,21 @@ function PaymentsContent() {
             setPage(1);
           }}
         />
-        <div className="col-span-2 sm:col-span-1">
-          <label
-            htmlFor="payment-status-filter"
-            className="mb-1 block text-sm font-medium text-foreground"
-          >
-            Payment status
-          </label>
-          <select
-            id="payment-status-filter"
-            value={statusFilter}
-            onChange={(event) => {
-              setStatusFilter(event.target.value as StatusFilter);
-              setPage(1);
-            }}
-            className={inputClass}
-          >
-            <option value="All">All</option>
-            <option value="Paid">Paid</option>
-            <option value="Pending">Pending</option>
-          </select>
-        </div>
+        <FilterSelect
+          id="payment-status-filter"
+          label="Payment status"
+          className="col-span-2 sm:col-span-1"
+          value={statusFilter}
+          options={[
+            { value: "All", label: "All" },
+            { value: "Paid", label: "Paid" },
+            { value: "Pending", label: "Pending" },
+          ]}
+          onChange={(value) => {
+            setStatusFilter(value);
+            setPage(1);
+          }}
+        />
       </section>
 
       <p className="mb-2 text-sm text-muted" aria-live="polite">
