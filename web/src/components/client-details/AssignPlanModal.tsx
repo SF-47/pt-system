@@ -179,7 +179,7 @@ export default function AssignPlanModal({
                 aria-haspopup="listbox"
                 aria-expanded={isDropdownOpen}
                 aria-busy={isLoadingPlans}
-                className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-input-border bg-background px-3 text-left text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-input-border bg-background px-3 text-left text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isLoadingPlans ? (
                   <span className="flex items-center gap-2 text-muted">

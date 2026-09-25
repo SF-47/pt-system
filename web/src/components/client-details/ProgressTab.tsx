@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import FilterSelect from "@/components/FilterSelect";
 import Icon from "@/components/Icon";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
@@ -194,23 +195,15 @@ export default function ProgressTab({ clientId }: { clientId: number }) {
             Workout and meal completion summary
           </p>
         </div>
-        <div className="ml-auto">
-          <label htmlFor="progress-period" className="sr-only">
-            Progress period
-          </label>
-          <select
-            id="progress-period"
-            value={period}
-            onChange={(event) => setPeriod(event.target.value as ProgressPeriod)}
-            className="min-h-11 rounded-md border border-input-border bg-surface px-3 py-2 text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
-          >
-            {periodOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FilterSelect
+          id="progress-period"
+          label="Progress period"
+          className="ml-auto w-40"
+          labelClassName="sr-only"
+          value={period}
+          options={periodOptions}
+          onChange={setPeriod}
+        />
       </div>
 
       <div className="mt-4">

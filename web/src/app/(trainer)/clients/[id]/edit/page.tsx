@@ -1,13 +1,13 @@
 "use client";
 
 import BackLink from "@/components/BackLink";
+import FilterSelect from "@/components/FilterSelect";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
 import { getErrorMessage } from "@/lib/getErrorMessage";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import EditClientLoading from "./loading";
@@ -280,44 +280,23 @@ export default function EditClientPage() {
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="isActive"
-                className="mb-2 block text-sm font-medium"
-              >
-                Account Status
-              </label>
-
-              <div className="relative">
-                <span
-                  aria-hidden="true"
-                  className={`pointer-events-none absolute top-1/2 left-3 size-2 -translate-y-1/2 rounded-full ${
-                    personalInfoForm.isActive ? "bg-primary" : "bg-muted"
-                  }`}
-                />
-
-                <select
-                  id="isActive"
-                  name="isActive"
-                  value={personalInfoForm.isActive ? "active" : "inactive"}
-                  onChange={(event) =>
-                    setPersonalInfoForm((prev) => ({
-                      ...prev,
-                      isActive: event.target.value === "active",
-                    }))
-                  }
-                  className="min-h-11 w-full appearance-none rounded-md border border-input-border bg-background py-2 pr-10 pl-8 text-foreground transition-colors hover:border-border-strong focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-
-                <ChevronDown
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted"
-                />
-              </div>
-            </div>
+            <FilterSelect
+              id="isActive"
+              label="Account Status"
+              labelClassName="mb-2 block text-sm font-medium"
+              tone="background"
+              value={personalInfoForm.isActive ? "active" : "inactive"}
+              options={[
+                { value: "active", label: "Active" },
+                { value: "inactive", label: "Inactive" },
+              ]}
+              onChange={(value) =>
+                setPersonalInfoForm((prev) => ({
+                  ...prev,
+                  isActive: value === "active",
+                }))
+              }
+            />
 
             <div>
               <label htmlFor="email" className="mb-2 block text-sm font-medium">

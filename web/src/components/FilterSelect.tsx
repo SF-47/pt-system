@@ -4,28 +4,31 @@ import { useState } from "react";
 
 import Icon from "@/components/Icon";
 
-export default function FilterSelect({
+export default function FilterSelect<T extends string | number>({
   id,
   label,
   value,
   options,
   onChange,
+  className = "",
+  labelClassName = "mb-1 block text-sm font-medium text-foreground",
+  tone = "surface",
 }: {
   id: string;
   label: string;
-  value: number;
-  options: { value: number; label: string }[];
-  onChange: (value: number) => void;
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (value: T) => void;
+  className?: string;
+  labelClassName?: string;
+  tone?: "surface" | "background";
 }) {
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.value === value);
 
   return (
-    <div>
-      <label
-        htmlFor={id}
-        className="mb-1 block text-sm font-medium text-foreground"
-      >
+    <div className={className}>
+      <label htmlFor={id} className={labelClassName}>
         {label}
       </label>
       <div
@@ -45,7 +48,9 @@ export default function FilterSelect({
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={() => setOpen((current) => !current)}
-          className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-input-border bg-surface px-3 text-left text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+          className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-md border border-input-border ${
+            tone === "surface" ? "bg-surface" : "bg-background"
+          } px-3 text-left text-foreground focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary`}
         >
           <span className="truncate">{selected?.label}</span>
           <Icon
