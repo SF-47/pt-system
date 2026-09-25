@@ -52,7 +52,6 @@ const monthNames = [
   "December",
 ];
 
-// Tells the trainer which period the two summary cards cover.
 function getPeriodLabel(month: number, year: number) {
   if (month && year) return `${monthNames[month - 1]} ${year}`;
   if (month) return `${monthNames[month - 1]}, all years`;
@@ -60,7 +59,6 @@ function getPeriodLabel(month: number, year: number) {
   return "All time";
 }
 
-// Overdue is display-only: the stored status stays Pending.
 function getPaymentStatus(payment: Payment): PaymentStatus {
   if (payment.status === 1) return "Paid";
   if (payment.status === 0) {
@@ -71,8 +69,6 @@ function getPaymentStatus(payment: Payment): PaymentStatus {
   return "Unknown";
 }
 
-// PaidAt is stored as UTC but serialized without an offset; treat it as UTC
-// so it converts to the trainer's local date.
 function formatPaidAt(value: string) {
   return formatDate(/[zZ]|[+-]\d\d:\d\d$/.test(value) ? value : `${value}Z`);
 }
@@ -121,7 +117,6 @@ export default function PaymentsPage() {
 }
 
 function PaymentsContent() {
-  // Dashboard shortcuts: /payments?add=1 opens the modal, ?status=Pending filters.
   const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(
@@ -147,7 +142,6 @@ function PaymentsContent() {
 
   const [isAddOpen, setIsAddOpen] = useState(searchParams.get("add") === "1");
   const currentYear = new Date().getFullYear();
-  // A few future years for payments scheduled ahead, newest first.
   const yearOptions = Array.from({ length: 9 }, (_, i) => currentYear + 4 - i);
 
   useEffect(() => {
@@ -208,7 +202,6 @@ function PaymentsContent() {
     };
   }, [month, year]);
 
-  // Refetch the current page and totals without a skeleton flash or reload.
   async function refreshData() {
     const [paymentsResponse, statsResponse] = await Promise.all([
       api.get<PagedResponse<Payment>>(

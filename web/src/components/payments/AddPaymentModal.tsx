@@ -13,7 +13,6 @@ type ClientOption = {
   fullName: string;
 };
 
-// Matches CreatePaymentRequest on the backend (0.01 - 99,999,999.99).
 const MAX_AMOUNT = 99999999.99;
 
 const inputClass =
@@ -24,7 +23,6 @@ type AddPaymentModalProps = {
   onCreated: () => void;
 };
 
-// Mount only while open so the form resets each time.
 export default function AddPaymentModal({
   onClose,
   onCreated,
@@ -41,7 +39,6 @@ export default function AddPaymentModal({
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
-  // Server-side client search so the picker works with any number of clients.
   useEffect(() => {
     if (selectedClient) return;
 

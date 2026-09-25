@@ -17,7 +17,6 @@ const labelClass = "mb-1 block text-xs font-medium text-muted";
 const inputClass =
   "min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
 
-// Field limits match the backend DTO validation for exercises.
 export default function ExerciseFields({
   idPrefix,
   values,

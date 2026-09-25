@@ -23,8 +23,6 @@ type AssignPlanModalProps = {
   onAssigned: () => void;
 };
 
-// Used for both workout plans and meal plans. Mount it only while open so
-// its state resets each time.
 export default function AssignPlanModal({
   title,
   planLabel,

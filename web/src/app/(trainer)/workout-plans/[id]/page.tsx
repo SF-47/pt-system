@@ -41,8 +41,6 @@ export default function WorkoutPlanPage() {
   const planId = Number(params.id);
   const hasValidPlanId = Number.isInteger(planId) && planId > 0;
 
-  // When opened from a client's weekly schedule (?fromClient=<id>), Back
-  // returns to that client instead of the plans list.
   const fromClientId = Number(searchParams.get("fromClient"));
   const hasFromClient = Number.isInteger(fromClientId) && fromClientId > 0;
   const backHref = hasFromClient ? `/clients/${fromClientId}` : "/workout-plans";
@@ -143,7 +141,6 @@ export default function WorkoutPlanPage() {
     );
   }
 
-  // Long plans use two columns on wide screens, filled top to bottom.
   const useTwoColumns = plan.exercises.length > 8;
   const rowsPerColumn = useTwoColumns
     ? Math.ceil(plan.exercises.length / 2)

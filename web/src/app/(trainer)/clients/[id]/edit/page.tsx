@@ -133,8 +133,6 @@ export default function EditClientPage() {
       setCredentialsMessage("");
       setCredentialsError("");
 
-      // The backend only accepts { username, password } — the new
-      // password is what gets saved, "Current Password" is not sent.
       await api.put(Endpoints.updateClientCredentials(clientId), {
         username: credentialsForm.username.trim(),
         password: credentialsForm.newPassword,

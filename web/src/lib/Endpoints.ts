@@ -118,7 +118,6 @@ export const Endpoints = {
 
   paymentsStats: "/api/stats/payments",
 
-  // Same filters as the payments list, so totals match the table.
   paymentsStatsFiltered: (
     search?: string,
     status?: string,

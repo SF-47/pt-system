@@ -37,7 +37,6 @@ export default function GlobalHeader({ date }: { date: string }) {
   const [greeting, setGreeting] = useState("Welcome back");
 
   useEffect(() => {
-    // JWT data is used only for display; authorization remains server-owned.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTrainerName(getTrainerName());
     setGreeting(getGreeting(new Date().getHours()));

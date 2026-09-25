@@ -35,7 +35,6 @@ const rateFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-// Ranges include today, so "last 7 days" starts 6 days back.
 function getProgressRange(period: ProgressPeriod) {
   if (period === "all") {
     return {};
