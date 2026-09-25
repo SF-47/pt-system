@@ -11,8 +11,6 @@ type SortableRowProps = {
   children: (dragHandle: ReactNode) => ReactNode;
 };
 
-// Renders the row and hands the drag handle to the caller so it can be
-// placed inside the row's own layout.
 export default function SortableRow({ id, label, children }: SortableRowProps) {
   const {
     attributes,

@@ -44,8 +44,6 @@ const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 });
 
-// The API returns ISO strings; the first 10 characters are the calendar day
-// whatever time/offset follows, so compare on that instead of parsing a Date.
 function assignedDateKey(value: string) {
   return value.slice(0, 10);
 }
@@ -66,7 +64,6 @@ function getWeekDates(weekStart: Date) {
   });
 }
 
-// Same colors as StatusBadge: green completed, orange pending, gray skipped.
 function getWorkoutCardTone(status: number) {
   if (status === 1) {
     return "border-primary/40 bg-primary-soft hover:bg-primary-soft/70";
@@ -276,9 +273,6 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
         </p>
       )}
 
-      {/* A CSS grid instead of a <table>: h-full inside flex children of a
-          <td> doesn't resolve reliably, so the workout/meal split would
-          drift between columns. */}
       <div className="overflow-x-auto rounded-lg border border-border">
         <div className="min-w-[1050px]">
           <div className="grid grid-cols-7 divide-x divide-border border-b border-border">
@@ -315,7 +309,6 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
               const isToday = dateKey === todayKey;
               const dateLabel = shortDateFormatter.format(date);
 
-              // At most one workout plan and one meal plan per day.
               const dayWorkout = workouts.find(
                 (assignment) => assignedDateKey(assignment.assignedDate) === dateKey,
               );

@@ -4,8 +4,6 @@ import { useState } from "react";
 
 import Icon from "@/components/Icon";
 
-// Custom listbox instead of a native <select> so the option list has a
-// fixed max height and scrolls.
 export default function FilterSelect({
   id,
   label,

@@ -39,7 +39,6 @@ const completedTimeFormatter = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
 });
 
-// "Missed" is derived by the API (Pending on a past day), never stored.
 function getActivityStatus(item: ActivityItem) {
   return item.isMissed ? "Missed" : getCompletionStatus(item.status);
 }

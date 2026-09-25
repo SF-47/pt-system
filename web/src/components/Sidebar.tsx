@@ -21,8 +21,6 @@ export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Read the saved desktop collapse preference after mount (avoids an
-  // SSR/hydration mismatch, since localStorage isn't available server-side).
   useEffect(() => {
     try {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -30,9 +28,6 @@ export default function Sidebar() {
     } catch {}
   }, []);
 
-  // The grid track width lives in the parent layout; expose the desktop
-  // sidebar width as a CSS variable so collapsing actually reclaims space
-  // instead of just shrinking content inside a fixed-width column.
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--sidebar-width",

@@ -17,8 +17,6 @@ export function formatDate(value: string) {
   }).format(date);
 }
 
-// Local calendar day. Avoids toISOString(), which converts to UTC and can
-// shift the day depending on the user's timezone.
 export function toDateKey(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -26,7 +24,6 @@ export function toDateKey(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-// Stored values: 0 = Pending, 1 = Completed, 2 = Skipped.
 export function getCompletionStatus(status: number) {
   if (status === 1) {
     return "Completed";

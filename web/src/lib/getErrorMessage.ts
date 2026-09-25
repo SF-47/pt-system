@@ -1,16 +1,5 @@
 import { isAxiosError } from "axios";
 
-/**
- * Extracts a useful, user-facing message from an API error.
- *
- * Backend errors come back in one of two shapes:
- * - business-rule errors: `{ message: "..." }` (e.g. conflicts, inactive
- *   client, empty plan)
- * - ASP.NET Core's automatic DataAnnotations validation failures:
- *   `{ title: "...", errors: { FieldName: ["message", ...] } }`
- *
- * Falls back to `fallback` when neither shape yields anything usable.
- */
 export function getErrorMessage(error: unknown, fallback: string): string {
   if (!isAxiosError(error)) {
     return fallback;
