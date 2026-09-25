@@ -87,9 +87,10 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId");
-
                     b.HasIndex("MealPlanId");
+
+                    b.HasIndex("ClientId", "AssignedDate")
+                        .IsUnique();
 
                     b.ToTable("ClientMealPlans");
                 });
@@ -148,9 +149,10 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId");
-
                     b.HasIndex("WorkoutPlanId");
+
+                    b.HasIndex("ClientId", "AssignedDate")
+                        .IsUnique();
 
                     b.ToTable("ClientWorkoutAssignments");
                 });
