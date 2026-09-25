@@ -16,15 +16,25 @@ export default function Loading() {
           </div>
         ))}
       </div>
-      <div className="mb-4 h-11 w-full max-w-sm rounded-md bg-border" />
+      <div className="mb-5 flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 min-[761px]:flex-row min-[761px]:items-end min-[761px]:justify-between">
+        <div className="w-full max-w-sm">
+          <div className="mb-1 h-4 w-28 rounded bg-border" />
+          <div className="h-11 w-full rounded-md bg-border" />
+        </div>
+        <div>
+          <div className="mb-1 h-4 w-14 rounded bg-border" />
+          <div className="h-13 w-64 rounded-md bg-border" />
+        </div>
+      </div>
+      <div className="mb-2 h-4 w-64 rounded bg-border" />
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
-        <div className="grid min-w-180 grid-cols-5 gap-4 bg-background px-5 py-4">
+        <div className="grid min-w-190 grid-cols-5 gap-4 bg-background px-5 py-4">
           {[0, 1, 2, 3, 4].map((cell) => (
             <div key={cell} className="h-4 w-16 rounded bg-border" />
           ))}
         </div>
         {[0, 1, 2, 3, 4].map((row) => (
-          <div key={row} className="grid min-w-180 grid-cols-5 gap-4 border-t border-border px-5 py-5">
+          <div key={row} className="grid min-w-190 grid-cols-5 gap-4 border-t border-border px-5 py-5">
             {[0, 1, 2, 3, 4].map((cell) => (
               <div key={cell} className="h-5 w-4/5 rounded bg-border" />
             ))}

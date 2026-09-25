@@ -19,9 +19,12 @@ export default function Loading() {
         ))}
       </div>
 
-      <div className="mb-4 flex items-center justify-between gap-3 border-t border-border pt-5">
-        <div className="h-4 w-32 rounded bg-border" />
-        <div className="h-4 w-24 rounded bg-border" />
+      <div className="mb-5 flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="w-full max-w-sm">
+          <div className="mb-1 h-4 w-32 rounded bg-border" />
+          <div className="h-11 w-full rounded-md bg-border" />
+        </div>
+        <div className="h-4 w-48 rounded bg-border" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 min-[1200px]:grid-cols-3">
