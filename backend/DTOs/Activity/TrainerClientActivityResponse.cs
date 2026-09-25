@@ -13,10 +13,8 @@ public class TrainerWorkoutActivityResponse
     public int WorkoutPlanId { get; set; }
     public string WorkoutPlanName { get; set; } = string.Empty;
 
-    // Stored value: 0 = Pending, 1 = Completed, 2 = Skipped.
     public int Status { get; set; }
 
-    // Derived: Pending on a day before today. Never stored.
     public bool IsMissed { get; set; }
     public DateTime? CompletedAt { get; set; }
 }
@@ -27,10 +25,8 @@ public class TrainerMealActivityResponse
     public int MealId { get; set; }
     public string MealName { get; set; } = string.Empty;
 
-    // Stored value: 0 = Pending, 1 = Completed, 2 = Skipped.
     public int Status { get; set; }
 
-    // Derived: Pending on a day before today. Never stored.
     public bool IsMissed { get; set; }
     public DateTime? CompletedAt { get; set; }
 }

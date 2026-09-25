@@ -32,7 +32,6 @@ public class ClientWorkoutService : IClientWorkoutService
             TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
         };
 
-        // Calculate in long so large page numbers cannot overflow the offset.
         var offset = ((long)page - 1) * pageSize;
         if (offset >= totalCount)
         {
