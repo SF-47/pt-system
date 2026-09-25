@@ -345,9 +345,6 @@ public class MealAssignmentService : IMealAssignmentService
             return false;
         }
 
-        // ClientMealStatuses cascade-delete at the DB level (see
-        // FK_ClientMealStatuses_ClientMealPlans_ClientMealPlanId), so no
-        // manual cleanup is needed here.
         _db.ClientMealPlans.Remove(assignment);
         await _db.SaveChangesAsync();
 

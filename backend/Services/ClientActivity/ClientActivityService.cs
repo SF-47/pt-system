@@ -97,9 +97,6 @@ public class ClientActivityService : IClientActivityService
         };
     }
 
-    // CompletedAt is written with DateTime.UtcNow but read back with an
-    // unspecified kind; mark it UTC so the JSON carries a "Z" and the
-    // browser converts it to local time correctly.
     private static DateTime? AsUtc(DateTime? value) =>
         value.HasValue ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc) : null;
 }

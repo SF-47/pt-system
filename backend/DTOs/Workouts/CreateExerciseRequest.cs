@@ -20,7 +20,6 @@ public class CreateExerciseRequest
     [Range(0, 3600)]
     public int RestSeconds { get; set; }
 
-    // Optional. When omitted the exercise is added at the end of the plan.
     [Range(1, int.MaxValue)]
     public int? Position { get; set; }
 }

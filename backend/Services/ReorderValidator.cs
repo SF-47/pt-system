@@ -4,8 +4,6 @@ namespace backend.Services;
 
 public static class ReorderValidator
 {
-    // Returns an error message, or null when the request is a valid full
-    // reorder of the plan's children: same ids, positions exactly 1..N.
     public static string? Validate(List<ReorderItem> items, List<int> planItemIds)
     {
         if (items.Count != planItemIds.Count)

@@ -44,7 +44,6 @@ public class WorkoutPlanService : IWorkoutPlanService
             TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
         };
 
-        // Calculate in long so large page numbers cannot overflow the offset.
         var offset = ((long)page - 1) * pageSize;
         if (offset >= totalCount)
         {

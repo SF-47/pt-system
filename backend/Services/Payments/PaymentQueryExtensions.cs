@@ -5,8 +5,6 @@ namespace backend.Services.Payments;
 
 public static class PaymentQueryExtensions
 {
-    // Shared by the payments list and the payment stats so both always
-    // describe the same set of payments.
     public static IQueryable<Payment> ApplyFilters(
         this IQueryable<Payment> query,
         string? search,
