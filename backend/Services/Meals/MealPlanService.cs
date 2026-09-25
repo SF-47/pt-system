@@ -43,7 +43,6 @@ public class MealPlanService : IMealPlanService
             TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
         };
 
-        // Calculate in long so large page numbers cannot overflow the offset.
         var offset = ((long)page - 1) * pageSize;
         if (offset >= totalCount)
         {
@@ -259,6 +258,17 @@ public class MealPlanService : IMealPlanService
         };
 
         _db.Meals.Add(meal);
+
+        var assignments = await _db
+            .ClientMealPlans.Where(assignment => assignment.MealPlanId == mealPlanId)
+            .ToListAsync();
+
+        foreach (var assignment in assignments)
+        {
+            var mealStatus = new ClientMealStatus { ClientMealPlanId = assignment.Id, Meal = meal };
+
+            _db.ClientMealStatuses.Add(mealStatus);
+        }
 
         await _db.SaveChangesAsync();
 

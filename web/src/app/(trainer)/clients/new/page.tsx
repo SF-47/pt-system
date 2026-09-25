@@ -90,6 +90,7 @@ export default function AddClientPage() {
                   required
                   minLength={2}
                   autoComplete="off"
+                  placeholder="e.g. John Smith"
                   value={dataForm.fullName}
                   onChange={(event) =>
                     setDataForm((prev) => ({
@@ -97,7 +98,7 @@ export default function AddClientPage() {
                       fullName: event.target.value,
                     }))
                   }
-                  className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -114,6 +115,7 @@ export default function AddClientPage() {
                   name="email"
                   type="email"
                   autoComplete="off"
+                  placeholder="name@example.com"
                   value={dataForm.email}
                   onChange={(event) =>
                     setDataForm((prev) => ({
@@ -121,7 +123,7 @@ export default function AddClientPage() {
                       email: event.target.value,
                     }))
                   }
-                  className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -141,6 +143,7 @@ export default function AddClientPage() {
                   minLength={6}
                   maxLength={30}
                   autoComplete="off"
+                  placeholder="e.g. 71 234 567"
                   value={dataForm.phoneNumber}
                   onChange={(event) =>
                     setDataForm((prev) => ({
@@ -148,7 +151,7 @@ export default function AddClientPage() {
                       phoneNumber: event.target.value,
                     }))
                   }
-                  className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
             </div>

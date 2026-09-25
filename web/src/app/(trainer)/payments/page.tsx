@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import EmptyState from "@/components/EmptyState";
@@ -112,8 +113,20 @@ function PaymentsTableSkeleton() {
 }
 
 export default function PaymentsPage() {
+  return (
+    <Suspense fallback={<PaymentsLoading />}>
+      <PaymentsContent />
+    </Suspense>
+  );
+}
+
+function PaymentsContent() {
+  // Dashboard shortcuts: /payments?add=1 opens the modal, ?status=Pending filters.
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(
+    searchParams.get("status") === "Pending" ? "Pending" : "All",
+  );
   const [month, setMonth] = useState(0);
   const [year, setYear] = useState(0);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -132,7 +145,7 @@ export default function PaymentsPage() {
   const [updateError, setUpdateError] = useState("");
   const [paymentToRevert, setPaymentToRevert] = useState<Payment | null>(null);
 
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(searchParams.get("add") === "1");
   const currentYear = new Date().getFullYear();
   // A few future years for payments scheduled ahead, newest first.
   const yearOptions = Array.from({ length: 9 }, (_, i) => currentYear + 4 - i);

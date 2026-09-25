@@ -364,7 +364,7 @@ export default function ClientsPage() {
                             View
                           </Link>
                           <Link
-                            className="inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-transparent px-3 py-2 text-sm text-foreground transition-colors hover:bg-hover"
+                            className="inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-primary/50 bg-primary-soft px-3 py-2 text-sm font-semibold text-primary-hover transition-colors hover:bg-primary-soft/70 dark:text-foreground"
                             href={`/clients/${client.id}/edit`}
                             aria-label={`Edit ${client.fullName}`}
                           >

@@ -177,13 +177,21 @@ export default function DashboardPage() {
           </div>
           <Icon name="workout" className="size-8 shrink-0 text-primary dark:text-foreground" />
         </div>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <Link href="/workout-plans/new" className="inline-flex min-h-11 items-center justify-between gap-3 rounded-lg bg-surface px-4 font-semibold hover:bg-hover">
             Create Workout Plan
             <Icon name="arrow" className="size-4 text-primary dark:text-foreground" />
           </Link>
           <Link href="/meal-plans/new" className="inline-flex min-h-11 items-center justify-between gap-3 rounded-lg bg-surface px-4 font-semibold hover:bg-hover">
             Create Meal Plan
+            <Icon name="arrow" className="size-4 text-primary dark:text-foreground" />
+          </Link>
+          <Link href="/payments?add=1" className="inline-flex min-h-11 items-center justify-between gap-3 rounded-lg bg-surface px-4 font-semibold hover:bg-hover">
+            New Payment
+            <Icon name="plus" className="size-4 text-primary dark:text-foreground" />
+          </Link>
+          <Link href="/payments?status=Pending" className="inline-flex min-h-11 items-center justify-between gap-3 rounded-lg bg-surface px-4 font-semibold hover:bg-hover">
+            Pending Payments{stats ? ` (${stats.pendingPayments})` : ""}
             <Icon name="arrow" className="size-4 text-primary dark:text-foreground" />
           </Link>
         </div>
