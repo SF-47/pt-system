@@ -28,5 +28,12 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Client>().HasIndex(c => c.Username).IsUnique();
 
         modelBuilder.Entity<Payment>().Property(p => p.Amount).HasPrecision(10, 2);
+        
+        modelBuilder
+            .Entity<ClientWorkoutAssignment>()
+            .Property(x => x.AssignedDate)
+            .HasColumnType("date");
+
+        modelBuilder.Entity<ClientMealPlan>().Property(x => x.AssignedDate).HasColumnType("date");
     }
 }
