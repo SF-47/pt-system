@@ -284,7 +284,7 @@ export default function WorkoutPlanPage() {
       <DeleteConfirmDialog
         open={isDeleteOpen}
         title={`Delete "${plan.name}"?`}
-        description="This action removes the workout plan, its exercises, and any client assignments for this plan."
+        description="This action cannot be undone. Plans with assignment history cannot be deleted."
         isDeleting={isDeleting}
         error={deleteError}
         onCancel={() => {

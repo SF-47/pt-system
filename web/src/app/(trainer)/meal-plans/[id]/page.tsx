@@ -329,7 +329,7 @@ export default function MealPlanPage() {
       <DeleteConfirmDialog
         open={isDeletePlanOpen}
         title={`Delete "${plan.name}"?`}
-        description="This action permanently removes the meal plan."
+        description="This action cannot be undone. Plans with assignment history cannot be deleted."
         isDeleting={isDeletingPlan}
         error={deletePlanError}
         onCancel={() => {
