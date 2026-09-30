@@ -188,56 +188,61 @@ function ActivityRow({
   expanded: boolean;
   onToggle: () => void;
 }) {
-  return (
-    <div className="border-b border-border last:border-b-0 print:break-inside-avoid">
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={expanded}
-        className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-left text-sm transition-colors hover:bg-hover print:hover:bg-transparent"
-      >
-        <span className="w-14 shrink-0 font-medium tabular-nums">{formatShortDate(day.date)}</span>
-        <span className="min-w-32 flex-1 truncate">{day.workout ? day.workout.name : "—"}</span>
-        <span className="w-24 shrink-0">
-          {day.workout ? (
-            <StatusBadge status={getActivityStatus(day.workout)} />
-          ) : (
-            <span className="text-xs text-muted">—</span>
-          )}
-        </span>
-        <span className="w-full shrink-0 text-xs text-muted sm:w-44 sm:text-sm print:w-44 print:text-sm">
-          {getMealSummaryText(day.meals)}
-        </span>
+  const hasMeals = day.meals.length > 0;
+
+  const rowFields = (
+    <>
+      <span className="w-14 shrink-0 font-medium tabular-nums">{formatShortDate(day.date)}</span>
+      <span className="min-w-32 flex-1 truncate">{day.workout ? day.workout.name : "—"}</span>
+      <span className="w-24 shrink-0">
+        {day.workout ? (
+          <StatusBadge status={getActivityStatus(day.workout)} />
+        ) : (
+          <span className="text-xs text-muted">—</span>
+        )}
+      </span>
+      <span className="w-full shrink-0 text-xs text-muted sm:w-44 sm:text-sm print:w-44 print:text-sm">
+        {getMealSummaryText(day.meals)}
+      </span>
+      {hasMeals ? (
         <Icon
           name="arrow"
           className={`ml-auto size-4 shrink-0 text-muted transition-transform print:hidden ${expanded ? "rotate-90" : ""}`}
         />
-      </button>
+      ) : (
+        <span className="ml-auto size-4 shrink-0 print:hidden" aria-hidden="true" />
+      )}
+    </>
+  );
 
-      {expanded && (
-        <div className="space-y-2 border-t border-border bg-background px-3 py-2.5 text-sm print:hidden">
-          {day.workout && (
-            <div>
-              <p className="text-xs font-semibold text-muted">Workout</p>
-              <div className="mt-1 flex items-center justify-between gap-3">
-                <span className="truncate">{day.workout.name}</span>
-                <StatusBadge status={getActivityStatus(day.workout)} />
-              </div>
-            </div>
-          )}
-          {day.meals.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-muted">Meals</p>
-              <ul className="mt-1 space-y-1">
-                {day.meals.map((meal) => (
-                  <li key={meal.mealStatusId} className="flex items-center justify-between gap-3">
-                    <span className="truncate">{meal.name}</span>
-                    <StatusBadge status={getActivityStatus(meal)} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+  return (
+    <div className="border-b border-border last:border-b-0 print:break-inside-avoid">
+      {hasMeals ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-left text-sm transition-colors hover:bg-hover print:hover:bg-transparent"
+        >
+          {rowFields}
+        </button>
+      ) : (
+        <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
+          {rowFields}
+        </div>
+      )}
+
+      {expanded && hasMeals && (
+        <div className="border-t border-border bg-background px-3 py-2 text-sm print:hidden">
+          <p className="text-xs font-semibold text-muted">Meals</p>
+          <ul className="mt-1 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2 xl:grid-cols-3">
+            {day.meals.map((meal) => (
+              <li key={meal.mealStatusId} className="flex items-center justify-between gap-2">
+                <span className="min-w-0 flex-1 truncate">{meal.name}</span>
+                <StatusBadge status={getActivityStatus(meal)} />
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
