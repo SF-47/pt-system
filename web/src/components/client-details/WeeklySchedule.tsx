@@ -288,7 +288,7 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
       )}
 
       <div className="overflow-x-auto rounded-lg border border-border">
-        <div className="min-w-[1050px]">
+        <div className="min-w-262.5">
           <div className="grid grid-cols-7 divide-x divide-border border-b border-border">
             {weekDates.map((date) => {
               const isToday = toDateKey(date) === todayKey;
@@ -324,10 +324,12 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
               const dateLabel = shortDateFormatter.format(date);
 
               const dayWorkout = workouts.find(
-                (assignment) => assignedDateKey(assignment.assignedDate) === dateKey,
+                (assignment) =>
+                  assignedDateKey(assignment.assignedDate) === dateKey,
               );
               const dayMeal = meals.find(
-                (assignment) => assignedDateKey(assignment.assignedDate) === dateKey,
+                (assignment) =>
+                  assignedDateKey(assignment.assignedDate) === dateKey,
               );
 
               return (
@@ -340,7 +342,7 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
                   <div className="min-h-0 p-2">
                     {isLoading ? (
                       <div
-                        className="h-full min-h-[72px] animate-pulse rounded-md border border-border bg-border/40"
+                        className="h-full min-h-18 animate-pulse rounded-md border border-border bg-border/40"
                         aria-hidden="true"
                       />
                     ) : dayWorkout ? (
@@ -360,7 +362,7 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
                               {dayWorkout.workoutPlanName}
                             </span>
                           </p>
-                          <p className="mt-auto pt-1 pl-[22px] text-xs text-muted">
+                          <p className="mt-auto pt-1 pl-5.5 text-xs text-muted">
                             {dayWorkout.exerciseCount}{" "}
                             {dayWorkout.exerciseCount === 1
                               ? "exercise"
@@ -412,7 +414,7 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
                   <div className="min-h-0 p-2">
                     {isLoading ? (
                       <div
-                        className="h-full min-h-[72px] animate-pulse rounded-md border border-border bg-border/40"
+                        className="h-full min-h-18 animate-pulse rounded-md border border-border bg-border/40"
                         aria-hidden="true"
                       />
                     ) : dayMeal ? (
@@ -430,7 +432,7 @@ export default function WeeklySchedule({ clientId }: { clientId: number }) {
                               {dayMeal.mealPlanName}
                             </span>
                           </p>
-                          <p className="mt-auto pt-1 pl-[22px] text-xs text-muted">
+                          <p className="mt-auto pt-1 pl-5.5 text-xs text-muted">
                             {dayMeal.mealCount}{" "}
                             {dayMeal.mealCount === 1 ? "meal" : "meals"}
                           </p>
