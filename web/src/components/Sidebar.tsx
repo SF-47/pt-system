@@ -144,7 +144,7 @@ export default function Sidebar() {
             onClick={handleLogout}
             title="Logout"
             aria-label="Logout"
-            className={`flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-muted transition-colors hover:bg-hover hover:text-foreground ${
+            className={`flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-muted transition-colors hover:bg-danger-soft hover:text-danger ${
               isCollapsed ? "min-[761px]:justify-center" : ""
             }`}
           >
