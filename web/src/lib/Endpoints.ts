@@ -139,4 +139,9 @@ export const Endpoints = {
   paymentStatus: (id: number) => `/api/payments/${id}/status`,
 
   dashboardStats: "/api/stats/dashboard",
+
+  clientReport: (clientId: number, startDate: string, endDate: string) =>
+    `/api/clients/${clientId}/report?startDate=${encodeURIComponent(
+      startDate,
+    )}&endDate=${encodeURIComponent(endDate)}`,
 };

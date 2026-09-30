@@ -3,8 +3,10 @@ using backend.DTOs.Activity;
 using backend.DTOs.Clients;
 using backend.DTOs.Common;
 using backend.DTOs.Progress;
+using backend.DTOs.Reports;
 using backend.Services.ClientActivity;
 using backend.Services.Clients;
+using backend.Services.Reports;
 using TrainerProgressService = backend.Services.ClientProgress.IClientProgressService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,16 +23,19 @@ public class ClientController : ControllerBase
     private readonly IClientService _clientService;
     private readonly TrainerProgressService _progressService;
     private readonly IClientActivityService _activityService;
+    private readonly IClientReportService _reportService;
 
     public ClientController(
         IClientService clientService,
         TrainerProgressService progressService,
-        IClientActivityService activityService
+        IClientActivityService activityService,
+        IClientReportService reportService
     )
     {
         _clientService = clientService;
         _progressService = progressService;
         _activityService = activityService;
+        _reportService = reportService;
     }
 
     [HttpGet]
@@ -220,6 +225,44 @@ public class ClientController : ControllerBase
         }
 
         return Ok(activity);
+    }
+
+    [HttpGet("{clientId}/report")]
+    public async Task<ActionResult<ClientReportResponse>> GetReport(
+        int clientId,
+        DateTime? startDate = null,
+        DateTime? endDate = null
+    )
+    {
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+
+        if (startDate is null || endDate is null)
+        {
+            return BadRequest(new { message = "Start date and end date are required." });
+        }
+
+        if (startDate > endDate)
+        {
+            return BadRequest(new { message = "Start date cannot be after end date." });
+        }
+
+        var result = await _reportService.GetClientReportAsync(
+            trainerId.Value,
+            clientId,
+            startDate.Value,
+            endDate.Value
+        );
+
+        if (!result.Success)
+        {
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
+        }
+
+        return Ok(result.Data);
     }
 
     private int? GetTrainerId()
