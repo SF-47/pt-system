@@ -13,6 +13,7 @@ const items: { href: string; label: string; icon: IconName }[] = [
   { href: "/workout-plans", label: "Workout Plans", icon: "workout" },
   { href: "/meal-plans", label: "Meal Plans", icon: "meal" },
   { href: "/payments", label: "Payments", icon: "payment" },
+  { href: "/reports", label: "Reports", icon: "report" },
 ];
 
 export default function Sidebar() {

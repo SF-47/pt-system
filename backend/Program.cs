@@ -43,6 +43,10 @@ builder.Services.AddScoped<IClientMealService, ClientMealService>();
 builder.Services.AddScoped<IClientProgressService, ClientProgressService>();
 builder.Services.AddScoped<IClientActivityService, ClientActivityService>();
 builder.Services.AddScoped<
+    backend.Services.Reports.IClientReportService,
+    backend.Services.Reports.ClientReportService
+>();
+builder.Services.AddScoped<
     backend.Services.ClientProgress.IClientProgressService,
     backend.Services.ClientProgress.ClientProgressService
 >();
