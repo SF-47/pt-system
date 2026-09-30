@@ -55,7 +55,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="relative flex h-auto flex-col overflow-y-auto border-b border-border bg-sidebar dark:border-border dark:bg-sidebar min-[761px]:sticky min-[761px]:top-0 min-[761px]:h-dvh min-[761px]:border-r min-[761px]:border-b-0">
+    <aside className="relative flex h-auto flex-col overflow-y-auto border-b border-border bg-sidebar dark:border-border dark:bg-sidebar min-[761px]:sticky min-[761px]:top-0 min-[761px]:h-dvh min-[761px]:border-r min-[761px]:border-b-0 print:hidden">
       <div
         className={`flex items-center px-5 py-4 min-[761px]:pt-7 min-[761px]:pb-8 ${
           isCollapsed

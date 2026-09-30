@@ -125,3 +125,35 @@ textarea { line-height: 1.65; }
 }
 
 html.dark :focus-visible { outline-color: var(--text); }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  :root,
+  html.dark {
+    color-scheme: light;
+    --background: #FFFFFF;
+    --surface: #FFFFFF;
+    --sidebar: #FFFFFF;
+    --border: #D0D5DD;
+    --border-strong: #B7BEC7;
+    --input-border: #B7BEC7;
+    --primary: #2F855A;
+    --primary-hover: #276749;
+    --primary-soft: #E6F4EC;
+    --text: #111827;
+    --text-muted: #4B5563;
+    --warning: #92400E;
+    --danger: #B91C1C;
+    --warning-soft: #FEF3C7;
+    --danger-soft: #FEE2E2;
+    --hover: #F3F4F6;
+  }
+
+  body {
+    background: #FFFFFF;
+  }
+}

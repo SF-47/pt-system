@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Users, Dumbbell, Utensils, CreditCard, Plus, Pencil,
-  ArrowRight, CheckCircle, Clock, XCircle, LogOut, Eye, CalendarDays, FileText,
+  ArrowRight, CheckCircle, Clock, XCircle, LogOut, Eye, CalendarDays, FileText, Printer,
 } from "lucide-react";
 
 const icons = {
@@ -19,6 +19,7 @@ const icons = {
   view: Eye,
   calendar: CalendarDays,
   report: FileText,
+  print: Printer,
 };
 
 export type IconName = keyof typeof icons;
