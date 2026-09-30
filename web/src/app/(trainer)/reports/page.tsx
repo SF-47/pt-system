@@ -235,9 +235,12 @@ function ActivityRow({
       {expanded && hasMeals && (
         <div className="border-t border-border bg-background px-3 py-2 text-sm print:hidden">
           <p className="text-xs font-semibold text-muted">Meals</p>
-          <ul className="mt-1 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2 xl:grid-cols-3">
+          <ul className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {day.meals.map((meal) => (
-              <li key={meal.mealStatusId} className="flex items-center justify-between gap-2">
+              <li
+                key={meal.mealStatusId}
+                className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1"
+              >
                 <span className="min-w-0 flex-1 truncate">{meal.name}</span>
                 <StatusBadge status={getActivityStatus(meal)} />
               </li>
