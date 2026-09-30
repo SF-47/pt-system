@@ -76,6 +76,9 @@ type ClientReport = {
 const inputClass =
   "min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary";
 
+const metricGridClass =
+  "mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-sm sm:grid-cols-3 xl:grid-cols-5 print:grid-cols-5";
+
 const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
@@ -146,7 +149,7 @@ function SummaryBreakdown({
   return (
     <div className="rounded-lg border border-border bg-background p-3 print:break-inside-avoid print:p-2">
       <h3 className="text-sm font-semibold">{title}</h3>
-      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm sm:grid-cols-5">
+      <dl className={metricGridClass}>
         <div>
           <dd className="text-lg font-semibold tabular-nums">{total}</dd>
           <dt className="text-xs text-muted">{totalLabel}</dt>
@@ -346,7 +349,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl print:max-w-none">
+    <div>
       <div className="print:hidden">
         <PageHeader
           title="Reports"
@@ -568,7 +571,7 @@ export default function ReportsPage() {
             />
           </div>
 
-          <div className="grid gap-3 lg:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <SummaryBreakdown
               title="Workout Summary"
               total={report.workoutSummary.total}
@@ -587,43 +590,43 @@ export default function ReportsPage() {
               skipped={report.mealSummary.skipped}
               missed={report.mealSummary.missed}
             />
-          </div>
 
-          <section className="rounded-lg border border-border bg-background p-3 print:break-inside-avoid print:p-2">
-            <h3 className="text-sm font-semibold">Payment Summary</h3>
-            <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm sm:grid-cols-5">
-              <div>
-                <dd className="text-lg font-semibold tabular-nums">
-                  {currencyFormatter.format(report.paymentSummary.totalAmount)}
-                </dd>
-                <dt className="text-xs text-muted">Total amount</dt>
-              </div>
-              <div>
-                <dd className="text-lg font-semibold tabular-nums text-primary-hover dark:text-primary">
-                  {currencyFormatter.format(report.paymentSummary.paidAmount)}
-                </dd>
-                <dt className="text-xs text-muted">Paid amount</dt>
-              </div>
-              <div>
-                <dd className="text-lg font-semibold tabular-nums text-warning">
-                  {currencyFormatter.format(report.paymentSummary.pendingAmount)}
-                </dd>
-                <dt className="text-xs text-muted">Pending amount</dt>
-              </div>
-              <div>
-                <dd className="text-lg font-semibold tabular-nums">
-                  {report.paymentSummary.paymentsCount}
-                </dd>
-                <dt className="text-xs text-muted">Payments</dt>
-              </div>
-              <div>
-                <dd className="text-lg font-semibold tabular-nums text-danger">
-                  {report.paymentSummary.overdueCount}
-                </dd>
-                <dt className="text-xs text-muted">Overdue</dt>
-              </div>
-            </dl>
-          </section>
+            <section className="rounded-lg border border-border bg-background p-3 sm:col-span-2 lg:col-span-1 print:break-inside-avoid print:p-2">
+              <h3 className="text-sm font-semibold">Payment Summary</h3>
+              <dl className={metricGridClass}>
+                <div>
+                  <dd className="text-lg font-semibold tabular-nums">
+                    {currencyFormatter.format(report.paymentSummary.totalAmount)}
+                  </dd>
+                  <dt className="text-xs text-muted">Total amount</dt>
+                </div>
+                <div>
+                  <dd className="text-lg font-semibold tabular-nums text-primary-hover dark:text-primary">
+                    {currencyFormatter.format(report.paymentSummary.paidAmount)}
+                  </dd>
+                  <dt className="text-xs text-muted">Paid amount</dt>
+                </div>
+                <div>
+                  <dd className="text-lg font-semibold tabular-nums text-warning">
+                    {currencyFormatter.format(report.paymentSummary.pendingAmount)}
+                  </dd>
+                  <dt className="text-xs text-muted">Pending amount</dt>
+                </div>
+                <div>
+                  <dd className="text-lg font-semibold tabular-nums">
+                    {report.paymentSummary.paymentsCount}
+                  </dd>
+                  <dt className="text-xs text-muted">Payments</dt>
+                </div>
+                <div>
+                  <dd className="text-lg font-semibold tabular-nums text-danger">
+                    {report.paymentSummary.overdueCount}
+                  </dd>
+                  <dt className="text-xs text-muted">Overdue</dt>
+                </div>
+              </dl>
+            </section>
+          </div>
 
           <section className="rounded-xl border border-border bg-surface p-3 print:p-0">
             <h2 className="px-1 pb-1 font-semibold print:break-after-avoid">Daily Activity</h2>
