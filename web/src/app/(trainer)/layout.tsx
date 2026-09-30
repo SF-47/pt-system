@@ -16,9 +16,9 @@ export default function TrainerLayout({
 
   return (
     <TrainerAuthGuard>
-      <div className="min-h-dvh min-[761px]:grid min-[761px]:grid-cols-[var(--sidebar-width,270px)_minmax(0,1fr)] min-[761px]:transition-[grid-template-columns] min-[761px]:duration-200">
+      <div className="min-h-dvh min-[761px]:grid min-[761px]:grid-cols-[var(--sidebar-width,270px)_minmax(0,1fr)] min-[761px]:transition-[grid-template-columns] min-[761px]:duration-200 print:block">
         <a
-          className="fixed -top-24 left-3 z-10 bg-primary p-3 text-white focus:top-3"
+          className="fixed -top-24 left-3 z-10 bg-primary p-3 text-white focus:top-3 print:hidden"
           href="#main-content"
         >
           Skip to content
@@ -28,10 +28,10 @@ export default function TrainerLayout({
           <GlobalHeader date={today} />
           <main
             id="main-content"
-            className="w-full min-w-0 px-4 pt-6 pb-10 min-[761px]:p-6 min-[1001px]:px-14 min-[1001px]:pt-8 min-[1001px]:pb-10"
+            className="w-full min-w-0 px-4 pt-6 pb-10 min-[761px]:p-6 min-[1001px]:px-14 min-[1001px]:pt-8 min-[1001px]:pb-10 print:p-0"
             tabIndex={-1}
           >
-            <div className="mx-auto w-full max-w-360">{children}</div>
+            <div className="mx-auto w-full max-w-360 print:max-w-none">{children}</div>
           </main>
         </div>
       </div>

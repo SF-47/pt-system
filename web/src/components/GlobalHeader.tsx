@@ -43,7 +43,7 @@ export default function GlobalHeader({ date }: { date: string }) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-4 border-b border-border bg-surface px-4 min-[761px]:px-6 min-[1001px]:px-14">
+    <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-4 border-b border-border bg-surface px-4 min-[761px]:px-6 min-[1001px]:px-14 print:hidden">
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-muted">
           {greeting}, {trainerName}
