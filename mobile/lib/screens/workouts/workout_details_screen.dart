@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
 import '../../models/workout.dart';
 import '../../services/workout_service.dart';
+import 'package:vibration/vibration.dart';
 
 class WorkoutDetailsScreen extends StatefulWidget {
   final int assignmentId;
@@ -277,7 +279,7 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
   }
 }
 
-class _ExerciseCard extends StatelessWidget {
+class _ExerciseCard extends StatefulWidget {
   final int number;
   final dynamic exercise;
 
@@ -287,7 +289,100 @@ class _ExerciseCard extends StatelessWidget {
   });
 
   @override
+  State<_ExerciseCard> createState() => _ExerciseCardState();
+}
+
+class _ExerciseCardState extends State<_ExerciseCard> {
+  int _completedSets = 0;
+
+  Timer? _timer;
+  int _remainingSeconds = 0;
+  bool _isResting = false;
+  bool _isPaused = false;
+
+  void _startRestTimer() {
+    final restSeconds = widget.exercise.restSeconds;
+
+    if (restSeconds <= 0) {
+      return;
+    }
+
+    _timer?.cancel();
+
+    setState(() {
+      _remainingSeconds = restSeconds;
+      _isResting = true;
+      _isPaused = false;
+    });
+
+    _timer = Timer.periodic(
+      const Duration(seconds: 1),
+          (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+
+        if (_isPaused) {
+          return;
+        }
+
+        if (_remainingSeconds > 1) {
+          setState(() {
+            _remainingSeconds--;
+          });
+        } else {
+          timer.cancel();
+
+          // Immediately finish the timer.
+          setState(() {
+            _remainingSeconds = 0;
+            _isResting = false;
+            _isPaused = false;
+          });
+
+          // Vibrate after the timer has finished.
+          Vibration.vibrate(duration: 500);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Rest complete! Ready for your next set.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  void _togglePause() {
+    setState(() {
+      _isPaused = !_isPaused;
+    });
+  }
+
+  void _skipRest() {
+    _timer?.cancel();
+
+    setState(() {
+      _remainingSeconds = 0;
+      _isResting = false;
+      _isPaused = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+  @override
   Widget build(BuildContext context) {
+    final exercise = widget.exercise;
+    final totalSets = exercise.sets;
+
+    final isCompleted = _completedSets >= totalSets;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: Colors.white,
@@ -306,7 +401,7 @@ class _ExerciseCard extends StatelessWidget {
                   radius: 18,
                   backgroundColor: const Color(0xFFEAF6EF),
                   child: Text(
-                    '$number',
+                    '${widget.number}',
                     style: const TextStyle(
                       color: Color(0xFF2F855A),
                       fontWeight: FontWeight.bold,
@@ -324,9 +419,16 @@ class _ExerciseCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (isCompleted)
+                  const Icon(
+                    Icons.check_circle,
+                    color: Color(0xFF2F855A),
+                  ),
               ],
             ),
+
             const SizedBox(height: 12),
+
             Text(
               exercise.description,
               style: const TextStyle(
@@ -334,7 +436,9 @@ class _ExerciseCard extends StatelessWidget {
                 color: Color(0xFF6B7280),
               ),
             ),
+
             const SizedBox(height: 14),
+
             Row(
               children: [
                 _ExerciseInfo(
@@ -350,6 +454,153 @@ class _ExerciseCard extends StatelessWidget {
                   value: '${exercise.restSeconds}s',
                 ),
               ],
+            ),
+
+            const SizedBox(height: 18),
+
+            // Set progress
+    const SizedBox(height: 18),
+
+    if (_isResting) ...[
+    Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+    color: const Color(0xFFEAF6EF),
+    borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+    children: [
+    const Text(
+    'Rest Time',
+    style: TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: Color(0xFF6B7280),
+    ),
+    ),
+    const SizedBox(height: 6),
+      SizedBox(
+        width: 100,
+        height: 100,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 190,
+              height: 190,
+              child: CircularProgressIndicator(
+                value: widget.exercise.restSeconds == 0
+                    ? 0
+                    : _remainingSeconds / widget.exercise.restSeconds,
+                strokeWidth: 10,
+                backgroundColor: const Color(0xFFD5EBDD),
+                color: const Color(0xFF2F855A),
+              ),
+            ),
+            Text(
+              '${_remainingSeconds}s',
+              style: const TextStyle(
+                fontSize: 38,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2F855A),
+              ),
+            ),
+          ],
+        ),
+      ),
+    const SizedBox(height: 12),
+    Row(
+    children: [
+    Expanded(
+    child: OutlinedButton.icon(
+    onPressed: _togglePause,
+    icon: Icon(
+    _isPaused ? Icons.play_arrow : Icons.pause,
+    ),
+    label: Text(
+    _isPaused ? 'Resume' : 'Pause',
+    ),
+    ),
+    ),
+    const SizedBox(width: 10),
+    Expanded(
+    child: OutlinedButton.icon(
+    onPressed: _skipRest,
+    icon: const Icon(Icons.skip_next),
+    label: const Text('Skip Rest'),
+    ),
+    ),
+    ],
+    ),
+    ],
+    ),
+    ),
+    const SizedBox(height: 14),
+    ],
+
+    Text(
+    isCompleted
+    ? 'Exercise completed'
+        : 'Set $_completedSets of $totalSets completed',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: totalSets == 0
+                    ? 0
+                    : _completedSets / totalSets,
+                minHeight: 8,
+                backgroundColor: const Color(0xFFEAF6EF),
+                color: const Color(0xFF2F855A),
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton.icon(
+                onPressed: isCompleted || _isResting
+                    ? null
+                    : () {
+                  setState(() {
+                    _completedSets++;
+                  });
+
+                  if (_completedSets < totalSets) {
+                    _startRestTimer();
+                  }
+                },
+                icon: Icon(
+                  isCompleted
+                      ? Icons.check
+                      : Icons.check_circle_outline,
+                ),
+                label: Text(
+                  isCompleted
+                      ? 'Exercise Completed'
+                      : 'Complete Set',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2F855A),
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFEAF6EF),
+                  disabledForegroundColor: const Color(0xFF2F855A),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
             ),
           ],
         ),

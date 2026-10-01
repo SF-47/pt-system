@@ -11,38 +11,110 @@ class WorkoutsScreen extends StatefulWidget {
 }
 
 class _WorkoutsScreenState extends State<WorkoutsScreen> {
-  final WorkoutService _workoutService = WorkoutService();
 
   List<Workout> _workouts = [];
   bool _isLoading = true;
-  String? _errorMessage;
+  int _currentPage = 1;
+  int _totalPages = 1;
+  bool _isLoadingMore = false;
+  String? _error;
+  final ScrollController _scrollController = ScrollController();
 
+  void _onScroll() {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+
+    final position = _scrollController.position;
+
+    if (position.pixels >= position.maxScrollExtent - 200) {
+      _loadMoreWorkouts();
+    }
+  }
   @override
   void initState() {
     super.initState();
+
+    _scrollController.addListener(_onScroll);
+
     _loadWorkouts();
   }
-
   Future<void> _loadWorkouts() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _currentPage = 1;
+      _totalPages = 1;
+      _workouts = [];
+    });
+
     try {
-      final workouts = await _workoutService.getWorkouts();
+      final result = await WorkoutService().getWorkouts(
+        page: 1,
+        pageSize: 10,
+      );
 
       if (!mounted) return;
 
       setState(() {
-        _workouts = workouts;
+        _workouts = result.items;
+        _currentPage = result.page;
+        _totalPages = result.totalPages;
         _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
-        _errorMessage = e.toString();
+        _error = e.toString();
         _isLoading = false;
       });
     }
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMoreWorkouts() async {
+    if (_isLoadingMore) {
+      return;
+    }
+
+    if (_currentPage >= _totalPages) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    try {
+      final nextPage = _currentPage + 1;
+
+      final result = await WorkoutService().getWorkouts(
+        page: nextPage,
+        pageSize: 10,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _workouts.addAll(result.items);
+        _currentPage = result.page;
+        _totalPages = result.totalPages;
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingMore = false;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,12 +137,12 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       );
     }
 
-    if (_errorMessage != null) {
+    if (_error != null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            _errorMessage!,
+            _error!,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Color(0xFFDC2626),
@@ -97,10 +169,19 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       color: const Color(0xFF2F855A),
       child: ListView.builder(
         padding: const EdgeInsets.all(20),
-        itemCount: _workouts.length,
+        controller: _scrollController,
+        itemCount: _workouts.length + (_isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
-          final workout = _workouts[index];
+          if (index == _workouts.length) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
 
+          final workout = _workouts[index];
           return _WorkoutCard(
             workout: workout,
             onTap: () {

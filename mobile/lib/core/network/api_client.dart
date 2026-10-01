@@ -30,11 +30,15 @@ class ApiClient {
 
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
+
           }
 
           handler.next(options);
         },
+
       ),
     );
+
+
   }
 }

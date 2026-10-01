@@ -15,34 +15,102 @@ class _MealsScreenState extends State<MealsScreen> {
 
   List<MealPlan> _mealPlans = [];
   bool _isLoading = true;
-  String? _errorMessage;
+  int _currentPage = 1;
+  int _totalPages = 1;
+  bool _isLoadingMore = false;
+  String? _error;
+  final ScrollController _scrollController = ScrollController();
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
   @override
   void initState() {
     super.initState();
-    _loadMeals();
+    _scrollController.addListener(_onScroll);
+    _loadMealPlans();
   }
+  void _onScroll() {
+    if (!_scrollController.hasClients) {
+      return;
+    }
 
-  Future<void> _loadMeals() async {
+    final position = _scrollController.position;
+
+    if (position.pixels >= position.maxScrollExtent - 200) {
+      _loadMoreMealPlans();
+    }
+  }
+  Future<void> _loadMealPlans() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _currentPage = 1;
+      _totalPages = 1;
+      _mealPlans = [];
+    });
+
     try {
-      final mealPlans = await _mealService.getMealPlans();
+      final result = await _mealService.getMealPlans(
+        page: 1,
+        pageSize: 10,
+      );
 
       if (!mounted) return;
 
       setState(() {
-        _mealPlans = mealPlans;
+        _mealPlans = result.items;
+        _currentPage = result.page;
+        _totalPages = result.totalPages;
         _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
-        _errorMessage = e.toString();
+        _error = e.toString();
         _isLoading = false;
       });
     }
   }
+  Future<void> _loadMoreMealPlans() async {
+    if (_isLoadingMore) {
+      return;
+    }
 
+    if (_currentPage >= _totalPages) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    try {
+      final nextPage = _currentPage + 1;
+
+      final result = await _mealService.getMealPlans(
+        page: nextPage,
+        pageSize: 10,
+      );
+      if (!mounted) return;
+
+      setState(() {
+        _mealPlans.addAll(result.items);
+        _currentPage = result.page;
+        _totalPages = result.totalPages;
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingMore = false;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,12 +133,12 @@ class _MealsScreenState extends State<MealsScreen> {
       );
     }
 
-    if (_errorMessage != null) {
+    if (_error != null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            _errorMessage!,
+            _error!,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Color(0xFFDC2626),
@@ -93,12 +161,22 @@ class _MealsScreenState extends State<MealsScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadMeals,
+      onRefresh: _loadMealPlans,
       color: const Color(0xFF2F855A),
       child: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.all(20),
-        itemCount: _mealPlans.length,
+        itemCount: _mealPlans.length + (_isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
+          if (index == _mealPlans.length) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
           final mealPlan = _mealPlans[index];
 
           return _MealPlanCard(
