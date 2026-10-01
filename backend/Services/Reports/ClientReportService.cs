@@ -79,6 +79,7 @@ public class ClientReportService : IClientReportService
                 status.Id,
                 status.MealId,
                 MealName = status.Meal.Name,
+                MealPlanName = status.ClientMealPlan.MealPlan.Name,
                 AssignedDate = status.ClientMealPlan.AssignedDate,
                 status.Status,
             })
@@ -173,6 +174,7 @@ public class ClientReportService : IClientReportService
                     MealStatusId = meal.Id,
                     MealId = meal.MealId,
                     Name = meal.MealName,
+                    MealPlanName = meal.MealPlanName,
                     Status = (int)meal.Status,
                     IsMissed = meal.Status == CompletionStatus.Pending && day < today,
                 }

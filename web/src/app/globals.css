@@ -129,7 +129,7 @@ html.dark :focus-visible { outline-color: var(--text); }
 @media print {
   @page {
     size: A4;
-    margin: 12mm;
+    margin: 0;
   }
 
   :root,
@@ -155,5 +155,6 @@ html.dark :focus-visible { outline-color: var(--text); }
 
   body {
     background: #FFFFFF;
+    padding: 12mm;
   }
 }

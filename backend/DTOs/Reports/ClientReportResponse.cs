@@ -66,6 +66,7 @@ public class ClientReportMealActivityResponse
     public int MealStatusId { get; set; }
     public int MealId { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string MealPlanName { get; set; } = string.Empty;
     public int Status { get; set; }
     public bool IsMissed { get; set; }
 }

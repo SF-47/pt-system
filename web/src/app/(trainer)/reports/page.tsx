@@ -49,6 +49,7 @@ type DailyMeal = ActivityItem & {
   mealStatusId: number;
   mealId: number;
   name: string;
+  mealPlanName: string;
 };
 
 type DailyActivity = {
@@ -99,6 +100,13 @@ function formatShortDate(value: string) {
   return Number.isNaN(date.getTime()) ? value : shortDateFormatter.format(date);
 }
 
+const activityGridClass =
+  "sm:grid sm:grid-cols-[4rem_minmax(0,1fr)_6rem_minmax(0,1fr)_10rem_1rem] sm:items-center sm:gap-x-3 print:grid print:grid-cols-[4rem_minmax(0,1fr)_6rem_minmax(0,1fr)_10rem] print:items-center print:gap-x-3";
+
+function getMealPlanName(meals: DailyMeal[]) {
+  return Array.from(new Set(meals.map((meal) => meal.mealPlanName).filter(Boolean))).join(", ");
+}
+
 function getMealSummaryText(meals: DailyMeal[]) {
   if (meals.length === 0) {
     return "No meals";
@@ -140,7 +148,11 @@ function SummaryBreakdown({
   missed: number;
 }) {
   const stats = [
-    { label: "Completed", value: completed, tone: "text-primary-hover dark:text-primary" },
+    {
+      label: "Completed",
+      value: completed,
+      tone: "text-primary-hover dark:text-primary",
+    },
     { label: "Pending", value: pending, tone: "text-warning" },
     { label: "Skipped", value: skipped, tone: "text-muted" },
     { label: "Missed", value: missed, tone: "text-danger" },
@@ -170,7 +182,10 @@ function ReportSkeleton() {
     <div role="status" aria-label="Generating report" className="mt-4 space-y-3 print:hidden">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[0, 1, 2, 3].map((index) => (
-          <div key={index} className="h-24 animate-pulse rounded-xl border border-border bg-surface" />
+          <div
+            key={index}
+            className="h-24 animate-pulse rounded-xl border border-border bg-surface"
+          />
         ))}
       </div>
       <div className="h-28 animate-pulse rounded-xl border border-border bg-surface" />
@@ -192,18 +207,17 @@ function ActivityRow({
 
   const rowFields = (
     <>
-      <span className="w-14 shrink-0 font-medium tabular-nums">{formatShortDate(day.date)}</span>
-      <span className="min-w-32 flex-1 truncate">{day.workout ? day.workout.name : "—"}</span>
-      <span className="w-24 shrink-0">
+      <span className="font-medium tabular-nums">{formatShortDate(day.date)}</span>
+      <span className="truncate">{day.workout ? day.workout.name : "—"}</span>
+      <span>
         {day.workout ? (
           <StatusBadge status={getActivityStatus(day.workout)} />
         ) : (
           <span className="text-xs text-muted">—</span>
         )}
       </span>
-      <span className="w-full shrink-0 text-xs text-muted sm:w-44 sm:text-sm print:w-44 print:text-sm">
-        {getMealSummaryText(day.meals)}
-      </span>
+      <span className="truncate">{hasMeals ? getMealPlanName(day.meals) : "—"}</span>
+      <span className="text-xs text-muted sm:text-sm">{getMealSummaryText(day.meals)}</span>
       {hasMeals ? (
         <Icon
           name="arrow"
@@ -222,12 +236,14 @@ function ActivityRow({
           type="button"
           onClick={onToggle}
           aria-expanded={expanded}
-          className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-left text-sm transition-colors hover:bg-hover print:hover:bg-transparent"
+          className={`flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-left text-sm transition-colors hover:bg-hover print:hover:bg-transparent ${activityGridClass}`}
         >
           {rowFields}
         </button>
       ) : (
-        <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
+        <div
+          className={`flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm ${activityGridClass}`}
+        >
           {rowFields}
         </div>
       )}
@@ -366,7 +382,11 @@ export default function ReportsPage() {
       </div>
 
       <section className="rounded-xl border border-border bg-surface p-4 print:hidden">
-        <form onSubmit={(event) => void handleSubmit(event)} noValidate className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
+        <form
+          onSubmit={(event) => void handleSubmit(event)}
+          noValidate
+          className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end"
+        >
           <div
             className="relative lg:min-w-56 lg:flex-1"
             onBlur={(event) => {
@@ -645,12 +665,15 @@ export default function ReportsPage() {
               </p>
             ) : (
               <div className="overflow-hidden rounded-lg border border-border">
-                <div className="hidden border-b border-border bg-background px-3 py-2 text-xs font-semibold tracking-wide text-muted uppercase sm:flex sm:items-center sm:gap-x-3 print:flex">
-                  <span className="w-14 shrink-0">Date</span>
-                  <span className="min-w-32 flex-1">Workout</span>
-                  <span className="w-24 shrink-0">Status</span>
-                  <span className="w-44 shrink-0">Meals</span>
-                  <span className="w-4 shrink-0 print:hidden" aria-hidden="true" />
+                <div
+                  className={`hidden border-b border-border bg-background px-3 py-2 text-xs font-semibold tracking-wide text-muted uppercase ${activityGridClass}`}
+                >
+                  <span>Date</span>
+                  <span>Workout</span>
+                  <span>Status</span>
+                  <span>Meal plan</span>
+                  <span>Meals</span>
+                  <span className="print:hidden" aria-hidden="true" />
                 </div>
                 {report.dailyActivity.map((day) => (
                   <ActivityRow
