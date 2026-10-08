@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import BackLink from "@/components/BackLink";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
+import Pagination from "@/components/Pagination";
+import { useFitPageSize } from "@/hooks/useFitPageSize";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
 import { getErrorMessage } from "@/lib/getErrorMessage";
@@ -49,6 +51,8 @@ const emptyExerciseForm: ExerciseForm = {
   restSeconds: 60,
 };
 
+const getRowHeight = (width: number) => (width < 1024 ? 150 : 72);
+
 export default function EditWorkoutPlanPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -88,6 +92,12 @@ export default function EditWorkoutPlanPage() {
   const [deleteExerciseMessage, setDeleteExerciseMessage] = useState("");
   const [isReordering, setIsReordering] = useState(false);
   const [reorderError, setReorderError] = useState("");
+  const [page, setPage] = useState(1);
+  const { ref: listRef, pageSize } = useFitPageSize(exercises.length, getRowHeight);
+  const totalPages = Math.max(1, Math.ceil(exercises.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageOffset = (currentPage - 1) * pageSize;
+  const visibleExercises = exercises.slice(pageOffset, pageOffset + pageSize);
 
   useEffect(() => {
     let ignore = false;
@@ -258,6 +268,19 @@ export default function EditWorkoutPlanPage() {
     } finally {
       setIsReordering(false);
     }
+  }
+
+  function handleMove(index: number, direction: -1 | 1) {
+    const target = index + direction;
+
+    if (target < 0 || target >= exercises.length) {
+      return;
+    }
+
+    const reordered = [...exercises];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    setPage(Math.floor(target / pageSize) + 1);
+    void handleReorder(reordered);
   }
 
   async function handleDeleteExercise() {
@@ -632,12 +655,21 @@ export default function EditWorkoutPlanPage() {
         )}
 
         {exercises.length > 0 ? (
+          <>
+          <div ref={listRef}>
           <SortableList
-            items={exercises}
+            items={visibleExercises}
             disabled={isReordering}
-            onReorder={(reordered) => void handleReorder(reordered)}
+            onReorder={(reordered) =>
+              void handleReorder([
+                ...exercises.slice(0, pageOffset),
+                ...reordered,
+                ...exercises.slice(pageOffset + pageSize),
+              ])
+            }
           >
-          {exercises.map((exercise, index) => {
+          {visibleExercises.map((exercise, localIndex) => {
+            const index = pageOffset + localIndex;
             const isUpdating = updatingExerciseId === exercise.id;
             const isEditing =
               editingExerciseId === exercise.id &&
@@ -692,6 +724,26 @@ export default function EditWorkoutPlanPage() {
                   </dl>
 
                   <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleMove(index, -1)}
+                      disabled={isReordering || index === 0}
+                      aria-label={`Move ${exercise.name} up`}
+                      title="Move up"
+                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronUp className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMove(index, 1)}
+                      disabled={isReordering || index === exercises.length - 1}
+                      aria-label={`Move ${exercise.name} down`}
+                      title="Move down"
+                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronDown className="size-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleEditExercise(exercise)}
@@ -764,6 +816,16 @@ export default function EditWorkoutPlanPage() {
             );
           })}
           </SortableList>
+          </div>
+          {totalPages > 1 && (
+            <Pagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPrevious={() => setPage(Math.max(1, currentPage - 1))}
+              onNext={() => setPage(Math.min(totalPages, currentPage + 1))}
+            />
+          )}
+          </>
         ) : !isAddingExercise ? (
           <p className="border-t border-border px-5 py-8 text-center text-sm text-muted sm:px-6">
             This workout plan does not have any exercises yet.

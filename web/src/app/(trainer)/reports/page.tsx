@@ -1,376 +1,116 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useRef, useState } from "react";
 
-import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
-import StatusBadge from "@/components/StatusBadge";
-import SummaryMetric from "@/components/SummaryMetric";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
-import { currencyFormatter, formatDate, getCompletionStatus, toDateKey } from "@/lib/format";
 import { getErrorMessage } from "@/lib/getErrorMessage";
-import type { PagedResponse } from "@/types/api";
 
-type ClientOption = {
-  id: number;
-  fullName: string;
-};
-
-type ReportSummary = {
-  total: number;
-  completed: number;
-  pending: number;
-  skipped: number;
-  missed: number;
-  completionRate: number;
-};
-
-type PaymentSummary = {
-  totalAmount: number;
-  paidAmount: number;
-  pendingAmount: number;
-  paymentsCount: number;
-  overdueCount: number;
-};
-
-type ActivityItem = {
-  status: number;
-  isMissed: boolean;
-};
-
-type DailyWorkout = ActivityItem & {
-  assignmentId: number;
-  workoutPlanId: number;
-  name: string;
-};
-
-type DailyMeal = ActivityItem & {
-  mealStatusId: number;
-  mealId: number;
-  name: string;
-  mealPlanName: string;
-};
-
-type DailyActivity = {
-  date: string;
-  workout: DailyWorkout | null;
-  meals: DailyMeal[];
-};
-
-type ClientReport = {
-  client: {
-    id: number;
-    fullName: string;
-    username: string;
-    email: string | null;
-    phoneNumber: string;
-    isActive: boolean;
-  };
-  period: { startDate: string; endDate: string };
-  workoutSummary: ReportSummary;
-  mealSummary: ReportSummary;
-  paymentSummary: PaymentSummary;
-  dailyActivity: DailyActivity[];
-};
-
-const inputClass =
-  "min-h-11 w-full rounded-md border border-input-border bg-surface px-3 py-2 text-foreground placeholder:text-muted focus:border-primary focus:outline-2 focus:outline-offset-2 focus:outline-primary";
-
-const metricGridClass =
-  "mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-sm sm:grid-cols-3 xl:grid-cols-5 print:grid-cols-5";
-
-const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-});
-
-const generatedAtFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-
-function getActivityStatus(item: ActivityItem) {
-  return item.isMissed ? "Missed" : getCompletionStatus(item.status);
-}
-
-function formatShortDate(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : shortDateFormatter.format(date);
-}
-
-const activityGridClass =
-  "sm:grid sm:grid-cols-[4rem_minmax(0,1fr)_6rem_minmax(0,1fr)_10rem_1rem] sm:items-center sm:gap-x-3 print:grid print:grid-cols-[4rem_minmax(0,1fr)_6rem_minmax(0,1fr)_10rem] print:items-center print:gap-x-3";
-
-function getMealPlanName(meals: DailyMeal[]) {
-  return Array.from(new Set(meals.map((meal) => meal.mealPlanName).filter(Boolean))).join(", ");
-}
-
-function getMealSummaryText(meals: DailyMeal[]) {
-  if (meals.length === 0) {
-    return "No meals";
-  }
-
-  const total = meals.length;
-  const counts = { Completed: 0, Pending: 0, Skipped: 0, Missed: 0 };
-
-  meals.forEach((meal) => {
-    counts[getActivityStatus(meal) as keyof typeof counts] += 1;
-  });
-
-  const parts = [`${counts.Completed}/${total} Completed`];
-
-  (["Skipped", "Missed", "Pending"] as const).forEach((label) => {
-    if (counts[label] > 0) {
-      parts.push(`${counts[label]} ${label}`);
-    }
-  });
-
-  return parts.join(" · ");
-}
-
-function SummaryBreakdown({
-  title,
-  total,
-  totalLabel,
-  completed,
-  pending,
-  skipped,
-  missed,
-}: {
-  title: string;
-  total: number;
-  totalLabel: string;
-  completed: number;
-  pending: number;
-  skipped: number;
-  missed: number;
-}) {
-  const stats = [
-    {
-      label: "Completed",
-      value: completed,
-      tone: "text-primary-hover dark:text-primary",
-    },
-    { label: "Pending", value: pending, tone: "text-warning" },
-    { label: "Skipped", value: skipped, tone: "text-muted" },
-    { label: "Missed", value: missed, tone: "text-danger" },
-  ];
-
-  return (
-    <div className="rounded-lg border border-border bg-background p-3 print:break-inside-avoid print:p-2">
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <dl className={metricGridClass}>
-        <div>
-          <dd className="text-lg font-semibold tabular-nums">{total}</dd>
-          <dt className="text-xs text-muted">{totalLabel}</dt>
-        </div>
-        {stats.map((stat) => (
-          <div key={stat.label}>
-            <dd className={`text-lg font-semibold tabular-nums ${stat.tone}`}>{stat.value}</dd>
-            <dt className="text-xs text-muted">{stat.label}</dt>
-          </div>
-        ))}
-      </dl>
-    </div>
-  );
-}
-
-function ReportSkeleton() {
-  return (
-    <div role="status" aria-label="Generating report" className="mt-4 space-y-3 print:hidden">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[0, 1, 2, 3].map((index) => (
-          <div
-            key={index}
-            className="h-24 animate-pulse rounded-xl border border-border bg-surface"
-          />
-        ))}
-      </div>
-      <div className="h-28 animate-pulse rounded-xl border border-border bg-surface" />
-      <div className="h-40 animate-pulse rounded-xl border border-border bg-surface" />
-    </div>
-  );
-}
-
-function ActivityRow({
-  day,
-  expanded,
-  onToggle,
-}: {
-  day: DailyActivity;
-  expanded: boolean;
-  onToggle: () => void;
-}) {
-  const hasMeals = day.meals.length > 0;
-
-  const rowFields = (
-    <>
-      <span className="font-medium tabular-nums">{formatShortDate(day.date)}</span>
-      <span className="truncate">{day.workout ? day.workout.name : "—"}</span>
-      <span>
-        {day.workout ? (
-          <StatusBadge status={getActivityStatus(day.workout)} />
-        ) : (
-          <span className="text-xs text-muted">—</span>
-        )}
-      </span>
-      <span className="truncate">{hasMeals ? getMealPlanName(day.meals) : "—"}</span>
-      <span className="text-xs text-muted sm:text-sm">{getMealSummaryText(day.meals)}</span>
-      {hasMeals ? (
-        <Icon
-          name="arrow"
-          className={`ml-auto size-4 shrink-0 text-muted transition-transform print:hidden ${expanded ? "rotate-90" : ""}`}
-        />
-      ) : (
-        <span className="ml-auto size-4 shrink-0 print:hidden" aria-hidden="true" />
-      )}
-    </>
-  );
-
-  return (
-    <div className="border-b border-border last:border-b-0 print:break-inside-avoid">
-      {hasMeals ? (
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={expanded}
-          className={`flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-left text-sm transition-colors hover:bg-hover print:hover:bg-transparent ${activityGridClass}`}
-        >
-          {rowFields}
-        </button>
-      ) : (
-        <div
-          className={`flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm ${activityGridClass}`}
-        >
-          {rowFields}
-        </div>
-      )}
-
-      {expanded && hasMeals && (
-        <div className="border-t border-border bg-background px-3 py-2 text-sm print:hidden">
-          <p className="text-xs font-semibold text-muted">Meals</p>
-          <ul className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {day.meals.map((meal) => (
-              <li
-                key={meal.mealStatusId}
-                className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1"
-              >
-                <span className="min-w-0 flex-1 truncate">{meal.name}</span>
-                <StatusBadge status={getActivityStatus(meal)} />
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
+import DailyActivityTable from "./components/DailyActivityTable";
+import PaymentsSection from "./components/PaymentsSection";
+import ReportEmptyState from "./components/ReportEmptyState";
+import ReportForm from "./components/ReportForm";
+import ReportHeader from "./components/ReportHeader";
+import ReportSkeleton from "./components/ReportSkeleton";
+import ReportSummary from "./components/ReportSummary";
+import type {
+  ClientOption,
+  ClientReport,
+  ReportFormError,
+} from "./report-types";
+import { validateReportInput } from "./report-utils";
 
 export default function ReportsPage() {
-  const [clientSearch, setClientSearch] = useState("");
-  const [clientOptions, setClientOptions] = useState<ClientOption[]>([]);
-  const [isLoadingClients, setIsLoadingClients] = useState(false);
-  const [clientsError, setClientsError] = useState("");
-  const [selectedClient, setSelectedClient] = useState<ClientOption | null>(null);
-  const [isClientMenuOpen, setIsClientMenuOpen] = useState(false);
-
+  const [selectedClient, setSelectedClient] = useState<ClientOption | null>(
+    null,
+  );
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [formError, setFormError] = useState("");
+  const [formError, setFormError] = useState<ReportFormError | null>(null);
+  const clientInputRef = useRef<HTMLInputElement>(null);
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const endDateRef = useRef<HTMLInputElement>(null);
 
   const [report, setReport] = useState<ClientReport | null>(null);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState("");
   const [hasGenerated, setHasGenerated] = useState(false);
-  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (selectedClient || !isClientMenuOpen) return;
-
-    let ignore = false;
-    const timer = window.setTimeout(async () => {
-      setIsLoadingClients(true);
-      setClientsError("");
-      try {
-        const response = await api.get<PagedResponse<ClientOption>>(
-          Endpoints.clients(1, 8, clientSearch.trim(), ""),
-        );
-        if (!ignore) setClientOptions(response.data.items);
-      } catch (error) {
-        console.error("Failed to load clients:", error);
-        if (!ignore) {
-          setClientsError(getErrorMessage(error, "Clients could not be loaded."));
-        }
-      } finally {
-        if (!ignore) setIsLoadingClients(false);
-      }
-    }, 250);
-
-    return () => {
-      ignore = true;
-      window.clearTimeout(timer);
-    };
-  }, [selectedClient, clientSearch, isClientMenuOpen]);
+  const [expandedDate, setExpandedDate] = useState<string | null>(null);
+  const [activityPage, setActivityPage] = useState(1);
 
   async function generateReport(clientId: number, start: string, end: string) {
     try {
       setIsGenerating(true);
       setGenerateError("");
 
-      const response = await api.get<ClientReport>(Endpoints.clientReport(clientId, start, end));
+      const response = await api.get<ClientReport>(
+        Endpoints.clientReport(clientId, start, end),
+      );
 
       setReport(response.data);
       setGeneratedAt(new Date());
-      setExpandedDates(new Set());
+      setExpandedDate(null);
+      setActivityPage(1);
     } catch (error) {
       console.error("Failed to generate report:", error);
       setReport(null);
-      setGenerateError(getErrorMessage(error, "Report could not be generated."));
+      setGenerateError(
+        getErrorMessage(error, "Report could not be generated."),
+      );
     } finally {
       setIsGenerating(false);
     }
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  // Shared by Generate and Retry. Returns the client when input is valid.
+  function validateForm() {
+    const error = validateReportInput(selectedClient, startDate, endDate);
+    setFormError(error);
+    if (error) {
+      const refs = {
+        client: clientInputRef,
+        start: startDateRef,
+        end: endDateRef,
+      };
+      refs[error.field].current?.focus();
+      return null;
+    }
+    return selectedClient;
+  }
 
-    if (!selectedClient) {
-      setFormError("Select a client.");
-      return;
-    }
-    if (!startDate || !endDate) {
-      setFormError("Start date and end date are required.");
-      return;
-    }
-    if (startDate > endDate) {
-      setFormError("Start date cannot be after end date.");
-      return;
-    }
+  async function handleSubmit() {
+    const client = validateForm();
+    if (!client) return;
 
-    setFormError("");
     setHasGenerated(true);
-    await generateReport(selectedClient.id, startDate, endDate);
+    await generateReport(client.id, startDate, endDate);
   }
 
   function handleRetry() {
-    if (!selectedClient || !startDate || !endDate) return;
-    void generateReport(selectedClient.id, startDate, endDate);
+    const client = validateForm();
+    if (!client) return;
+
+    void generateReport(client.id, startDate, endDate);
+  }
+
+  function handleClearClient() {
+    setSelectedClient(null);
+    setReport(null);
+    setHasGenerated(false);
   }
 
   function toggleDay(date: string) {
-    setExpandedDates((current) => {
-      const next = new Set(current);
-      if (next.has(date)) {
-        next.delete(date);
-      } else {
-        next.add(date);
-      }
-      return next;
-    });
+    setExpandedDate((current) => (current === date ? null : date));
   }
+
+  function changeActivityPage(page: number) {
+    setActivityPage(page);
+    setExpandedDate(null);
+  }
+
+  const isEmptyState = !hasGenerated && !isGenerating;
 
   return (
     <div>
@@ -381,157 +121,29 @@ export default function ReportsPage() {
         />
       </div>
 
-      <section className="rounded-xl border border-border bg-surface p-4 print:hidden">
-        <form
-          onSubmit={(event) => void handleSubmit(event)}
-          noValidate
-          className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end"
-        >
-          <div
-            className="relative lg:min-w-56 lg:flex-1"
-            onBlur={(event) => {
-              if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-                setIsClientMenuOpen(false);
-              }
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") setIsClientMenuOpen(false);
-            }}
-          >
-            <label htmlFor="report-client-search" className="mb-1 block text-sm font-medium">
-              Client
-            </label>
-            {selectedClient ? (
-              <div className="flex min-h-11 items-center justify-between gap-2 rounded-md border border-input-border bg-background px-3">
-                <span className="truncate font-medium">{selectedClient.fullName}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedClient(null);
-                    setReport(null);
-                    setHasGenerated(false);
-                    setIsClientMenuOpen(true);
-                  }}
-                  disabled={isGenerating}
-                  className="shrink-0 text-sm font-medium text-primary-hover underline-offset-2 hover:underline disabled:opacity-60 dark:text-primary"
-                >
-                  Change
-                </button>
-              </div>
-            ) : (
-              <>
-                <input
-                  id="report-client-search"
-                  type="search"
-                  value={clientSearch}
-                  onChange={(event) => {
-                    setClientSearch(event.target.value);
-                    setIsClientMenuOpen(true);
-                  }}
-                  onFocus={() => setIsClientMenuOpen(true)}
-                  placeholder="Search clients by name"
-                  autoComplete="off"
-                  className={inputClass}
-                />
-                {isClientMenuOpen && (
-                  <div className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-md border border-border bg-surface shadow-xl">
-                    {isLoadingClients ? (
-                      <p role="status" className="px-3 py-2 text-sm text-muted">
-                        Loading clients...
-                      </p>
-                    ) : clientsError ? (
-                      <p role="alert" className="px-3 py-2 text-sm text-danger">
-                        {clientsError}
-                      </p>
-                    ) : clientOptions.length === 0 ? (
-                      <p className="px-3 py-2 text-sm text-muted">No clients found.</p>
-                    ) : (
-                      <ul>
-                        {clientOptions.map((option) => (
-                          <li key={option.id}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedClient(option);
-                                setIsClientMenuOpen(false);
-                              }}
-                              className="block min-h-9 w-full truncate px-3 py-1.5 text-left text-sm hover:bg-hover"
-                            >
-                              {option.fullName}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 lg:flex lg:gap-3">
-            <div className="lg:w-36">
-              <label htmlFor="report-start-date" className="mb-1 block text-sm font-medium">
-                Start date
-              </label>
-              <input
-                id="report-start-date"
-                type="date"
-                value={startDate}
-                max={endDate || undefined}
-                onChange={(event) => setStartDate(event.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="lg:w-36">
-              <label htmlFor="report-end-date" className="mb-1 block text-sm font-medium">
-                End date
-              </label>
-              <input
-                id="report-end-date"
-                type="date"
-                value={endDate}
-                min={startDate || undefined}
-                max={toDateKey(new Date())}
-                onChange={(event) => setEndDate(event.target.value)}
-                className={inputClass}
-              />
-            </div>
-          </div>
-
-          <div className="lg:shrink-0">
-            <button
-              type="submit"
-              disabled={isGenerating}
-              aria-busy={isGenerating}
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-primary bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
-            >
-              {isGenerating ? "Generating..." : "Generate Report"}
-            </button>
-          </div>
-        </form>
-
-        {formError && (
-          <p role="alert" className="mt-3 text-sm text-danger">
-            {formError}
-          </p>
-        )}
-      </section>
-
-      {!hasGenerated && !isGenerating && (
-        <section className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-border bg-surface px-4 py-3.5 print:hidden">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
-            <Icon name="report" className="size-4" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold">No report generated yet</p>
-            <p className="text-sm text-muted">
-              Select a client and date range, then click Generate Report.
-            </p>
-          </div>
-        </section>
-      )}
+      <div
+        className={
+          isEmptyState ? "grid gap-3 lg:grid-cols-[3fr_2fr]" : undefined
+        }
+      >
+        <ReportForm
+          isEmptyState={isEmptyState}
+          selectedClient={selectedClient}
+          onSelectClient={setSelectedClient}
+          onClearClient={handleClearClient}
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          formError={formError}
+          isGenerating={isGenerating}
+          onSubmit={() => void handleSubmit()}
+          clientInputRef={clientInputRef}
+          startDateRef={startDateRef}
+          endDateRef={endDateRef}
+        />
+        {isEmptyState && <ReportEmptyState />}
+      </div>
 
       {isGenerating && <ReportSkeleton />}
 
@@ -552,140 +164,17 @@ export default function ReportsPage() {
       )}
 
       {!isGenerating && !generateError && report && (
-        <div className="mt-4 space-y-3 print:mt-0 print:space-y-3">
-          <section className="rounded-xl border border-border bg-surface p-4 print:break-inside-avoid print:border-0 print:p-0">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-                  Client Report
-                </p>
-                <h2 className="mt-0.5 text-lg font-semibold">{report.client.fullName}</h2>
-                <p className="mt-0.5 text-sm text-muted">
-                  {formatDate(report.period.startDate)} – {formatDate(report.period.endDate)}
-                </p>
-                {generatedAt && (
-                  <p className="text-xs text-muted">
-                    Generated {generatedAtFormatter.format(generatedAt)}
-                  </p>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="inline-flex min-h-9 shrink-0 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-hover print:hidden"
-              >
-                <Icon name="print" className="size-4" />
-                Print Report
-              </button>
-            </div>
-          </section>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-4 print:break-inside-avoid">
-            <SummaryMetric
-              label="Workout Completion"
-              value={`${report.workoutSummary.completionRate}%`}
-            />
-            <SummaryMetric
-              label="Meal Completion"
-              value={`${report.mealSummary.completionRate}%`}
-            />
-            <SummaryMetric
-              label="Paid Amount"
-              value={currencyFormatter.format(report.paymentSummary.paidAmount)}
-            />
-            <SummaryMetric
-              label="Pending Amount"
-              value={currencyFormatter.format(report.paymentSummary.pendingAmount)}
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <SummaryBreakdown
-              title="Workout Summary"
-              total={report.workoutSummary.total}
-              totalLabel="Total workouts"
-              completed={report.workoutSummary.completed}
-              pending={report.workoutSummary.pending}
-              skipped={report.workoutSummary.skipped}
-              missed={report.workoutSummary.missed}
-            />
-            <SummaryBreakdown
-              title="Meal Summary"
-              total={report.mealSummary.total}
-              totalLabel="Total meals"
-              completed={report.mealSummary.completed}
-              pending={report.mealSummary.pending}
-              skipped={report.mealSummary.skipped}
-              missed={report.mealSummary.missed}
-            />
-
-            <section className="rounded-lg border border-border bg-background p-3 sm:col-span-2 lg:col-span-1 print:break-inside-avoid print:p-2">
-              <h3 className="text-sm font-semibold">Payment Summary</h3>
-              <dl className={metricGridClass}>
-                <div>
-                  <dd className="text-lg font-semibold tabular-nums">
-                    {currencyFormatter.format(report.paymentSummary.totalAmount)}
-                  </dd>
-                  <dt className="text-xs text-muted">Total amount</dt>
-                </div>
-                <div>
-                  <dd className="text-lg font-semibold tabular-nums text-primary-hover dark:text-primary">
-                    {currencyFormatter.format(report.paymentSummary.paidAmount)}
-                  </dd>
-                  <dt className="text-xs text-muted">Paid amount</dt>
-                </div>
-                <div>
-                  <dd className="text-lg font-semibold tabular-nums text-warning">
-                    {currencyFormatter.format(report.paymentSummary.pendingAmount)}
-                  </dd>
-                  <dt className="text-xs text-muted">Pending amount</dt>
-                </div>
-                <div>
-                  <dd className="text-lg font-semibold tabular-nums">
-                    {report.paymentSummary.paymentsCount}
-                  </dd>
-                  <dt className="text-xs text-muted">Payments</dt>
-                </div>
-                <div>
-                  <dd className="text-lg font-semibold tabular-nums text-danger">
-                    {report.paymentSummary.overdueCount}
-                  </dd>
-                  <dt className="text-xs text-muted">Overdue</dt>
-                </div>
-              </dl>
-            </section>
-          </div>
-
-          <section className="rounded-xl border border-border bg-surface p-3 print:p-0">
-            <h2 className="px-1 pb-1 font-semibold print:break-after-avoid">Daily Activity</h2>
-
-            {report.dailyActivity.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-border px-3 py-3 text-sm text-muted">
-                No activity found for this period.
-              </p>
-            ) : (
-              <div className="overflow-hidden rounded-lg border border-border">
-                <div
-                  className={`hidden border-b border-border bg-background px-3 py-2 text-xs font-semibold tracking-wide text-muted uppercase ${activityGridClass}`}
-                >
-                  <span>Date</span>
-                  <span>Workout</span>
-                  <span>Status</span>
-                  <span>Meal plan</span>
-                  <span>Meals</span>
-                  <span className="print:hidden" aria-hidden="true" />
-                </div>
-                {report.dailyActivity.map((day) => (
-                  <ActivityRow
-                    key={day.date}
-                    day={day}
-                    expanded={expandedDates.has(day.date)}
-                    onToggle={() => toggleDay(day.date)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
+        <div className="mt-3 space-y-3 print:mt-0 print:space-y-2">
+          <ReportHeader report={report} generatedAt={generatedAt} />
+          <ReportSummary report={report} />
+          <PaymentsSection payments={report.paymentSummary} />
+          <DailyActivityTable
+            activity={report.dailyActivity}
+            page={activityPage}
+            onPageChange={changeActivityPage}
+            expandedDate={expandedDate}
+            onToggleDay={toggleDay}
+          />
         </div>
       )}
     </div>

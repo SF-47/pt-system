@@ -35,6 +35,7 @@ export default function MealPlansPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [stats, setStats] = useState<MealStats | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const [listError, setListError] = useState("");
   const [statsError, setStatsError] = useState("");
@@ -80,6 +81,8 @@ export default function MealPlansPage() {
       } catch {
         if (!ignore)
           setStatsError("Meal plan totals are currently unavailable.");
+      } finally {
+        if (!ignore) setIsStatsLoading(false);
       }
     }
 
@@ -89,7 +92,7 @@ export default function MealPlansPage() {
     };
   }, []);
 
-  if (isInitialLoading) return <MealPlansLoading />;
+  if (isInitialLoading || isStatsLoading) return <MealPlansLoading />;
 
   return (
     <div>
