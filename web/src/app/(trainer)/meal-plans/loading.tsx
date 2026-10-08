@@ -27,7 +27,7 @@ export default function Loading() {
         <div className="h-4 w-48 rounded bg-border" />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 min-[1200px]:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 min-[640px]:grid-cols-2 min-[1200px]:grid-cols-3">
         {Array.from({ length: 6 }).map((_, card) => (
           <PlanCardSkeleton key={card} kind="meal" />
         ))}

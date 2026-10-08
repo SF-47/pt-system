@@ -38,7 +38,11 @@ public class TrainerAuthService : ITrainerAuthService
             );
         }
 
-        var token = _jwtService.GenerateTrainerToken(trainer.Id, trainer.Username);
+        var token = _jwtService.GenerateTrainerToken(
+            trainer.Id,
+            trainer.Username,
+            trainer.FullName
+        );
 
         var response = new TrainerLoginResponse
         {

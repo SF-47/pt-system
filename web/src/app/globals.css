@@ -126,9 +126,15 @@ textarea { line-height: 1.65; }
 
 html.dark :focus-visible { outline-color: var(--text); }
 
+@media screen and (max-width: 767px) {
+  .activity-table, .activity-table tbody, .activity-table tr:not(.hidden), .activity-table td { display: block; width: 100%; }
+  .activity-table thead { display: none; }
+  .activity-table td + td { border-left: 0; }
+}
+
 @media print {
   @page {
-    size: A4;
+    size: A4 portrait;
     margin: 0;
   }
 
@@ -153,8 +159,13 @@ html.dark :focus-visible { outline-color: var(--text); }
     --hover: #F3F4F6;
   }
 
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   body {
     background: #FFFFFF;
-    padding: 12mm;
+    padding: 8mm 10mm;
   }
 }

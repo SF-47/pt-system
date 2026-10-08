@@ -8,6 +8,8 @@ import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import EmptyState from "@/components/EmptyState";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
+import Pagination from "@/components/Pagination";
+import { useFitPageSize } from "@/hooks/useFitPageSize";
 import api from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { Endpoints } from "@/lib/Endpoints";
@@ -34,6 +36,8 @@ type WorkoutPlan = {
   exercises: Exercise[];
 };
 
+const getExerciseRowHeight = (width: number) => (width < 640 ? 84 : 58);
+
 export default function WorkoutPlanPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -52,6 +56,11 @@ export default function WorkoutPlanPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [page, setPage] = useState(1);
+  const { ref: listRef, pageSize } = useFitPageSize(
+    plan?.exercises.length ?? 0,
+    getExerciseRowHeight,
+  );
 
   useEffect(() => {
     let ignore = false;
@@ -141,23 +150,12 @@ export default function WorkoutPlanPage() {
     );
   }
 
-  const useTwoColumns = plan.exercises.length > 8;
-  const rowsPerColumn = useTwoColumns
-    ? Math.ceil(plan.exercises.length / 2)
-    : plan.exercises.length;
-
-  function dividers(index: number) {
-    if (!useTwoColumns) {
-      return "";
-    }
-
-    const startsColumn = index % rowsPerColumn === 0;
-    const inSecondColumn = index >= rowsPerColumn;
-
-    return `${startsColumn ? " min-[900px]:border-t-0" : ""}${
-      inSecondColumn ? " min-[900px]:border-l" : ""
-    }`;
-  }
+  const totalPages = Math.max(1, Math.ceil(plan.exercises.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const visibleExercises = plan.exercises.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   return (
     <div className="w-full">
@@ -226,23 +224,20 @@ export default function WorkoutPlanPage() {
         </div>
 
         {plan.exercises.length > 0 ? (
+          <>
           <ol
+            ref={listRef}
             aria-label="Exercises in this workout plan"
-            style={{ "--rows": rowsPerColumn } as React.CSSProperties}
-            className={`overflow-hidden rounded-xl border border-border bg-surface ${
-              useTwoColumns
-                ? "min-[900px]:grid min-[900px]:grid-flow-col min-[900px]:grid-cols-2 min-[900px]:grid-rows-[repeat(var(--rows),auto)]"
-                : ""
-            }`}
+            className="overflow-hidden rounded-xl border border-border bg-surface"
           >
-            {plan.exercises.map((exercise, index) => (
+            {visibleExercises.map((exercise, index) => (
               <li
                 key={exercise.id}
-                className={`flex flex-col gap-1.5 border-t border-border px-4 py-2.5 transition-colors first:border-t-0 hover:bg-hover sm:flex-row sm:items-center sm:gap-4${dividers(index)}`}
+                className="flex flex-col gap-1.5 border-t border-border px-4 py-2.5 transition-colors first:border-t-0 hover:bg-hover sm:flex-row sm:items-center sm:gap-4"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-primary-hover tabular-nums dark:text-foreground">
-                    {String(index + 1).padStart(2, "0")}
+                    {String((currentPage - 1) * pageSize + index + 1).padStart(2, "0")}
                   </span>
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-foreground">
@@ -270,6 +265,15 @@ export default function WorkoutPlanPage() {
               </li>
             ))}
           </ol>
+          {totalPages > 1 && (
+            <Pagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPrevious={() => setPage(Math.max(1, currentPage - 1))}
+              onNext={() => setPage(Math.min(totalPages, currentPage + 1))}
+            />
+          )}
+          </>
         ) : (
           <div className="rounded-xl border border-border bg-surface">
             <EmptyState

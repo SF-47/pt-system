@@ -9,6 +9,8 @@ import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import EmptyState from "@/components/EmptyState";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
+import Pagination from "@/components/Pagination";
+import { useFitPageSize } from "@/hooks/useFitPageSize";
 import api from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { Endpoints } from "@/lib/Endpoints";
@@ -32,6 +34,8 @@ type MealPlan = {
   meals: Meal[];
 };
 
+const getMealRowHeight = () => 58;
+
 export default function MealPlanPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -54,6 +58,11 @@ export default function MealPlanPage() {
   const [deletingMealId, setDeletingMealId] = useState<number | null>(null);
   const [deleteMealError, setDeleteMealError] = useState("");
   const [deleteMealMessage, setDeleteMealMessage] = useState("");
+  const [page, setPage] = useState(1);
+  const { ref: listRef, pageSize } = useFitPageSize(
+    plan?.meals.length ?? 0,
+    getMealRowHeight,
+  );
 
   useEffect(() => {
     let ignore = false;
@@ -175,23 +184,12 @@ export default function MealPlanPage() {
     );
   }
 
-  const useTwoColumns = plan.meals.length > 4;
-  const rowsPerColumn = useTwoColumns
-    ? Math.ceil(plan.meals.length / 2)
-    : plan.meals.length;
-
-  function dividers(index: number) {
-    if (!useTwoColumns) {
-      return "";
-    }
-
-    const startsColumn = index % rowsPerColumn === 0;
-    const inSecondColumn = index >= rowsPerColumn;
-
-    return `${startsColumn ? " min-[900px]:border-t-0" : ""}${
-      inSecondColumn ? " min-[900px]:border-l" : ""
-    }`;
-  }
+  const totalPages = Math.max(1, Math.ceil(plan.meals.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const visibleMeals = plan.meals.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   return (
     <div className="w-full">
@@ -266,22 +264,19 @@ export default function MealPlanPage() {
         )}
 
         {plan.meals.length > 0 ? (
+          <>
           <ol
+            ref={listRef}
             aria-label="Meals in this meal plan"
-            style={{ "--rows": rowsPerColumn } as React.CSSProperties}
-            className={`overflow-hidden rounded-xl border border-border bg-surface ${
-              useTwoColumns
-                ? "min-[900px]:grid min-[900px]:grid-flow-col min-[900px]:grid-cols-2 min-[900px]:grid-rows-[repeat(var(--rows),auto)]"
-                : ""
-            }`}
+            className="overflow-hidden rounded-xl border border-border bg-surface"
           >
-            {plan.meals.map((meal, index) => (
+            {visibleMeals.map((meal, index) => (
               <li
                 key={meal.id}
-                className={`flex items-center gap-3 border-t border-border px-4 py-2.5 transition-colors first:border-t-0 hover:bg-hover${dividers(index)}`}
+                className="flex items-center gap-3 border-t border-border px-4 py-2.5 transition-colors first:border-t-0 hover:bg-hover"
               >
                 <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary-soft text-xs font-semibold text-primary-hover tabular-nums dark:text-foreground">
-                  {String(index + 1).padStart(2, "0")}
+                  {String((currentPage - 1) * pageSize + index + 1).padStart(2, "0")}
                 </span>
 
                 <div className="min-w-0 flex-1">
@@ -315,6 +310,15 @@ export default function MealPlanPage() {
               </li>
             ))}
           </ol>
+          {totalPages > 1 && (
+            <Pagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPrevious={() => setPage(Math.max(1, currentPage - 1))}
+              onNext={() => setPage(Math.min(totalPages, currentPage + 1))}
+            />
+          )}
+          </>
         ) : (
           <div className="rounded-xl border border-border bg-surface">
             <EmptyState

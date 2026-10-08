@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import BackLink from "@/components/BackLink";
 import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
+import Pagination from "@/components/Pagination";
+import { useFitPageSize } from "@/hooks/useFitPageSize";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
 import { getErrorMessage } from "@/lib/getErrorMessage";
@@ -39,6 +41,8 @@ const emptyMealForm: MealForm = {
   instructions: "",
 };
 
+const getRowHeight = (width: number) => (width < 1024 ? 150 : 72);
+
 export default function EditMealPlanPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -67,6 +71,12 @@ export default function EditMealPlanPage() {
   const [deleteMealMessage, setDeleteMealMessage] = useState("");
   const [isReordering, setIsReordering] = useState(false);
   const [reorderError, setReorderError] = useState("");
+  const [page, setPage] = useState(1);
+  const { ref: listRef, pageSize } = useFitPageSize(meals.length, getRowHeight);
+  const totalPages = Math.max(1, Math.ceil(meals.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageOffset = (currentPage - 1) * pageSize;
+  const visibleMeals = meals.slice(pageOffset, pageOffset + pageSize);
 
   useEffect(() => {
     let ignore = false;
@@ -235,6 +245,19 @@ export default function EditMealPlanPage() {
     } finally {
       setIsReordering(false);
     }
+  }
+
+  function handleMove(index: number, direction: -1 | 1) {
+    const target = index + direction;
+
+    if (target < 0 || target >= meals.length) {
+      return;
+    }
+
+    const reordered = [...meals];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    setPage(Math.floor(target / pageSize) + 1);
+    void handleReorder(reordered);
   }
 
   async function handleDeleteMeal() {
@@ -641,12 +664,21 @@ export default function EditMealPlanPage() {
         )}
 
         {meals.length > 0 ? (
+          <>
+          <div ref={listRef}>
           <SortableList
-            items={meals}
+            items={visibleMeals}
             disabled={isReordering}
-            onReorder={(reordered) => void handleReorder(reordered)}
+            onReorder={(reordered) =>
+              void handleReorder([
+                ...meals.slice(0, pageOffset),
+                ...reordered,
+                ...meals.slice(pageOffset + pageSize),
+              ])
+            }
           >
-          {meals.map((meal, index) => {
+          {visibleMeals.map((meal, localIndex) => {
+            const index = pageOffset + localIndex;
             const isUpdating = updatingMealId === meal.id;
             const isEditing =
               editingMealId === meal.id && mealDraft?.id === meal.id;
@@ -677,6 +709,26 @@ export default function EditMealPlanPage() {
                   </div>
 
                   <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleMove(index, -1)}
+                      disabled={isReordering || index === 0}
+                      aria-label={`Move ${meal.name} up`}
+                      title="Move up"
+                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronUp className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMove(index, 1)}
+                      disabled={isReordering || index === meals.length - 1}
+                      aria-label={`Move ${meal.name} down`}
+                      title="Move down"
+                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronDown className="size-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleEditMeal(meal)}
@@ -790,6 +842,16 @@ export default function EditMealPlanPage() {
             );
           })}
           </SortableList>
+          </div>
+          {totalPages > 1 && (
+            <Pagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPrevious={() => setPage(Math.max(1, currentPage - 1))}
+              onNext={() => setPage(Math.min(totalPages, currentPage + 1))}
+            />
+          )}
+          </>
         ) : !isAddingMeal ? (
           <p className="border-t border-border px-5 py-8 text-center text-sm text-muted sm:px-6">
             This meal plan does not have any meals yet.

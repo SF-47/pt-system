@@ -15,6 +15,7 @@ function getTrainerName() {
     const paddedBase64 = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
     const payload = JSON.parse(atob(paddedBase64)) as Record<string, unknown>;
     const name =
+      payload.full_name ??
       payload.unique_name ??
       payload.name ??
       payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];

@@ -45,7 +45,7 @@ public class JwtService : IJwtService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public string GenerateTrainerToken(int trainerId, string username)
+    public string GenerateTrainerToken(int trainerId, string username, string fullName)
     {
         var key = _configuration["Jwt:Key"];
         if (string.IsNullOrWhiteSpace(key))
@@ -58,6 +58,7 @@ public class JwtService : IJwtService
             new Claim(ClaimTypes.NameIdentifier, trainerId.ToString()),
             new Claim(ClaimTypes.Name, username),
             new Claim(ClaimTypes.Role, "Trainer"),
+            new Claim("full_name", fullName),
         };
 
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
