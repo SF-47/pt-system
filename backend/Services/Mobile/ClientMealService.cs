@@ -19,10 +19,17 @@ public class ClientMealService : IClientMealService
     public async Task<PagedResponse<MobileMealPlanResponse>> GetMealsAsync(
         int clientId,
         int page,
-        int pageSize
+        int pageSize,
+        int? days
     )
     {
         var query = _db.ClientMealPlans.Where(a => a.ClientId == clientId);
+        if (days is not null)
+        {
+            var from = DateTime.UtcNow.Date.AddDays(-(days.Value - 1));
+            query = query.Where(a => a.AssignedDate >= from);
+        }
+
         var totalCount = await query.CountAsync();
         var response = new PagedResponse<MobileMealPlanResponse>
         {

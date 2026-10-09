@@ -6,7 +6,7 @@ namespace backend.Services.Mobile;
 
 public interface IClientMealService
 {
-    Task<PagedResponse<MobileMealPlanResponse>> GetMealsAsync(int clientId, int page, int pageSize);
+    Task<PagedResponse<MobileMealPlanResponse>> GetMealsAsync(int clientId, int page, int pageSize, int? days);
 
     Task<bool> UpdateMealStatusAsync(
         int mealStatusId,

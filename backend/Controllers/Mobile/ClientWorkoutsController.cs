@@ -23,7 +23,7 @@ public class ClientWorkoutsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResponse<MobileWorkoutResponse>>> GetWorkouts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<ActionResult<PagedResponse<MobileWorkoutResponse>>> GetWorkouts([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] int? days = null)
     {
         var clientId = GetClientId();
         if (clientId is null)
@@ -36,7 +36,12 @@ public class ClientWorkoutsController : ControllerBase
             return BadRequest(new { message = "Page must be at least 1 and pageSize must be between 1 and 50." });
         }
 
-        var workouts = await _service.GetWorkoutsAsync(clientId.Value, page, pageSize);
+        if (days is < 1 or > 365)
+        {
+            return BadRequest(new { message = "Days must be between 1 and 365." });
+        }
+
+        var workouts = await _service.GetWorkoutsAsync(clientId.Value, page, pageSize, days);
         return Ok(workouts);
     }
 

@@ -4,5 +4,5 @@ namespace backend.Services.Mobile;
 
 public interface IClientProgressService
 {
-    Task<ClientProgressResponse> GetProgressAsync(int clientId);
+    Task<ClientProgressResponse> GetProgressAsync(int clientId, string period, DateTime? date);
 }
