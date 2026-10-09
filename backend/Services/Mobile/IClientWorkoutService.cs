@@ -9,7 +9,8 @@ public interface IClientWorkoutService
     Task<PagedResponse<MobileWorkoutResponse>> GetWorkoutsAsync(
         int clientId,
         int page,
-        int pageSize
+        int pageSize,
+        int? days
     );
 
     Task<MobileWorkoutDetailsResponse?> GetWorkoutAsync(int assignmentId, int clientId);

@@ -21,7 +21,7 @@ public class ClientProgressController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<ClientProgressResponse>> GetProgress()
+    public async Task<ActionResult<ClientProgressResponse>> GetProgress([FromQuery] string period = "all", [FromQuery] DateTime? date = null)
     {
         var clientId = GetClientId();
         if (clientId is null)
@@ -29,7 +29,14 @@ public class ClientProgressController : ControllerBase
             return Unauthorized();
         }
 
-        var response = await _service.GetProgressAsync(clientId.Value);
+        var allowedPeriods = new[] { "all", "today", "week", "month", "year" };
+        period = period.Trim().ToLowerInvariant();
+        if (!allowedPeriods.Contains(period))
+        {
+            return BadRequest(new { message = "Period must be one of: all, today, week, month, year." });
+        }
+
+        var response = await _service.GetProgressAsync(clientId.Value, period, date);
         return Ok(response);
     }
 

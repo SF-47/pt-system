@@ -14,12 +14,32 @@ public class ClientProgressService : IClientProgressService
         _db = db;
     }
 
-    public async Task<ClientProgressResponse> GetProgressAsync(int clientId)
+    public async Task<ClientProgressResponse> GetProgressAsync(int clientId, string period, DateTime? date)
     {
-        var workouts = _db.ClientWorkoutAssignments.Where(a => a.ClientId == clientId);
+        var today = DateTime.UtcNow.Date;
+        var from = period switch
+        {
+            "today" => today,
+            "week" => today.AddDays(-6),
+            "month" => today.AddDays(-29),
+            "year" => today.AddDays(-364),
+            _ => DateTime.MinValue,
+        };
+        var to = DateTime.MaxValue;
+
+        if (date is not null)
+        {
+            from = date.Value.Date;
+            to = from.AddDays(1);
+        }
+
+        var workouts = _db.ClientWorkoutAssignments.Where(a =>
+            a.ClientId == clientId && a.AssignedDate >= from && a.AssignedDate < to
+        );
 
         var mealStatuses = _db.ClientMealStatuses.Where(status =>
-            status.ClientMealPlan.ClientId == clientId
+            status.ClientMealPlan.ClientId == clientId && status.ClientMealPlan.AssignedDate >= from
+            && status.ClientMealPlan.AssignedDate < to
         );
 
         var response = new ClientProgressResponse
