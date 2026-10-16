@@ -4,6 +4,7 @@ using backend.DTOs.Common;
 using backend.Models;
 using backend.Services;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 
 namespace backend.Services.Clients;
 
@@ -196,7 +197,11 @@ public class ClientService : IClientService
         );
     }
 
-    public async Task<bool> DeleteAsync(int id, int trainerId)
+    public async Task<ServiceResult<ClientResponse>> UpdateStatusAsync(
+        int id,
+        UpdateClientStatusRequest request,
+        int trainerId
+    )
     {
         var client = await _db.Clients.FirstOrDefaultAsync(client =>
             client.Id == id && client.TrainerId == trainerId
@@ -204,13 +209,77 @@ public class ClientService : IClientService
 
         if (client is null)
         {
-            return false;
+            return ServiceResult<ClientResponse>.NotFound("Client not found.");
+        }
+
+        client.IsActive = request.IsActive;
+
+        await _db.SaveChangesAsync();
+
+        return ServiceResult<ClientResponse>.Ok(
+            new ClientResponse
+            {
+                Id = client.Id,
+                TrainerId = client.TrainerId,
+                FullName = client.FullName,
+                Username = client.Username,
+                Email = client.Email,
+                PhoneNumber = client.PhoneNumber,
+                IsActive = client.IsActive,
+                CreatedAt = client.CreatedAt,
+            }
+        );
+    }
+
+    public async Task<ServiceResult<bool>> DeleteAsync(int id, int trainerId)
+    {
+        var client = await _db.Clients.FirstOrDefaultAsync(client =>
+            client.Id == id && client.TrainerId == trainerId
+        );
+
+        if (client is null)
+        {
+            return ServiceResult<bool>.NotFound("Client not found.");
+        }
+
+        var paymentCount = await _db.Payments.CountAsync(payment => payment.ClientId == id);
+        var workoutCount = await _db.ClientWorkoutAssignments.CountAsync(assignment =>
+            assignment.ClientId == id
+        );
+        var mealCount = await _db.ClientMealPlans.CountAsync(assignment =>
+            assignment.ClientId == id
+        );
+
+        if (paymentCount > 0 || workoutCount > 0 || mealCount > 0)
+        {
+            return ServiceResult<bool>.Conflict(
+                $"This client has payment or assignment history ({paymentCount} payments, "
+                    + $"{workoutCount} workout assignments, {mealCount} meal assignments) "
+                    + "and cannot be permanently deleted. Deactivate the client instead."
+            );
         }
 
         _db.Clients.Remove(client);
-        await _db.SaveChangesAsync();
 
-        return true;
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+            when (ex.InnerException
+                    is MySqlException
+                    {
+                        ErrorCode: MySqlErrorCode.RowIsReferenced or MySqlErrorCode.RowIsReferenced2
+                    }
+            )
+        {
+            // A payment or assignment was added after the check; the database refused the delete.
+            return ServiceResult<bool>.Conflict(
+                "This client has payment or assignment history and cannot be permanently deleted. Deactivate the client instead."
+            );
+        }
+
+        return ServiceResult<bool>.Ok(true);
     }
 
     public async Task<ServiceResult<bool>> UpdateCredentialsAsync(

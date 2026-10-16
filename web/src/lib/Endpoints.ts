@@ -11,6 +11,7 @@ export const Endpoints = {
   clientGrowth: "/api/stats/client-growth",
 
   clientById: (id: number) => `/api/clients/${id}`,
+  clientStatus: (id: number) => `/api/clients/${id}/status`,
 
   clientProgress: (clientId: number, startDate?: string, endDate?: string) => {
     const params = new URLSearchParams();

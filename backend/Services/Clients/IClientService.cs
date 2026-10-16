@@ -23,7 +23,13 @@ public interface IClientService
         int trainerId
     );
 
-    Task<bool> DeleteAsync(int id, int trainerId);
+    Task<ServiceResult<ClientResponse>> UpdateStatusAsync(
+        int id,
+        UpdateClientStatusRequest request,
+        int trainerId
+    );
+
+    Task<ServiceResult<bool>> DeleteAsync(int id, int trainerId);
 
     Task<ServiceResult<bool>> UpdateCredentialsAsync(
         int id,

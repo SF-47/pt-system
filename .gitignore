@@ -1,6 +1,8 @@
 # .NET
 backend/bin/
 backend/obj/
+backend.Tests/bin/
+backend.Tests/obj/
 
 # React/Vite
 web/node_modules/
