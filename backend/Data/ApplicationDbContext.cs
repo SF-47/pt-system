@@ -29,6 +29,29 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<Payment>().Property(p => p.Amount).HasPrecision(10, 2);
 
+        // Client history must never be removed implicitly: the database refuses to delete a
+        // client that still has payments or assignments.
+        modelBuilder
+            .Entity<Payment>()
+            .HasOne(p => p.Client)
+            .WithMany(c => c.Payments)
+            .HasForeignKey(p => p.ClientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder
+            .Entity<ClientWorkoutAssignment>()
+            .HasOne(x => x.Client)
+            .WithMany(c => c.WorkoutAssignments)
+            .HasForeignKey(x => x.ClientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder
+            .Entity<ClientMealPlan>()
+            .HasOne(x => x.Client)
+            .WithMany(c => c.MealPlans)
+            .HasForeignKey(x => x.ClientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder
             .Entity<ClientWorkoutAssignment>()
             .Property(x => x.AssignedDate)

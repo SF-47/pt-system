@@ -361,7 +361,7 @@ namespace backend.Migrations
                     b.HasOne("backend.Models.Client", "Client")
                         .WithMany("MealPlans")
                         .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("backend.Models.MealPlan", "MealPlan")
@@ -399,7 +399,7 @@ namespace backend.Migrations
                     b.HasOne("backend.Models.Client", "Client")
                         .WithMany("WorkoutAssignments")
                         .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("backend.Models.WorkoutPlan", "WorkoutPlan")
@@ -451,7 +451,7 @@ namespace backend.Migrations
                     b.HasOne("backend.Models.Client", "Client")
                         .WithMany("Payments")
                         .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Client");

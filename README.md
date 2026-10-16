@@ -6,7 +6,7 @@ A personal trainer management system. Trainers use a web dashboard to manage cli
 
 **Trainer web app**
 - Secure trainer login (JWT), protected routes, logout
-- Clients: create, edit, credentials, activate/deactivate, delete, search and filter
+- Clients: create, edit, credentials, deactivate/reactivate, permanent delete (only without history), search and filter
 - Workout plans and meal plans: create with items in one step, edit, drag-and-drop ordering, delete protection for assigned plans
 - Weekly schedule per client: assign, change plan or date, and remove workouts and meals (one workout and one meal plan per client per day)
 - Follow-up: progress summary (completed / pending / skipped / missed) and a daily activity view
@@ -120,6 +120,8 @@ Full endpoint documentation (trainer and mobile APIs, models, enums, pagination,
 
 - One workout assignment and one meal-plan assignment per client per calendar day (checked by the API and enforced by unique database indexes).
 - Only active clients can log in or receive new assignments; only non-empty plans can be assigned.
+- Deactivating a client (`PUT /api/clients/{id}/status`) keeps all payments, assignments and completion history; reactivating restores access.
+- Permanent deletion (`DELETE /api/clients/{id}`) is only possible for clients with no payments or assignments; otherwise the API returns `409 Conflict`. The web app asks you to type the client's full name first. Database foreign keys (`Restrict`) enforce this even for concurrent requests.
 - Workout and meal plans that have assignment history cannot be deleted.
 - Workout and meal statuses are Pending / Completed / Skipped. A Pending item dated before today is reported as Missed (derived, not stored).
 - Payments are Pending or Paid; Overdue is a display state for Pending payments past their due date.
@@ -128,3 +130,15 @@ Full endpoint documentation (trainer and mobile APIs, models, enums, pagination,
 ## Docker (backend)
 
 `backend/Dockerfile` builds and runs the API on port `10000`. Provide `ConnectionStrings__DefaultConnection`, `Jwt__Key`, `Jwt__Issuer` and `Jwt__Audience` as environment variables, and apply migrations to the target database with `dotnet ef database update`.
+
+## Automated tests (backend)
+
+`backend.Tests` holds xUnit integration tests that start a disposable MySQL 8.4 container with Testcontainers, apply the real migrations and exercise the API. They never touch your development or production database. Docker must be running.
+
+```bash
+dotnet test backend.Tests
+```
+
+## Deploying migrations
+
+Migration `RestrictClientHistoryDeletes` changes the foreign keys from clients to payments, workout assignments and meal assignments from `CASCADE` to `RESTRICT`. It only replaces constraints and does not change data. Back up the database, then run `dotnet ef database update`. Rolling it back (`dotnet ef database update AddUniqueDailyAssignmentIndexes`) restores cascading deletes, which would again let a client delete remove payments and history.

@@ -7,10 +7,10 @@ using backend.DTOs.Reports;
 using backend.Services.ClientActivity;
 using backend.Services.Clients;
 using backend.Services.Reports;
-using TrainerProgressService = backend.Services.ClientProgress.IClientProgressService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using TrainerProgressService = backend.Services.ClientProgress.IClientProgressService;
 
 namespace backend.Controllers;
 
@@ -132,14 +132,35 @@ public class ClientController : ControllerBase
         {
             return Unauthorized();
         }
-        var deleted = await _clientService.DeleteAsync(id, trainerId.Value);
+        var result = await _clientService.DeleteAsync(id, trainerId.Value);
 
-        if (!deleted)
+        if (!result.Success)
         {
-            return NotFound();
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
         }
 
         return NoContent();
+    }
+
+    [HttpPut("{id}/status")]
+    public async Task<ActionResult<ClientResponse>> UpdateStatus(
+        int id,
+        UpdateClientStatusRequest request
+    )
+    {
+        var trainerId = GetTrainerId();
+        if (trainerId is null)
+        {
+            return Unauthorized();
+        }
+        var result = await _clientService.UpdateStatusAsync(id, request, trainerId.Value);
+
+        if (!result.Success)
+        {
+            return StatusCode(result.StatusCode, new { message = result.ErrorMessage });
+        }
+
+        return Ok(result.Data);
     }
 
     [HttpPut("{id}/credentials")]

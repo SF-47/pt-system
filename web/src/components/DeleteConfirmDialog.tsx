@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type DeleteConfirmDialogProps = {
   open: boolean;
@@ -11,11 +11,19 @@ type DeleteConfirmDialogProps = {
   error?: string;
   confirmLabel?: string;
   confirmingLabel?: string;
+  /** When set, the confirm button stays disabled until this exact text is typed. */
+  requiredText?: string;
+  confirmTone?: "danger" | "primary";
   onCancel: () => void;
   onConfirm: () => void;
 };
 
-export default function DeleteConfirmDialog({
+export default function DeleteConfirmDialog(props: DeleteConfirmDialogProps) {
+  // The body mounts only while open, so the typed confirmation resets every time.
+  return props.open ? <DeleteConfirmDialogBody {...props} /> : null;
+}
+
+function DeleteConfirmDialogBody({
   open,
   title,
   description,
@@ -24,9 +32,13 @@ export default function DeleteConfirmDialog({
   error = "",
   confirmLabel = "Delete",
   confirmingLabel = "Deleting...",
+  requiredText,
+  confirmTone = "danger",
   onCancel,
   onConfirm,
 }: DeleteConfirmDialogProps) {
+  const [typedText, setTypedText] = useState("");
+
   useEffect(() => {
     if (!open) {
       return;
@@ -78,6 +90,27 @@ export default function DeleteConfirmDialog({
           {description}
         </p>
 
+        {requiredText && (
+          <div className="mt-3">
+            <label
+              htmlFor="delete-dialog-confirm-text"
+              className="mb-1.5 block text-sm font-medium"
+            >
+              Type <span className="font-semibold">{requiredText}</span> to
+              confirm
+            </label>
+            <input
+              id="delete-dialog-confirm-text"
+              type="text"
+              autoComplete="off"
+              value={typedText}
+              disabled={isDeleting}
+              onChange={(event) => setTypedText(event.target.value)}
+              className="min-h-11 w-full rounded-md border border-input-border bg-background px-3 py-2 text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60"
+            />
+          </div>
+        )}
+
         {error && (
           <p role="alert" className="mt-3 text-sm text-danger">
             {error}
@@ -96,9 +129,14 @@ export default function DeleteConfirmDialog({
           <button
             type="button"
             onClick={onConfirm}
-            disabled={isDeleting}
+            disabled={
+              isDeleting ||
+              (requiredText !== undefined && typedText.trim() !== requiredText)
+            }
             aria-busy={isDeleting}
-            className="inline-flex min-h-11 items-center justify-center rounded-md bg-danger px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className={`inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 ${
+              confirmTone === "danger" ? "bg-danger" : "bg-primary"
+            }`}
           >
             {isDeleting ? confirmingLabel : confirmLabel}
           </button>

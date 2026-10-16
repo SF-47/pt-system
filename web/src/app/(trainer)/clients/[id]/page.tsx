@@ -13,6 +13,7 @@ import WeeklySchedule from "@/components/client-details/WeeklySchedule";
 import type { Client, Payment } from "@/components/client-details/types";
 import api from "@/lib/api";
 import { Endpoints } from "@/lib/Endpoints";
+import { getErrorMessage } from "@/lib/getErrorMessage";
 import type { PagedResponse } from "@/types/api";
 import ClientDetailsLoading from "./loading";
 
@@ -39,6 +40,10 @@ export default function ClientDetailsPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
+  const [statusError, setStatusError] = useState("");
 
   useEffect(() => {
     let ignore = false;
@@ -96,9 +101,35 @@ export default function ClientDetailsPage() {
       router.push("/clients");
     } catch (error) {
       console.error("Failed to delete client:", error);
-      setDeleteError("Client could not be deleted. Please try again.");
+      setDeleteError(
+        getErrorMessage(error, "Client could not be deleted. Please try again."),
+      );
     } finally {
       setIsDeleting(false);
+    }
+  }
+
+  async function handleSetActive(isActive: boolean) {
+    try {
+      setIsStatusUpdating(true);
+      setStatusError("");
+
+      const response = await api.put<Client>(Endpoints.clientStatus(clientId), {
+        isActive,
+      });
+
+      setClient(response.data);
+      setIsDeactivateOpen(false);
+    } catch (error) {
+      console.error("Failed to update client status:", error);
+      setStatusError(
+        getErrorMessage(
+          error,
+          "Client status could not be updated. Please try again.",
+        ),
+      );
+    } finally {
+      setIsStatusUpdating(false);
     }
   }
 
@@ -128,11 +159,30 @@ export default function ClientDetailsPage() {
       <ClientSummaryCard
         client={client}
         payment={payment}
+        isStatusUpdating={isStatusUpdating}
+        onToggleActiveClick={() => {
+          setStatusError("");
+
+          if (client.isActive) {
+            setIsDeactivateOpen(true);
+          } else {
+            void handleSetActive(true);
+          }
+        }}
         onDeleteClick={() => {
           setDeleteError("");
           setIsDeleteOpen(true);
         }}
       />
+
+      {statusError && !isDeactivateOpen && (
+        <div
+          className="mb-5 rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
+          role="alert"
+        >
+          {statusError}
+        </div>
+      )}
 
       <nav
         aria-label="Client views"
@@ -166,11 +216,33 @@ export default function ClientDetailsPage() {
       </div>
 
       <DeleteConfirmDialog
+        open={isDeactivateOpen}
+        title={`Deactivate ${client.fullName}?`}
+        description="The client will no longer be able to log in or receive new plans. All payments, assigned plans and completion history are kept, and you can reactivate the client at any time."
+        isDeleting={isStatusUpdating}
+        error={statusError}
+        confirmLabel="Deactivate"
+        confirmingLabel="Deactivating..."
+        confirmTone="primary"
+        onCancel={() => {
+          if (!isStatusUpdating) {
+            setIsDeactivateOpen(false);
+            setStatusError("");
+          }
+        }}
+        onConfirm={() => {
+          void handleSetActive(false);
+        }}
+      />
+
+      <DeleteConfirmDialog
         open={isDeleteOpen}
-        title={`Delete ${client.fullName}?`}
-        description="This action removes the client and related records such as payments and assigned plans."
+        title={`Permanently delete ${client.fullName}?`}
+        description="This cannot be undone. Permanent deletion is only possible for clients with no payments or assigned plans; otherwise use Deactivate, which keeps all history."
+        requiredText={client.fullName}
         isDeleting={isDeleting}
         error={deleteError}
+        confirmLabel="Delete permanently"
         onCancel={() => {
           if (!isDeleting) {
             setIsDeleteOpen(false);

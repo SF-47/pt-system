@@ -9,12 +9,16 @@ import type { Client, Payment } from "./types";
 type ClientSummaryCardProps = {
   client: Client;
   payment: Payment | null;
+  onToggleActiveClick: () => void;
+  isStatusUpdating?: boolean;
   onDeleteClick: () => void;
 };
 
 export default function ClientSummaryCard({
   client,
   payment,
+  onToggleActiveClick,
+  isStatusUpdating = false,
   onDeleteClick,
 }: ClientSummaryCardProps) {
   return (
@@ -95,11 +99,19 @@ export default function ClientSummaryCard({
             </Link>
             <button
               type="button"
+              onClick={onToggleActiveClick}
+              disabled={isStatusUpdating}
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {client.isActive ? "Deactivate" : "Reactivate"}
+            </button>
+            <button
+              type="button"
               onClick={onDeleteClick}
               className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-danger/40 bg-surface px-3 text-sm font-medium text-danger transition-colors hover:bg-danger-soft"
             >
               <Icon name="close" className="size-4" />
-              Delete Client
+              Delete Permanently
             </button>
           </div>
         </div>
