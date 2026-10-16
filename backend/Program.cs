@@ -60,6 +60,11 @@ if (string.IsNullOrWhiteSpace(jwtKey))
     throw new InvalidOperationException("JWT signing key is not configured.");
 }
 
+if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
+{
+    throw new InvalidOperationException("JWT signing key must be at least 32 bytes.");
+}
+
 builder
     .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

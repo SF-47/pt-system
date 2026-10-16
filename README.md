@@ -48,7 +48,7 @@ cd backend
 
 # 1. Configuration (values are examples - use your own)
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Port=3306;Database=ptsystem;User=<user>;Password=<password>;"
-dotnet user-secrets set "Jwt:Key" "<a long random string, at least 32 characters>"
+dotnet user-secrets set "Jwt:Key" "<a long random string, at least 32 bytes>"
 
 # 2. Create / update the database schema
 dotnet ef database update
@@ -61,6 +61,11 @@ dotnet run
 - Migrations are not applied automatically when the app starts. Run `dotnet ef database update` after pulling new migrations.
 - Environment variable equivalents: `ConnectionStrings__DefaultConnection` and `Jwt__Key`.
 - `Jwt:Issuer` and `Jwt:Audience` have defaults in `appsettings.json`.
+- The API refuses to start if `Jwt:Key` is missing or shorter than 32 bytes (UTF-8).
+
+### JWT signing key in production
+
+Production must use a fresh, randomly generated signing key (for example `openssl rand -base64 48`). Never reuse a development key or any value that has appeared in the repository or its history, and never commit it. Supply it only through secure environment configuration (`Jwt__Key` in the host's secret store). Changing the key signs everyone out; they log in again.
 
 ### Create the first trainer
 
