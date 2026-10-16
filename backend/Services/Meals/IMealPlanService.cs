@@ -1,5 +1,6 @@
 using backend.DTOs.Common;
 using backend.DTOs.Meals;
+using backend.Services;
 
 namespace backend.Services.Meals;
 
@@ -24,7 +25,7 @@ public interface IMealPlanService
 
     Task<MealResponse?> UpdateMealAsync(int mealId, UpdateMealRequest request, int trainerId);
 
-    Task<bool> DeleteMealAsync(int mealId, int trainerId);
+    Task<ServiceResult<bool>> DeleteMealAsync(int mealId, int trainerId);
 
     Task<ServiceResult<bool>> ReorderMealsAsync(
         int mealPlanId,

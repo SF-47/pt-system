@@ -52,6 +52,14 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(x => x.ClientId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Completion history must survive: a meal that clients have statuses for cannot be deleted.
+        modelBuilder
+            .Entity<ClientMealStatus>()
+            .HasOne(x => x.Meal)
+            .WithMany()
+            .HasForeignKey(x => x.MealId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder
             .Entity<ClientWorkoutAssignment>()
             .Property(x => x.AssignedDate)

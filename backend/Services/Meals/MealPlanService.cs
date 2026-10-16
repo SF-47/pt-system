@@ -2,7 +2,9 @@ using backend.Data;
 using backend.DTOs.Common;
 using backend.DTOs.Meals;
 using backend.Models;
+using backend.Services;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 
 namespace backend.Services.Meals;
 
@@ -323,7 +325,10 @@ public class MealPlanService : IMealPlanService
         };
     }
 
-    public async Task<bool> DeleteMealAsync(int mealId, int trainerId)
+    private const string MealHistoryConflictMessage =
+        "This meal has client completion history (pending, completed or skipped) and cannot be deleted.";
+
+    public async Task<ServiceResult<bool>> DeleteMealAsync(int mealId, int trainerId)
     {
         var meal = await _db
             .Meals.Include(meal => meal.MealPlan)
@@ -331,7 +336,14 @@ public class MealPlanService : IMealPlanService
 
         if (meal is null)
         {
-            return false;
+            return ServiceResult<bool>.NotFound("Meal not found.");
+        }
+
+        var hasHistory = await _db.ClientMealStatuses.AnyAsync(status => status.MealId == meal.Id);
+
+        if (hasHistory)
+        {
+            return ServiceResult<bool>.Conflict(MealHistoryConflictMessage);
         }
 
         _db.Meals.Remove(meal);
@@ -347,9 +359,23 @@ public class MealPlanService : IMealPlanService
             remaining[index].Position = index + 1;
         }
 
-        await _db.SaveChangesAsync();
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+            when (ex.InnerException
+                    is MySqlException
+                    {
+                        ErrorCode: MySqlErrorCode.RowIsReferenced or MySqlErrorCode.RowIsReferenced2
+                    }
+            )
+        {
+            // A client status was added after the check; the database refused the delete.
+            return ServiceResult<bool>.Conflict(MealHistoryConflictMessage);
+        }
 
-        return true;
+        return ServiceResult<bool>.Ok(true);
     }
 
     public async Task<ServiceResult<bool>> ReorderMealsAsync(

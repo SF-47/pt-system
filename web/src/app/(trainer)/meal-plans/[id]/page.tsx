@@ -151,7 +151,9 @@ export default function MealPlanPage() {
       setDeleteMealMessage("Meal deleted successfully.");
     } catch (error) {
       console.error("Failed to delete meal:", error);
-      setDeleteMealError("Meal could not be deleted. Please try again.");
+      setDeleteMealError(
+        getErrorMessage(error, "Meal could not be deleted. Please try again."),
+      );
     } finally {
       setDeletingMealId(null);
     }

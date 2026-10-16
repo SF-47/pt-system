@@ -386,7 +386,7 @@ namespace backend.Migrations
                     b.HasOne("backend.Models.Meal", "Meal")
                         .WithMany()
                         .HasForeignKey("MealId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("ClientMealPlan");

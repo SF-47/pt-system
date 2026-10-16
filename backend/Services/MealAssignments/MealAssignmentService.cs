@@ -5,6 +5,7 @@ using backend.Enums;
 using backend.Models;
 using backend.Services;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 
 namespace backend.Services.MealAssignments;
 
@@ -151,24 +152,48 @@ public class MealAssignmentService : IMealAssignmentService
             AssignedDate = request.AssignedDate,
         };
 
-        _db.ClientMealPlans.Add(assignment);
-
-        await _db.SaveChangesAsync();
-
         foreach (var meal in mealPlan.Meals.OrderBy(meal => meal.Position))
         {
-            var mealStatus = new ClientMealStatus
-            {
-                ClientMealPlanId = assignment.Id,
-                MealId = meal.Id,
-                Status = CompletionStatus.Pending,
-                CompletedAt = null,
-            };
-
-            _db.ClientMealStatuses.Add(mealStatus);
+            assignment.MealStatuses.Add(
+                new ClientMealStatus
+                {
+                    MealId = meal.Id,
+                    Status = CompletionStatus.Pending,
+                    CompletedAt = null,
+                }
+            );
         }
 
-        await _db.SaveChangesAsync();
+        _db.ClientMealPlans.Add(assignment);
+
+        try
+        {
+            // One SaveChanges: the assignment and all of its meal statuses commit together.
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+            when (ex.InnerException
+                    is MySqlException { ErrorCode: MySqlErrorCode.DuplicateKeyEntry } duplicate
+                && duplicate.Message.Contains("IX_ClientMealPlans_ClientId_AssignedDate")
+            )
+        {
+            return ServiceResult<MealAssignmentResponse>.Conflict(
+                "This client already has a meal plan assigned for this day."
+            );
+        }
+        catch (DbUpdateException ex)
+            when (ex.InnerException
+                    is MySqlException
+                    {
+                        ErrorCode: MySqlErrorCode.NoReferencedRow2 or MySqlErrorCode.NoReferencedRow
+                    }
+            )
+        {
+            // The meal plan or one of its meals was deleted after it was loaded.
+            return ServiceResult<MealAssignmentResponse>.Conflict(
+                "The meal plan changed while it was being assigned. Please try again."
+            );
+        }
 
         var response = await GetAssignmentByIdAsync(assignment.Id, trainerId);
 

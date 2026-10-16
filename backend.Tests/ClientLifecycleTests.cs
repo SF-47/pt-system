@@ -7,7 +7,8 @@ using MySqlConnector;
 
 namespace backend.Tests;
 
-public class ClientLifecycleTests : IClassFixture<TestApp>
+[Collection(DatabaseCollection.Name)]
+public class ClientLifecycleTests
 {
     private readonly TestApp _app;
 

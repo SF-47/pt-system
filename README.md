@@ -122,7 +122,8 @@ Full endpoint documentation (trainer and mobile APIs, models, enums, pagination,
 - Only active clients can log in or receive new assignments; only non-empty plans can be assigned.
 - Deactivating a client (`PUT /api/clients/{id}/status`) keeps all payments, assignments and completion history; reactivating restores access.
 - Permanent deletion (`DELETE /api/clients/{id}`) is only possible for clients with no payments or assignments; otherwise the API returns `409 Conflict`. The web app asks you to type the client's full name first. Database foreign keys (`Restrict`) enforce this even for concurrent requests.
-- Workout and meal plans that have assignment history cannot be deleted.
+- Workout and meal plans that have assignment history cannot be deleted. A single meal cannot be deleted once any client status (Pending, Completed or Skipped) references it; the API returns `409 Conflict` and a `Restrict` foreign key enforces it for concurrent requests.
+- A meal-plan assignment and its meal statuses are saved in one transaction (all or nothing).
 - Workout and meal statuses are Pending / Completed / Skipped. A Pending item dated before today is reported as Missed (derived, not stored).
 - Payments are Pending or Paid; Overdue is a display state for Pending payments past their due date.
 - Trainers only see and modify their own data; clients only see their own data.
@@ -142,3 +143,5 @@ dotnet test backend.Tests
 ## Deploying migrations
 
 Migration `RestrictClientHistoryDeletes` changes the foreign keys from clients to payments, workout assignments and meal assignments from `CASCADE` to `RESTRICT`. It only replaces constraints and does not change data. Back up the database, then run `dotnet ef database update`. Rolling it back (`dotnet ef database update AddUniqueDailyAssignmentIndexes`) restores cascading deletes, which would again let a client delete remove payments and history.
+
+Migration `RestrictMealHistoryDeletes` changes only the foreign key from `ClientMealStatuses` to `Meals` from `CASCADE` to `RESTRICT`. It replaces the constraint and does not change data, so it is quick. Back up the database, then run `dotnet ef database update`. The code and the migration can be deployed in either order: the service check alone already refuses deletes, and the foreign key additionally closes the race with a concurrent assignment once the migration is applied. Rolling it back (`dotnet ef database update RestrictClientHistoryDeletes`) restores cascading deletes, which would again let deleting a meal silently remove clients' completion history.

@@ -11,6 +11,16 @@ using Testcontainers.MySql;
 namespace backend.Tests;
 
 /// <summary>
+/// All database tests share one container. Program reads connection settings from process-wide
+/// environment variables, so fixtures must not start in parallel.
+/// </summary>
+[CollectionDefinition(Name)]
+public class DatabaseCollection : ICollectionFixture<TestApp>
+{
+    public const string Name = "Database";
+}
+
+/// <summary>
 /// Starts a disposable MySQL container, applies the real migrations and hosts the API against it.
 /// Nothing here touches development or production data.
 /// </summary>
@@ -19,6 +29,8 @@ public class TestApp : WebApplicationFactory<Program>, IAsyncLifetime
     private readonly MySqlContainer _mysql = new MySqlBuilder("mysql:8.4")
         .WithDatabase("pt_tests")
         .WithPassword("throwaway-test-password")
+        // Lets tests create fault-injection triggers in this disposable container.
+        .WithCommand("--log-bin-trust-function-creators=1")
         .Build();
 
     private static int _sequence;
